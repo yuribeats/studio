@@ -7,6 +7,18 @@ let mainWindow;
 let auPlugins = [];
 
 // ============================================
+// NATIVE AU HOST ADDON
+// ============================================
+let auHost = null;
+try {
+    auHost = require('./native/build/Release/au_host.node');
+    console.log('[AU_HOST] Native addon loaded');
+} catch (e) {
+    console.warn('[AU_HOST] Native addon not available — AU hosting disabled');
+    console.warn('[AU_HOST]', e.message);
+}
+
+// ============================================
 // AU PLUGIN SCANNER
 // ============================================
 function scanAUPlugins() {
@@ -104,7 +116,10 @@ function scanAUPlugins() {
         type: p.auType === 'aufx' || p.auType === 'aumf' ? 'effect' :
               p.auType === 'aumu' ? 'instrument' : (p.type || 'effect'),
         arch: p.arch,
-        path: p.path
+        path: p.path,
+        auType: p.auType || '',
+        subtype: p.subtype || '',
+        auMfg: p.auMfg || ''
     })).sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -113,6 +128,29 @@ function scanAUPlugins() {
 // ============================================
 ipcMain.handle('get-au-plugins', () => {
     return auPlugins;
+});
+
+// ============================================
+// AU HOST IPC HANDLERS
+// ============================================
+ipcMain.handle('au-create-instance', (event, typeStr, subtypeStr, mfgStr) => {
+    if (!auHost) throw new Error('Native AU host not available');
+    return auHost.createInstance(typeStr, subtypeStr, mfgStr);
+});
+
+ipcMain.handle('au-open-editor', (event, instanceId, title) => {
+    if (!auHost) throw new Error('Native AU host not available');
+    return auHost.openEditor(instanceId, title || 'AU PLUGIN');
+});
+
+ipcMain.handle('au-close-editor', (event, instanceId) => {
+    if (!auHost) throw new Error('Native AU host not available');
+    return auHost.closeEditor(instanceId);
+});
+
+ipcMain.handle('au-destroy-instance', (event, instanceId) => {
+    if (!auHost) throw new Error('Native AU host not available');
+    return auHost.destroyInstance(instanceId);
 });
 
 // ============================================

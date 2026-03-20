@@ -6,7 +6,9 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --mac",
-    "build-universal": "electron-builder --mac --universal"
+    "build-universal": "electron-builder --mac --universal",
+    "build-native": "cmake-js build --directory native --CDCMAKE_BUILD_TYPE=Release --runtime electron --runtime-version 35.0.0 --arch arm64",
+    "rebuild-native": "cmake-js rebuild --directory native --CDCMAKE_BUILD_TYPE=Release --runtime electron --runtime-version 35.0.0 --arch arm64"
   },
   "build": {
     "appId": "com.studio.app",
@@ -19,18 +21,26 @@
           "arch": ["universal"]
         }
       ],
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
+      "hardenedRuntime": true
     },
     "files": [
       "**/*",
       "!node_modules/**/*",
       "!build/**/*",
       "!dist/**/*",
-      "!.git/**/*"
+      "!.git/**/*",
+      "native/build/Release/au_host.node"
     ],
     "extraResources": []
   },
+  "dependencies": {
+    "node-addon-api": "^8.3.0"
+  },
   "devDependencies": {
+    "cmake-js": "^7.3.0",
     "electron": "^35.0.0",
     "electron-builder": "^25.1.8"
   }

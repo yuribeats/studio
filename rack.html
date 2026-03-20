@@ -466,6 +466,12 @@ function renderChain() {
         const remove = e.target.closest('.slot-remove');
         if (remove) {
             const idx = parseInt(remove.dataset.idx);
+            const slot = chain[idx];
+            // Destroy native AU instance if it exists
+            if (slot && slot.instanceId && window.parent && window.parent.studioBridge) {
+                window.parent.studioBridge.auDestroyInstance(slot.instanceId)
+                    .catch(err => console.warn('[RACK] AU destroy failed:', err.message));
+            }
             chain.splice(idx, 1);
             renderChain();
             renderChannels();
@@ -483,6 +489,20 @@ function renderChain() {
             }
             renderChain();
             sendRackState();
+            return;
+        }
+        // Click on slot name -> open AU editor GUI
+        const slotName = e.target.closest('.slot-name');
+        if (slotName && !slotName.classList.contains('empty')) {
+            const slotEl = slotName.closest('.insert-slot');
+            if (slotEl) {
+                const idx = parseInt(slotEl.querySelector('.slot-num').textContent) - 1;
+                const slot = chain[idx];
+                if (slot && slot.instanceId && window.parent && window.parent.studioBridge) {
+                    window.parent.studioBridge.auOpenEditor(slot.instanceId, slot.plugin.name)
+                        .catch(err => console.warn('[RACK] AU openEditor failed:', err.message));
+                }
+            }
         }
     });
 }
@@ -530,12 +550,32 @@ function renderPlugins() {
     });
 }
 
-function addInsert(plugin) {
+async function addInsert(plugin) {
     if (!inserts[activeChannel]) inserts[activeChannel] = [];
-    inserts[activeChannel].push({
-        plugin: { name: plugin.name, manufacturer: plugin.manufacturer, type: plugin.type, path: plugin.path },
-        bypassed: false
-    });
+    const slot = {
+        plugin: {
+            name: plugin.name, manufacturer: plugin.manufacturer,
+            type: plugin.type, path: plugin.path,
+            auType: plugin.auType || '', subtype: plugin.subtype || '',
+            auMfg: plugin.auMfg || ''
+        },
+        bypassed: false,
+        instanceId: null
+    };
+
+    // Try to create native AU instance via Electron bridge
+    if (window.parent && window.parent.studioBridge && plugin.auType && plugin.subtype && plugin.auMfg) {
+        try {
+            const id = await window.parent.studioBridge.auCreateInstance(
+                plugin.auType, plugin.subtype, plugin.auMfg);
+            slot.instanceId = id;
+            console.log('[RACK] Created AU instance', id, 'for', plugin.name);
+        } catch (e) {
+            console.warn('[RACK] AU create failed:', e.message);
+        }
+    }
+
+    inserts[activeChannel].push(slot);
     renderChain();
     renderChannels();
     sendRackState();
@@ -567,7 +607,8 @@ function sendRackState() {
     Object.keys(inserts).forEach(ch => {
         data[ch] = inserts[ch].map(s => ({
             plugin: s.plugin,
-            bypassed: s.bypassed
+            bypassed: s.bypassed,
+            instanceId: s.instanceId || null
         }));
     });
     window.parent.postMessage({ type: 'rack-state', inserts: data }, '*');
