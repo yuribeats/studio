@@ -172,6 +172,28 @@
 				-->
 			</div>
 		</div>
+	<script>
+	// Pre-bundle: intercept AudioContext.destination to insert mixer gain
+	(function() {
+		var desc = Object.getOwnPropertyDescriptor(
+			(typeof BaseAudioContext !== 'undefined' ? BaseAudioContext : AudioContext).prototype,
+			'destination'
+		);
+		if (!desc) return;
+		var proto = (typeof BaseAudioContext !== 'undefined' ? BaseAudioContext : AudioContext).prototype;
+		Object.defineProperty(proto, 'destination', {
+			get: function() {
+				var real = desc.get.call(this);
+				if (!this._mixerGain) {
+					this._mixerGain = this.createGain();
+					this._mixerGain.connect(real);
+					window._dx7AudioCtx = this;
+				}
+				return this._mixerGain;
+			}
+		});
+	})();
+	</script>
 	<script src="bundle.js"></script>
 	<script>
 	// ==================== IFRAME MIDI/MIXER BRIDGE ====================
@@ -179,6 +201,7 @@
 		if (window === window.parent) return;
 
 		var synthCtrl = null;
+		var resumed = false;
 
 		// Poll for the angular controller to be ready
 		var findCtrl = setInterval(function() {
@@ -194,11 +217,22 @@
 			} catch(ex) {}
 		}, 200);
 
+		function ensureResumed() {
+			if (resumed) return;
+			resumed = true;
+			// Dispatch synthetic mousedown to trigger DX7's built-in AudioContext resume
+			document.body.dispatchEvent(new MouseEvent('mousedown'));
+			if (window._dx7AudioCtx && window._dx7AudioCtx.state === 'suspended') {
+				window._dx7AudioCtx.resume();
+			}
+		}
+
 		window.addEventListener('message', function(e) {
 			var d = e.data;
 			if (!d) return;
 
 			if (d.type === 'midi' && d.data) {
+				ensureResumed();
 				var fakeEvent = { data: new Uint8Array(d.data) };
 				if (synthCtrl && synthCtrl.queueMidiEvent) {
 					synthCtrl.queueMidiEvent(fakeEvent);
@@ -207,6 +241,13 @@
 
 			if (d.type === 'keyboard-focus') {
 				window.__kbEnabled = d.enabled;
+			}
+
+			if (d.type === 'mixer') {
+				if (window._dx7AudioCtx && window._dx7AudioCtx._mixerGain) {
+					if (d.param === 'volume') window._dx7AudioCtx._mixerGain.gain.value = d.value;
+					if (d.param === 'mute') window._dx7AudioCtx._mixerGain.gain.value = d.value ? 0 : 1;
+				}
 			}
 		});
 
