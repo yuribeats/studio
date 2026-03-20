@@ -1192,6 +1192,7 @@ function buildKeyboard() {
 
   // Interaction
   const noteOn = (el) => {
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     const note = parseInt(el.dataset.note);
     el.classList.add('active');
     if (synthNode) synthNode.port.postMessage({ type: 'noteOn', note, velocity: 100 });
@@ -1231,6 +1232,7 @@ function initComputerKeyboard() {
     if (k === 'arrowright') { loadPreset((currentPresetIdx + 1) % PRESETS.length); return; }
 
     if (keyMap[k] !== undefined && !activeKeys.has(k)) {
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       activeKeys.add(k);
       const note = currentOctave * 12 + keyMap[k];
       if (synthNode) synthNode.port.postMessage({ type: 'noteOn', note, velocity: 100 });
@@ -1270,6 +1272,7 @@ async function initMIDI() {
 }
 
 function handleMIDI(msg) {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   const [status, note, vel] = msg.data;
   const cmd = status & 0xF0;
   if (cmd === 0x90 && vel > 0) {
