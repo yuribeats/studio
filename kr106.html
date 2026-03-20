@@ -840,7 +840,6 @@ body {
           </div>
           <div class="preset-dropdown">
             <div class="preset-lcd" id="presetDisplay">A11 Brass</div>
-            <div class="preset-menu" id="presetMenu"></div>
           </div>
         </div>
       </div>
@@ -889,6 +888,8 @@ body {
 </div>
 
 </div><!-- /scale-wrap -->
+
+<div class="preset-menu" id="presetMenu"></div>
 
 <script>
 // ==================== PRESETS ====================
@@ -966,15 +967,23 @@ function buildPresetMenu() {
     if (menu.classList.contains('open')) {
       const rect = lcd.getBoundingClientRect();
       menu.style.left = rect.left + 'px';
-      menu.style.width = rect.width + 'px';
-      menu.style.bottom = (window.innerHeight - rect.top) + 'px';
+      menu.style.width = Math.max(rect.width, 180) + 'px';
+      menu.style.bottom = (window.innerHeight - rect.top + 2) + 'px';
       menu.style.top = 'auto';
+      // Clamp: if menu goes above viewport, flip to below
+      requestAnimationFrame(() => {
+        const menuRect = menu.getBoundingClientRect();
+        if (menuRect.top < 0) {
+          menu.style.bottom = 'auto';
+          menu.style.top = (rect.bottom + 2) + 'px';
+        }
+      });
       const active = menu.querySelector('.active-preset');
       if (active) active.scrollIntoView({block: 'nearest'});
     }
   });
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.preset-dropdown')) menu.classList.remove('open');
+    if (!e.target.closest('.preset-dropdown') && !e.target.closest('.preset-menu')) menu.classList.remove('open');
   });
 }
 
