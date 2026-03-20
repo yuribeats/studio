@@ -722,6 +722,17 @@ function drawWaveform() {
 // ============================================
 let activeSource = null;
 function playSlice(index) {
+    // Check for individual pad buffer (from deck export)
+    if (window._padBuffers && window._padBuffers[index]) {
+        if (activeSource) { try { activeSource.stop(); } catch(e) {} }
+        const source = actx.createBufferSource();
+        source.buffer = window._padBuffers[index];
+        source.connect(comp);
+        source.start(0);
+        activeSource = source;
+        source.onended = () => { if (activeSource === source) activeSource = null; };
+        return;
+    }
     if (!audioBuffer || index >= slices.length) return;
     // Monophonic: stop previous pad before playing new one
     if (activeSource) { try { activeSource.stop(); } catch(e) {} }
@@ -1323,6 +1334,45 @@ if (window !== window.parent) {
     if (d && d.type === 'mixer') {
       if (d.param === 'volume') mixerGain.gain.value = d.value;
       if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+    }
+    if (d && d.type === 'get-session') {
+      window.parent.postMessage({
+        type: 'session-data', source: 'mpc',
+        data: {
+          recording: recording.map(h => ({pad: h.pad, time: h.time})),
+          bpm, totalBars, quantizeEnabled, loopEnabled, loadedFileName,
+          sensitivity
+        }
+      }, '*');
+    }
+    if (d && d.type === 'load-session' && d.data) {
+      const sd = d.data;
+      if (sd.recording) recording = sd.recording;
+      if (sd.bpm) { bpm = sd.bpm; document.getElementById('bpmInput').value = bpm; }
+      if (sd.totalBars) { totalBars = sd.totalBars; document.getElementById('barsInput').value = totalBars; }
+      if (sd.quantizeEnabled !== undefined) { quantizeEnabled = sd.quantizeEnabled; document.getElementById('btnQuantize').classList.toggle('active', quantizeEnabled); }
+      if (sd.loopEnabled !== undefined) { loopEnabled = sd.loopEnabled; document.getElementById('btnLoop').classList.toggle('active', loopEnabled); }
+      if (sd.sensitivity !== undefined) sensitivity = sd.sensitivity;
+      if (recording.length > 0) {
+        document.getElementById('lcd-status').textContent = recording.length + ' HITS LOADED';
+      }
+    }
+    if (d && d.type === 'deck-export-mpc' && d.loops) {
+      // Load exported deck loops as pad samples
+      d.loops.forEach((loop, i) => {
+        if (i >= 16 || !loop.data || !loop.length) return;
+        const buf = actx.createBuffer(1, loop.length, loop.sampleRate);
+        buf.getChannelData(0).set(new Float32Array(loop.data));
+        // Store as a slice for this pad
+        if (!slices[i]) slices[i] = {};
+        slices[i] = { start: 0, end: loop.length };
+        // Replace the audioBuffer approach — store individual pad buffers
+        if (!window._padBuffers) window._padBuffers = {};
+        window._padBuffers[i] = buf;
+        const label = padElements[i] ? padElements[i].querySelector('.pad-label') : null;
+        if (label) label.textContent = loop.name;
+      });
+      document.getElementById('lcd-status').textContent = d.loops.length + ' LOOPS IMPORTED FROM DECK';
     }
   });
   window.__kbEnabled = false;

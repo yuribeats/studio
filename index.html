@@ -254,6 +254,7 @@
             <div class="bar-btn" data-popout="pianoroll">PIANO ROLL</div>
             <div class="bar-btn" id="togglePedals">SHOW PEDALS</div>
             <div class="bar-btn" data-popout="pedals">PEDALS</div>
+            <div class="bar-btn" data-popout="deck">DECK</div>
             <div class="bar-btn" data-popout="mixer">MIXER</div>
             <div class="bar-btn" data-popout="tape">TAPE</div>
         </div>
@@ -271,6 +272,7 @@
             <div class="kb-btn" data-target="mpc">MPC</div>
             <div class="kb-btn" data-target="cr78">808</div>
             <div class="kb-btn" data-target="dx7">DX7</div>
+            <div class="kb-btn" data-target="deck">DECK</div>
         </div>
     </div>
 
@@ -312,8 +314,17 @@
             </div>
         </div>
 
-        <!-- ROW 5: PEDALS (hidden by default) + MIXER + TAPE MACHINE -->
-        <div class="inst-row tall" data-row="4">
+        <!-- ROW 5: DRIFT DECK -->
+        <div class="inst-row" data-row="4" style="min-height:300px;">
+            <div class="inst-wrapper" data-inst="deck">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">DRIFT DECK</div>
+                <iframe id="frameDeck" src="deck.html"></iframe>
+            </div>
+        </div>
+
+        <!-- ROW 6: PEDALS (hidden by default) + MIXER + TAPE MACHINE -->
+        <div class="inst-row tall" data-row="5">
             <div class="inst-wrapper hidden-inst" data-inst="pedals">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">PEDALBOARD</div>
@@ -332,7 +343,7 @@
         </div>
 
         <!-- ROW 7: PIANO ROLL (always last) -->
-        <div class="inst-row tall" data-row="6">
+        <div class="inst-row tall" data-row="7">
             <div class="inst-wrapper" data-inst="pianoroll">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">PIANO ROLL</div>
@@ -353,11 +364,12 @@ const INSTRUMENTS = {
     dx7:   { frame: 'frameDx7',   label: 'DX7',     file: 'dx7/index.html',  windowName: 'dx7win' },
     pianoroll: { frame: 'framePianoroll', label: 'PIANO ROLL', file: 'pianoroll.html', windowName: 'pianorollwin' },
     pedals:{ frame: 'framePedals',label: 'PEDALS',  file: 'pedals.html',     windowName: 'pedalswin' },
+    deck:  { frame: 'frameDeck',  label: 'DECK',    file: 'deck.html',       windowName: 'deckwin' },
     mixer: { frame: 'frameMixer', label: 'MIXER',   file: 'mixer.html',      windowName: 'mixerwin' },
     tape:  { frame: 'frameTape',  label: 'TAPE',    file: 'tape.html',       windowName: 'tapewin' },
 };
 const instIds = Object.keys(INSTRUMENTS);
-const localInsts = ['juno', 'mpc', 'cr78', 'dx7', 'pianoroll', 'pedals', 'mixer', 'tape'];
+const localInsts = ['juno', 'mpc', 'cr78', 'dx7', 'pianoroll', 'pedals', 'deck', 'mixer', 'tape'];
 
 // ============================================
 // STATE
@@ -508,6 +520,7 @@ const ROUTE_OPTIONS = [
     {value: 'mpc', label: 'MPC'},
     {value: 'cr78', label: '808'},
     {value: 'dx7', label: 'DX7'},
+    {value: 'deck', label: 'DECK'},
     {value: 'all', label: 'ALL'},
     {value: 'none', label: 'NONE'},
 ];
@@ -661,7 +674,7 @@ window.addEventListener('message', (e) => {
     }
     // Route piano roll notes to target instruments
     if (d && d.type === 'pianoroll-note') {
-        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', dx7: 'dx7'};
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', dx7: 'dx7', deck: 'deck'};
         const instId = idMap[d.channel] || d.channel;
         if (INSTRUMENTS[instId]) {
             const midiData = d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0];
@@ -688,6 +701,10 @@ window.addEventListener('message', (e) => {
     if (d && d.type === 'transport') {
         sendToInst('tape', d);
     }
+    // Deck export to MPC — forward loop data to MPC
+    if (d && d.type === 'deck-export-mpc') {
+        sendToInst('mpc', d);
+    }
     if (d && d.type === 'mixer-control') {
         const target = d.channel;
         if (target === 'master') {
@@ -709,23 +726,25 @@ window.addEventListener('message', (e) => {
 let pendingSave = null;
 const sessionParts = {};
 
+const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'deck'];
+
 function requestSessionData() {
-    sessionParts.pianoroll = null;
-    sessionParts.cr78 = null;
+    SESSION_SOURCES.forEach(s => sessionParts[s] = null);
     pendingSave = true;
-    sendToInst('pianoroll', {type: 'get-session'});
-    sendToInst('cr78', {type: 'get-session'});
+    SESSION_SOURCES.forEach(s => sendToInst(s, {type: 'get-session'}));
 }
 
 function checkSaveReady() {
     if (!pendingSave) return;
-    if (sessionParts.pianoroll && sessionParts.cr78) {
+    if (SESSION_SOURCES.every(s => sessionParts[s])) {
         pendingSave = false;
         const session = {
-            version: 1,
+            version: 2,
             timestamp: new Date().toISOString(),
             pianoroll: sessionParts.pianoroll,
-            drumMachine: sessionParts.cr78
+            drumMachine: sessionParts.cr78,
+            mpc: sessionParts.mpc,
+            deck: sessionParts.deck
         };
         const json = JSON.stringify(session, null, 2);
         const blob = new Blob([json], {type: 'application/json'});
@@ -739,12 +758,10 @@ function checkSaveReady() {
 }
 
 function loadSession(session) {
-    if (session.pianoroll) {
-        sendToInst('pianoroll', {type: 'load-session', data: session.pianoroll});
-    }
-    if (session.drumMachine) {
-        sendToInst('cr78', {type: 'load-session', data: session.drumMachine});
-    }
+    if (session.pianoroll) sendToInst('pianoroll', {type: 'load-session', data: session.pianoroll});
+    if (session.drumMachine) sendToInst('cr78', {type: 'load-session', data: session.drumMachine});
+    if (session.mpc) sendToInst('mpc', {type: 'load-session', data: session.mpc});
+    if (session.deck) sendToInst('deck', {type: 'load-session', data: session.deck});
 }
 
 document.getElementById('btnSave').addEventListener('click', requestSessionData);

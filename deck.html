@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRIFT DECK</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+    background: #0a0a0a;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #ccc;
+    user-select: none;
+}
+
+.deck {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+.deck-header {
+    background: #111;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.deck-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #00ccaa;
+}
+.deck-file {
+    font-size: 9px;
+    color: #555;
+    letter-spacing: 1px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.d-btn {
+    font-family: Arial, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: #666;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    padding: 4px 10px;
+}
+.d-btn.active { color: #00ccaa; border-color: #00ccaa; }
+.d-btn.play-on { color: #33ff33; border-color: #33ff33; }
+
+/* WAVEFORM */
+.waveform-area {
+    flex: 1;
+    position: relative;
+    background: #0a0a0a;
+    border-bottom: 1px solid #222;
+    min-height: 80px;
+}
+.waveform-area canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.drop-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #333;
+    letter-spacing: 2px;
+    pointer-events: none;
+}
+.drop-hint.hidden { display: none; }
+
+/* CONTROLS */
+.controls-row {
+    background: #111;
+    border-bottom: 1px solid #222;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+.ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.ctrl-label {
+    font-size: 7px;
+    color: #555;
+    letter-spacing: 1px;
+    min-width: 40px;
+}
+.ctrl-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 80px;
+    height: 3px;
+    background: #222;
+    outline: none;
+}
+.ctrl-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 8px;
+    height: 16px;
+    background: #00ccaa;
+    border: 1px solid #008866;
+}
+.ctrl-val {
+    font-size: 8px;
+    color: #00ccaa;
+    min-width: 30px;
+    text-align: right;
+}
+.ctrl-sep { width: 1px; height: 20px; background: #333; }
+
+/* LOOP BANK */
+.loop-bank {
+    background: #0e0e0e;
+    border-bottom: 1px solid #222;
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    overflow-x: auto;
+}
+.bank-label {
+    font-size: 7px;
+    color: #444;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+.loop-slot {
+    font-size: 7px;
+    color: #555;
+    background: #141414;
+    border: 1px solid #222;
+    padding: 3px 8px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    min-width: 50px;
+    text-align: center;
+}
+.loop-slot.has-loop { color: #00ccaa; border-color: #00775a; }
+.loop-slot.active-loop { color: #fff; background: #00775a; border-color: #00ccaa; }
+
+/* MIDI NOTE DISPLAY */
+.midi-note {
+    font-size: 7px;
+    color: #444;
+    letter-spacing: 1px;
+}
+</style>
+</head>
+<body>
+
+<div class="deck">
+    <div class="deck-header">
+        <span class="deck-title">DRIFT DECK</span>
+        <span class="deck-file" id="fileName">NO FILE LOADED</span>
+        <div class="d-btn" id="btnLoad">LOAD</div>
+        <div class="d-btn" id="btnPlay">PLAY</div>
+        <div class="d-btn" id="btnStop">STOP</div>
+        <div class="d-btn" id="btnLoop">LOOP</div>
+        <div class="d-btn" id="btnSaveLoop">SAVE LOOP</div>
+        <div class="d-btn" id="btnExportMpc">EXPORT TO MPC</div>
+        <div class="ctrl-sep"></div>
+        <span class="midi-note">MIDI TRIGGER: C4</span>
+    </div>
+
+    <div class="waveform-area" id="waveArea">
+        <canvas id="waveCanvas"></canvas>
+        <div class="drop-hint" id="dropHint">DROP AUDIO FILE HERE OR CLICK LOAD</div>
+    </div>
+
+    <div class="controls-row">
+        <div class="ctrl-group">
+            <span class="ctrl-label">SPEED</span>
+            <input class="ctrl-slider" id="speedSlider" type="range" min="-50" max="50" value="0" />
+            <span class="ctrl-val" id="speedVal">1.00X</span>
+        </div>
+        <div class="ctrl-sep"></div>
+        <div class="ctrl-group">
+            <span class="ctrl-label">REVERB</span>
+            <input class="ctrl-slider" id="reverbSlider" type="range" min="0" max="100" value="40" />
+            <span class="ctrl-val" id="reverbVal">40%</span>
+        </div>
+        <div class="ctrl-sep"></div>
+        <div class="ctrl-group">
+            <span class="ctrl-label">TONE</span>
+            <input class="ctrl-slider" id="toneSlider" type="range" min="-100" max="100" value="0" />
+            <span class="ctrl-val" id="toneVal">0</span>
+        </div>
+        <div class="ctrl-sep"></div>
+        <div class="ctrl-group">
+            <span class="ctrl-label">VOLUME</span>
+            <input class="ctrl-slider" id="volSlider" type="range" min="0" max="100" value="80" />
+        </div>
+    </div>
+
+    <div class="loop-bank" id="loopBank">
+        <span class="bank-label">LOOPS</span>
+    </div>
+</div>
+
+<script>
+// ============================================
+// STATE
+// ============================================
+let audioBuffer = null;
+let isPlaying = false;
+let loopEnabled = false;
+let activeLoop = -1; // index in loopBank
+const loopBank = []; // {name, start, end, buffer} — start/end in seconds
+let regionStart = 0;
+let regionEnd = 0;
+let playheadPos = 0;
+let animFrame = null;
+
+// Audio nodes
+const actx = new (window.AudioContext || window.webkitAudioContext)();
+const masterGain = actx.createGain();
+masterGain.gain.value = 0.8;
+const mixerGain = actx.createGain();
+mixerGain.connect(actx.destination);
+
+// Reverb
+const convolver = actx.createConvolver();
+const dryGain = actx.createGain();
+const wetGain = actx.createGain();
+dryGain.gain.value = 0.7;
+wetGain.gain.value = 0.3;
+// Tone filter
+const toneFilter = actx.createBiquadFilter();
+toneFilter.type = 'lowpass';
+toneFilter.frequency.value = 20000;
+toneFilter.Q.value = 0.7;
+
+// Chain: source -> toneFilter -> dry/wet reverb split -> masterGain -> mixerGain -> dest
+toneFilter.connect(dryGain);
+toneFilter.connect(convolver);
+convolver.connect(wetGain);
+dryGain.connect(masterGain);
+wetGain.connect(masterGain);
+masterGain.connect(mixerGain);
+
+let sourceNode = null;
+let startedAt = 0;
+let pauseOffset = 0;
+
+// Generate impulse response
+function generateImpulse(duration, decay) {
+    const len = actx.sampleRate * duration;
+    const buf = actx.createBuffer(2, len, actx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+        const data = buf.getChannelData(ch);
+        for (let i = 0; i < len; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+        }
+    }
+    return buf;
+}
+convolver.buffer = generateImpulse(3.5, 2.5);
+
+function updateReverb() {
+    const val = parseInt(document.getElementById('reverbSlider').value) / 100;
+    wetGain.gain.value = val * 0.6;
+    dryGain.gain.value = 1 - val * 0.3;
+    const dur = 2.5 + val * 3.5;
+    const decay = 2 + val * 2;
+    convolver.buffer = generateImpulse(dur, decay);
+}
+
+function updateTone() {
+    const val = parseInt(document.getElementById('toneSlider').value) / 100;
+    // -1 = dark (2000Hz), 0 = neutral (20kHz), +1 = bright (20kHz + resonance)
+    if (val <= 0) {
+        toneFilter.frequency.value = 20000 * Math.pow(10, val * 1.0); // 2000 to 20000
+        toneFilter.Q.value = 0.7;
+    } else {
+        toneFilter.frequency.value = 20000;
+        toneFilter.Q.value = 0.7 + val * 4;
+    }
+}
+
+function getSpeed() {
+    return 1 + parseInt(document.getElementById('speedSlider').value) / 100;
+}
+
+// ============================================
+// WAVEFORM
+// ============================================
+function drawWaveform() {
+    const canvas = document.getElementById('waveCanvas');
+    const c = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+    c.scale(dpr, dpr);
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    c.clearRect(0, 0, w, h);
+
+    if (!audioBuffer) return;
+
+    const data = audioBuffer.getChannelData(0);
+    const dur = audioBuffer.duration;
+    const mid = h / 2;
+
+    // Draw waveform
+    c.fillStyle = '#1a3a2a';
+    const step = Math.max(1, Math.floor(data.length / w));
+    for (let x = 0; x < w; x++) {
+        const idx = Math.floor((x / w) * data.length);
+        let max = 0;
+        for (let j = 0; j < step; j++) {
+            const v = Math.abs(data[idx + j] || 0);
+            if (v > max) max = v;
+        }
+        const barH = max * mid * 0.9;
+        c.fillRect(x, mid - barH, 1, barH * 2);
+    }
+
+    // Region
+    if (regionEnd > regionStart) {
+        const rx = (regionStart / dur) * w;
+        const rw = ((regionEnd - regionStart) / dur) * w;
+        c.fillStyle = 'rgba(0,204,170,0.1)';
+        c.fillRect(rx, 0, rw, h);
+        c.strokeStyle = '#00ccaa';
+        c.lineWidth = 1;
+        c.beginPath();
+        c.moveTo(rx, 0); c.lineTo(rx, h);
+        c.moveTo(rx + rw, 0); c.lineTo(rx + rw, h);
+        c.stroke();
+    }
+
+    // Playhead
+    if (isPlaying || playheadPos > 0) {
+        const px = (playheadPos / dur) * w;
+        c.strokeStyle = '#33ff33';
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(px, 0); c.lineTo(px, h);
+        c.stroke();
+    }
+}
+
+// ============================================
+// PLAYBACK
+// ============================================
+function play() {
+    if (!audioBuffer) return;
+    if (actx.state === 'suspended') actx.resume();
+    stop(true);
+
+    sourceNode = actx.createBufferSource();
+    sourceNode.buffer = audioBuffer;
+    sourceNode.playbackRate.value = getSpeed();
+    sourceNode.connect(toneFilter);
+    sourceNode.loop = loopEnabled && regionEnd > regionStart;
+    if (sourceNode.loop) {
+        sourceNode.loopStart = regionStart;
+        sourceNode.loopEnd = regionEnd;
+    }
+
+    const offset = pauseOffset || (regionStart > 0 ? regionStart : 0);
+    const duration = (loopEnabled && regionEnd > regionStart) ? undefined : undefined;
+    sourceNode.start(0, offset);
+    startedAt = actx.currentTime - offset / getSpeed();
+    isPlaying = true;
+    document.getElementById('btnPlay').classList.add('play-on');
+    document.getElementById('dropHint').classList.add('hidden');
+
+    sourceNode.onended = () => {
+        if (isPlaying) {
+            isPlaying = false;
+            document.getElementById('btnPlay').classList.remove('play-on');
+            pauseOffset = 0;
+        }
+    };
+
+    tick();
+}
+
+function stop(preserveOffset) {
+    if (sourceNode) {
+        try { sourceNode.stop(); } catch(e) {}
+        sourceNode.disconnect();
+        sourceNode = null;
+    }
+    if (!preserveOffset) {
+        pauseOffset = 0;
+        playheadPos = 0;
+    }
+    isPlaying = false;
+    document.getElementById('btnPlay').classList.remove('play-on');
+    if (animFrame) cancelAnimationFrame(animFrame);
+    drawWaveform();
+}
+
+function tick() {
+    if (!isPlaying) return;
+    const elapsed = (actx.currentTime - startedAt) * getSpeed();
+    if (loopEnabled && regionEnd > regionStart) {
+        const loopLen = regionEnd - regionStart;
+        playheadPos = regionStart + ((elapsed - regionStart) % loopLen);
+    } else {
+        playheadPos = elapsed;
+    }
+    drawWaveform();
+    animFrame = requestAnimationFrame(tick);
+}
+
+// ============================================
+// REGION (click drag on waveform)
+// ============================================
+let regionDrag = null;
+const waveArea = document.getElementById('waveArea');
+waveArea.addEventListener('mousedown', (e) => {
+    if (!audioBuffer) return;
+    const rect = waveArea.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    regionDrag = { startX: x };
+    regionStart = x * audioBuffer.duration;
+    regionEnd = regionStart;
+});
+document.addEventListener('mousemove', (e) => {
+    if (!regionDrag || !audioBuffer) return;
+    const rect = waveArea.getBoundingClientRect();
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const s = Math.min(regionDrag.startX, x) * audioBuffer.duration;
+    const en = Math.max(regionDrag.startX, x) * audioBuffer.duration;
+    regionStart = s;
+    regionEnd = en;
+    drawWaveform();
+});
+document.addEventListener('mouseup', () => {
+    if (regionDrag) {
+        regionDrag = null;
+        if (regionEnd - regionStart < 0.05) { regionStart = 0; regionEnd = 0; }
+        drawWaveform();
+    }
+});
+
+// ============================================
+// LOOP BANK
+// ============================================
+function renderLoopBank() {
+    const container = document.getElementById('loopBank');
+    container.innerHTML = '<span class="bank-label">LOOPS</span>';
+    loopBank.forEach((loop, i) => {
+        const el = document.createElement('div');
+        el.className = 'loop-slot has-loop' + (i === activeLoop ? ' active-loop' : '');
+        el.textContent = loop.name;
+        el.addEventListener('click', () => {
+            activeLoop = i;
+            regionStart = loop.start;
+            regionEnd = loop.end;
+            renderLoopBank();
+            drawWaveform();
+        });
+        container.appendChild(el);
+    });
+    if (loopBank.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'loop-slot';
+        empty.textContent = 'EMPTY';
+        container.appendChild(empty);
+    }
+}
+
+document.getElementById('btnSaveLoop').addEventListener('click', () => {
+    if (!audioBuffer || regionEnd <= regionStart) return;
+    const name = 'LOOP ' + (loopBank.length + 1);
+    loopBank.push({ name, start: regionStart, end: regionEnd });
+    activeLoop = loopBank.length - 1;
+    renderLoopBank();
+});
+
+// ============================================
+// EXPORT TO MPC
+// ============================================
+document.getElementById('btnExportMpc').addEventListener('click', () => {
+    if (loopBank.length === 0 || !audioBuffer) return;
+    // Render each loop to a buffer and send to parent for MPC creation
+    const loopBuffers = [];
+    const promises = loopBank.map((loop, i) => {
+        const startSample = Math.floor(loop.start * audioBuffer.sampleRate);
+        const endSample = Math.floor(loop.end * audioBuffer.sampleRate);
+        const len = endSample - startSample;
+        if (len <= 0) return Promise.resolve();
+        // Render through effects chain offline
+        const offCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, len, audioBuffer.sampleRate);
+        const src = offCtx.createBufferSource();
+        src.buffer = audioBuffer;
+        // Apply tone filter
+        const tf = offCtx.createBiquadFilter();
+        tf.type = 'lowpass';
+        tf.frequency.value = toneFilter.frequency.value;
+        tf.Q.value = toneFilter.Q.value;
+        src.connect(tf);
+        tf.connect(offCtx.destination);
+        src.start(0, loop.start, loop.end - loop.start);
+        return offCtx.startRendering().then(rendered => {
+            loopBuffers[i] = { name: loop.name, buffer: rendered };
+        });
+    });
+    Promise.all(promises).then(() => {
+        // Convert AudioBuffers to transferable Float32Arrays
+        const exportData = loopBuffers.filter(Boolean).map(lb => {
+            const ch0 = lb.buffer.getChannelData(0);
+            return {
+                name: lb.name,
+                sampleRate: lb.buffer.sampleRate,
+                channels: lb.buffer.numberOfChannels,
+                length: lb.buffer.length,
+                data: Array.from(ch0) // simplified mono export
+            };
+        });
+        if (window !== window.parent) {
+            window.parent.postMessage({type: 'deck-export-mpc', loops: exportData}, '*');
+        }
+    });
+});
+
+// ============================================
+// FILE LOADING
+// ============================================
+document.getElementById('btnLoad').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/*';
+    input.addEventListener('change', () => {
+        if (input.files[0]) loadFile(input.files[0]);
+    });
+    input.click();
+});
+
+waveArea.addEventListener('dragover', (e) => { e.preventDefault(); });
+waveArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+});
+
+async function loadFile(file) {
+    try {
+        document.getElementById('fileName').textContent = 'LOADING...';
+        const ab = await file.arrayBuffer();
+        audioBuffer = await actx.decodeAudioData(ab);
+        document.getElementById('fileName').textContent = file.name.replace(/\.\w+$/, '').toUpperCase();
+        document.getElementById('dropHint').classList.add('hidden');
+        regionStart = 0;
+        regionEnd = audioBuffer.duration;
+        drawWaveform();
+    } catch(e) {
+        document.getElementById('fileName').textContent = 'LOAD ERROR';
+        console.error(e);
+    }
+}
+
+// ============================================
+// CONTROLS
+// ============================================
+document.getElementById('btnPlay').addEventListener('click', () => { isPlaying ? stop() : play(); });
+document.getElementById('btnStop').addEventListener('click', () => stop());
+document.getElementById('btnLoop').addEventListener('click', () => {
+    loopEnabled = !loopEnabled;
+    document.getElementById('btnLoop').classList.toggle('active', loopEnabled);
+});
+
+document.getElementById('speedSlider').addEventListener('input', (e) => {
+    const spd = getSpeed();
+    document.getElementById('speedVal').textContent = spd.toFixed(2) + 'X';
+    if (sourceNode) sourceNode.playbackRate.value = spd;
+});
+document.getElementById('reverbSlider').addEventListener('input', (e) => {
+    document.getElementById('reverbVal').textContent = e.target.value + '%';
+    updateReverb();
+});
+document.getElementById('toneSlider').addEventListener('input', (e) => {
+    document.getElementById('toneVal').textContent = e.target.value;
+    updateTone();
+});
+document.getElementById('volSlider').addEventListener('input', (e) => {
+    masterGain.gain.value = e.target.value / 100;
+});
+
+// ============================================
+// INIT
+// ============================================
+renderLoopBank();
+window.addEventListener('resize', drawWaveform);
+
+// ============================================
+// IFRAME BRIDGE
+// ============================================
+if (window !== window.parent) {
+    window.addEventListener('message', (e) => {
+        const d = e.data;
+        if (d && d.type === 'midi' && d.data) {
+            const [status, note, vel] = d.data;
+            const cmd = status & 0xf0;
+            // MIDI note 60 (C4) triggers play/stop
+            if (note === 60) {
+                if (cmd === 0x90 && vel > 0) {
+                    if (!isPlaying) play();
+                } else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
+                    if (isPlaying) stop();
+                }
+            }
+        }
+        if (d && d.type === 'keyboard-focus') {
+            window.__kbEnabled = d.enabled;
+        }
+        if (d && d.type === 'mixer') {
+            if (d.param === 'volume') mixerGain.gain.value = d.value;
+            if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+        }
+        if (d && d.type === 'get-session') {
+            const bankData = loopBank.map(l => ({name: l.name, start: l.start, end: l.end}));
+            window.parent.postMessage({
+                type: 'session-data', source: 'deck',
+                data: { loops: bankData, regionStart, regionEnd, loopEnabled,
+                        speed: document.getElementById('speedSlider').value,
+                        reverb: document.getElementById('reverbSlider').value,
+                        tone: document.getElementById('toneSlider').value }
+            }, '*');
+        }
+        if (d && d.type === 'load-session' && d.data) {
+            const sd = d.data;
+            if (sd.speed) { document.getElementById('speedSlider').value = sd.speed; document.getElementById('speedVal').textContent = getSpeed().toFixed(2) + 'X'; }
+            if (sd.reverb) { document.getElementById('reverbSlider').value = sd.reverb; document.getElementById('reverbVal').textContent = sd.reverb + '%'; updateReverb(); }
+            if (sd.tone) { document.getElementById('toneSlider').value = sd.tone; document.getElementById('toneVal').textContent = sd.tone; updateTone(); }
+            if (sd.regionStart !== undefined) regionStart = sd.regionStart;
+            if (sd.regionEnd !== undefined) regionEnd = sd.regionEnd;
+            if (sd.loopEnabled) { loopEnabled = true; document.getElementById('btnLoop').classList.add('active'); }
+            drawWaveform();
+        }
+    });
+    window.__kbEnabled = false;
+    document.addEventListener('keydown', (e) => {
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+    }, true);
+    document.addEventListener('keyup', (e) => {
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+    }, true);
+    window.parent.postMessage({type: 'instrument-ready', name: 'deck'}, '*');
+}
+</script>
+</body>
+</html>
