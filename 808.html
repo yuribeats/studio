@@ -458,6 +458,9 @@
         <div class="ctrl-sep"></div>
         <div class="ctrl-btn" id="btnClear">CLEAR</div>
         <div class="ctrl-btn" id="btnRandom">RANDOM</div>
+        <div class="ctrl-sep"></div>
+        <div class="ctrl-btn" id="btnCopy">COPY</div>
+        <div class="ctrl-btn" id="btnPaste">PASTE</div>
         <div style="flex:1"></div>
         <div class="ctrl-group">
             <span class="ctrl-label" id="stepDisplay">STEP --</span>
@@ -584,6 +587,8 @@ function initPatternsForKit(kitId) {
 }
 initPatternsForKit(currentKit);
 function patterns() { return allPatterns[currentKit]; }
+
+let patternClipboard = null;
 
 let trackVolumes = TRACKS.map(() => 0.8);
 let trackMutes = TRACKS.map(() => false);
@@ -934,6 +939,34 @@ document.getElementById('btnRandom').addEventListener('click', () => {
         for (let s = 0; s < STEPS; s++) { if (Math.random() < 0.08) pat[t][s] = 1; }
     }
     refreshGrid();
+});
+document.getElementById('btnCopy').addEventListener('click', () => {
+    const pat = patterns()[currentPattern];
+    patternClipboard = pat.map(t => new Uint8Array(t));
+    document.getElementById('btnCopy').style.borderColor = '#228B22';
+    document.getElementById('btnCopy').style.color = '#228B22';
+    setTimeout(() => {
+        document.getElementById('btnCopy').style.borderColor = '';
+        document.getElementById('btnCopy').style.color = '';
+    }, 400);
+});
+document.getElementById('btnPaste').addEventListener('click', () => {
+    if (!patternClipboard) return;
+    const pat = patterns()[currentPattern];
+    const len = Math.min(pat.length, patternClipboard.length);
+    for (let t = 0; t < len; t++) {
+        pat[t].set(patternClipboard[t]);
+    }
+    for (let t = len; t < pat.length; t++) {
+        pat[t].fill(0);
+    }
+    refreshGrid();
+    document.getElementById('btnPaste').style.borderColor = '#228B22';
+    document.getElementById('btnPaste').style.color = '#228B22';
+    setTimeout(() => {
+        document.getElementById('btnPaste').style.borderColor = '';
+        document.getElementById('btnPaste').style.color = '';
+    }, 400);
 });
 
 document.getElementById('tempoInput').addEventListener('change', (e) => {
