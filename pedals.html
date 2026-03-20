@@ -357,6 +357,54 @@ const PEDAL_TYPES = {
             { id: 'depth', label: 'DEPTH', min: 0, max: 100, def: 50 },
             { id: 'feedback', label: 'FDBK', min: 0, max: 100, def: 30 }
         ]
+    },
+    bitcrusher: {
+        name: 'BITCRUSHER',
+        color: '#ff3366',
+        params: [
+            { id: 'bits', label: 'BITS', min: 1, max: 16, def: 8 },
+            { id: 'rate', label: 'RATE', min: 1, max: 100, def: 50 },
+            { id: 'mix', label: 'MIX', min: 0, max: 100, def: 80 }
+        ]
+    },
+    vinyl: {
+        name: 'VINYL',
+        color: '#8b6914',
+        params: [
+            { id: 'noise', label: 'NOISE', min: 0, max: 100, def: 30 },
+            { id: 'wow', label: 'WOW', min: 0, max: 100, def: 20 },
+            { id: 'flutter', label: 'FLTR', min: 0, max: 100, def: 15 },
+            { id: 'wear', label: 'WEAR', min: 0, max: 100, def: 40 }
+        ]
+    },
+    sp303: {
+        name: 'SP-303 LOFI',
+        color: '#ff6600',
+        params: [
+            { id: 'drive', label: 'DRIVE', min: 0, max: 100, def: 60 },
+            { id: 'comp', label: 'COMP', min: 0, max: 100, def: 70 },
+            { id: 'filter', label: 'FILTER', min: 0, max: 100, def: 50 }
+        ]
+    },
+    lofiecho: {
+        name: 'LOFI ECHO',
+        color: '#4488aa',
+        params: [
+            { id: 'time', label: 'TIME', min: 0, max: 100, def: 40 },
+            { id: 'feedback', label: 'FDBK', min: 0, max: 100, def: 50 },
+            { id: 'tone', label: 'TONE', min: 0, max: 100, def: 40 },
+            { id: 'mix', label: 'MIX', min: 0, max: 100, def: 40 }
+        ]
+    },
+    lofireverb: {
+        name: 'LOFI REVERB',
+        color: '#6644aa',
+        params: [
+            { id: 'decay', label: 'DECAY', min: 0, max: 100, def: 50 },
+            { id: 'damp', label: 'DAMP', min: 0, max: 100, def: 60 },
+            { id: 'filter', label: 'FILTER', min: 0, max: 100, def: 40 },
+            { id: 'mix', label: 'MIX', min: 0, max: 100, def: 40 }
+        ]
     }
 };
 
@@ -378,7 +426,7 @@ function getChannelList() {
         }
     });
     chs.push({ id: 'dx7', name: 'DX7' });
-    chs.push({ id: 'bass', name: 'BASS' });
+    chs.push({ id: 'deck', name: 'DECK' });
     return chs;
 }
 let CHANNEL_LIST = getChannelList();
