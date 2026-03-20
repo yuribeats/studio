@@ -577,6 +577,8 @@ function refreshMIDI() {
             } else if (route !== 'none') {
                 sendToInst(route, midiMsg);
             }
+            // Always forward MIDI to piano roll for recording
+            sendToInst('pianoroll', midiMsg);
         };
     }
     noMidi.style.display = hasDevices ? 'none' : 'block';

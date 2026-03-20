@@ -81,6 +81,19 @@
             color: #33ff33;
             border-color: #33ff33;
         }
+        .btn.rec-active {
+            color: #ff3333;
+            border-color: #ff3333;
+            animation: rec-blink 0.8s ease-in-out infinite;
+        }
+        @keyframes rec-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .btn.rec-armed {
+            color: #ff3333;
+            border-color: #ff3333;
+        }
 
         .bpm-input {
             font-family: Arial, Helvetica, sans-serif;
@@ -361,8 +374,10 @@
         <div class="header-section" id="channelTabs"></div>
         <div class="header-section">
             <button class="btn" id="btnPlay">PLAY</button>
+            <button class="btn" id="btnRec">REC</button>
             <button class="btn" id="btnStop">STOP</button>
             <button class="btn" id="btnLoop">LOOP</button>
+            <button class="btn" id="btnRepeat">REPEAT</button>
         </div>
         <div class="header-section">
             <span class="header-label">BPM</span>
@@ -511,8 +526,26 @@
     const notes = {};
     CHANNELS.forEach(ch => notes[ch] = []);
 
+    // Recording state
+    let isRecording = false;
+    let isCountingIn = false;
+    let countInBeats = 0; // how many beats of count-in have passed
+    let recStartTime = 0;
+    let recStartBeat = 0;
+    let activeRecNotes = new Map(); // midi -> { note obj, startTime }
+    let clickGain = null;
+
+    // QWERTY to MIDI mapping (2 octaves starting at C3 = MIDI 48)
+    const QWERTY_MAP = {
+        'a': 48, 'w': 49, 's': 50, 'e': 51, 'd': 52, 'f': 53, 't': 54,
+        'g': 55, 'y': 56, 'h': 57, 'u': 58, 'j': 59, 'k': 60, 'o': 61,
+        'l': 62, 'p': 63, ';': 64,
+        'z': 36, 'x': 37, 'c': 38, 'v': 39, 'b': 40, 'n': 41, 'm': 42,
+        ',': 43, '.': 44, '/': 45
+    };
+
     // Interaction state
-    let dragState = null; // { type: 'create'|'move'|'resize', note, origX, origY, ... }
+    let dragState = null; // { type: 'create'|'move'|'resize'|'marquee', note, origX, origY, ... }
 
     // ==================== DOM REFS ====================
     const gridScroll = document.getElementById('gridScroll');
@@ -639,10 +672,21 @@
     const btnStop = document.getElementById('btnStop');
     const btnLoop = document.getElementById('btnLoop');
 
+    const btnRec = document.getElementById('btnRec');
+    const btnRepeat = document.getElementById('btnRepeat');
+
     btnPlay.addEventListener('mousedown', () => {
         if (!isPlaying) startPlayback();
     });
+    btnRec.addEventListener('mousedown', () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    });
     btnStop.addEventListener('mousedown', () => {
+        if (isRecording) stopRecording();
         if (isPlaying) stopPlayback();
         else {
             playheadBeat = 0;
@@ -652,6 +696,9 @@
     btnLoop.addEventListener('mousedown', () => {
         isLooping = !isLooping;
         btnLoop.classList.toggle('active', isLooping);
+    });
+    btnRepeat.addEventListener('mousedown', () => {
+        repeatRegion();
     });
 
     function getAudioCtx() {
@@ -674,12 +721,156 @@
         btnPlay.classList.remove('play-active');
         if (animFrameId) cancelAnimationFrame(animFrameId);
         animFrameId = null;
-        // Send all note-offs
         scheduledNotes.forEach((val, key) => {
             sendNoteOff(val.channel, val.pitch);
         });
         scheduledNotes.clear();
         clearPlayingKeys();
+    }
+
+    // ==================== CLICK TRACK ====================
+    function playClick(time, accent) {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = accent ? 1200 : 800;
+        gain.gain.setValueAtTime(0.3, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(time);
+        osc.stop(time + 0.06);
+    }
+
+    let scheduledClickBeat = -1;
+
+    function scheduleClicks() {
+        if (!isPlaying) return;
+        const ctx = getAudioCtx();
+        const secPerBeat = 60 / bpm;
+        const lookAhead = 0.1; // schedule 100ms ahead
+
+        // Find which beat we should be scheduling
+        const now = ctx.currentTime;
+        const elapsed = now - playStartTime;
+        const currentBeat = elapsed / secPerBeat;
+
+        // Schedule clicks for upcoming beats
+        for (let b = Math.floor(currentBeat); b <= Math.ceil(currentBeat + lookAhead / secPerBeat); b++) {
+            if (b <= scheduledClickBeat) continue;
+            const beatTime = playStartTime + b * secPerBeat;
+            if (beatTime >= now - 0.01 && beatTime <= now + lookAhead) {
+                const accent = b % BEATS_PER_BAR === 0;
+                if (isCountingIn) {
+                    playClick(beatTime, accent);
+                } else if (isRecording) {
+                    playClick(beatTime, accent);
+                }
+                scheduledClickBeat = b;
+            }
+        }
+    }
+
+    // ==================== RECORDING ====================
+    function startRecording() {
+        const ctx = getAudioCtx();
+        isCountingIn = true;
+        countInBeats = 0;
+        isRecording = false;
+        activeRecNotes.clear();
+        btnRec.classList.add('rec-armed');
+        scheduledClickBeat = -1;
+
+        // Start playback for count-in (1 bar)
+        if (!isPlaying) {
+            recStartBeat = playheadBeat;
+            startPlayback();
+        } else {
+            recStartBeat = playheadBeat;
+        }
+        // Count-in is handled in tick via scheduleClicks
+        // After 1 bar of count-in, recording starts
+        const countInDuration = BEATS_PER_BAR * (60 / bpm);
+        setTimeout(() => {
+            if (!isPlaying) return;
+            isCountingIn = false;
+            isRecording = true;
+            recStartTime = ctx.currentTime;
+            recStartBeat = playheadBeat;
+            btnRec.classList.remove('rec-armed');
+            btnRec.classList.add('rec-active');
+        }, countInDuration * 1000);
+    }
+
+    function stopRecording() {
+        // Finalize any held notes
+        activeRecNotes.forEach((val, midi) => {
+            const dur = playheadBeat - val.startBeat;
+            val.note.duration = Math.max(gridResolution, snapBeat(dur));
+        });
+        activeRecNotes.clear();
+        isRecording = false;
+        isCountingIn = false;
+        btnRec.classList.remove('rec-active', 'rec-armed');
+        renderNotes();
+        renderVelocity();
+    }
+
+    function recordNoteOn(midi, velocity) {
+        if (!isRecording) return;
+        const beat = snapBeat(playheadBeat);
+        const newNote = {
+            pitch: midi,
+            start: beat,
+            duration: gridResolution,
+            velocity: velocity || 100
+        };
+        notes[activeChannel].push(newNote);
+        activeRecNotes.set(midi, { note: newNote, startBeat: beat });
+        renderNotes();
+
+        // Also trigger the sound on the instrument
+        sendNoteOn(activeChannel, midi, velocity || 100);
+        highlightPianoKey(midi, true);
+    }
+
+    function recordNoteOff(midi) {
+        if (!isRecording) return;
+        const rec = activeRecNotes.get(midi);
+        if (rec) {
+            const dur = playheadBeat - rec.startBeat;
+            rec.note.duration = Math.max(gridResolution, snapBeat(dur));
+            activeRecNotes.delete(midi);
+            renderNotes();
+            renderVelocity();
+        }
+        sendNoteOff(activeChannel, midi);
+        highlightPianoKey(midi, false);
+    }
+
+    // ==================== REPEAT REGION ====================
+    function repeatRegion() {
+        if (!loopRegionSet) return;
+        const regionLen = loopEnd - loopStart;
+        if (regionLen <= 0) return;
+        // Copy all notes in the loop region and paste them at loopEnd
+        const channelNotes = notes[activeChannel];
+        const regionNotes = channelNotes.filter(n => n.start >= loopStart && n.start < loopEnd);
+        if (regionNotes.length === 0) return;
+        const copies = regionNotes.map(n => ({
+            pitch: n.pitch,
+            start: n.start + regionLen,
+            duration: n.duration,
+            velocity: n.velocity
+        }));
+        copies.forEach(c => channelNotes.push(c));
+        // Shift loop region forward
+        loopStart += regionLen;
+        loopEnd += regionLen;
+        renderNotes();
+        renderVelocity();
+        renderTimeline();
     }
 
     function tick() {
@@ -737,6 +928,11 @@
                 }
             });
         });
+
+        // Schedule click track for recording
+        if (isRecording || isCountingIn) {
+            scheduleClicks();
+        }
 
         updatePlayheadPosition();
         animFrameId = requestAnimationFrame(tick);
@@ -1464,12 +1660,32 @@
     }
 
     // ==================== KEYBOARD SHORTCUTS ====================
+    const qwertyHeld = new Set();
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT') return;
 
+        // QWERTY recording
+        if (isRecording && !e.repeat && QWERTY_MAP[e.key.toLowerCase()] !== undefined) {
+            const midi = QWERTY_MAP[e.key.toLowerCase()];
+            if (!qwertyHeld.has(midi)) {
+                qwertyHeld.add(midi);
+                recordNoteOn(midi, 100);
+            }
+            e.preventDefault();
+            return;
+        }
+
+        // Record toggle with R key
+        if (e.key === 'r' && !e.ctrlKey && !e.metaKey && !isRecording) {
+            e.preventDefault();
+            startRecording();
+            return;
+        }
+
         if (e.key === ' ' || e.code === 'Space') {
             e.preventDefault();
-            if (isPlaying) stopPlayback();
+            if (isRecording) { stopRecording(); stopPlayback(); }
+            else if (isPlaying) stopPlayback();
             else startPlayback();
         }
         if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -1505,6 +1721,21 @@
         }
     });
 
+    document.addEventListener('keyup', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        if (QWERTY_MAP[e.key.toLowerCase()] !== undefined) {
+            const midi = QWERTY_MAP[e.key.toLowerCase()];
+            if (qwertyHeld.has(midi)) {
+                qwertyHeld.delete(midi);
+                if (isRecording) recordNoteOff(midi);
+                else {
+                    sendNoteOff(activeChannel, midi);
+                    highlightPianoKey(midi, false);
+                }
+            }
+        }
+    });
+
     // ==================== FULL RENDER ====================
     function fullRender() {
         cellW = ZOOM_H_LEVELS[zoomHIndex];
@@ -1534,16 +1765,25 @@
             if (d && d.type === 'keyboard-focus') {
                 window.__kbEnabled = d.enabled;
             }
-            if (d && d.type === 'midi') {
-                // Forward MIDI to playback if needed
+            if (d && d.type === 'midi' && d.data) {
+                const status = d.data[0] & 0xF0;
+                const midi = d.data[1];
+                const vel = d.data[2] || 0;
+                if (status === 0x90 && vel > 0) {
+                    if (isRecording) recordNoteOn(midi, vel);
+                } else if (status === 0x80 || (status === 0x90 && vel === 0)) {
+                    if (isRecording) recordNoteOff(midi);
+                }
             }
         });
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT') return;
-            // Always allow Delete/Backspace, Cmd+A, Cmd+D, Space for piano roll operations
-            const allowedKeys = ['Delete', 'Backspace', ' '];
+            // Always allow Delete/Backspace, Cmd+A, Cmd+D, Space, R for piano roll operations
+            // Allow QWERTY keys during recording
+            const allowedKeys = ['Delete', 'Backspace', ' ', 'r'];
             const isModCombo = (e.ctrlKey || e.metaKey) && ['a','d'].includes(e.key);
-            if (!window.__kbEnabled && !allowedKeys.includes(e.key) && !isModCombo) {
+            const isRecKey = isRecording && QWERTY_MAP[e.key.toLowerCase()] !== undefined;
+            if (!window.__kbEnabled && !allowedKeys.includes(e.key) && !isModCombo && !isRecKey) {
                 e.stopImmediatePropagation(); e.preventDefault();
             }
         }, true);
