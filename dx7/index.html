@@ -195,17 +195,6 @@
 	})();
 	</script>
 	<script src="bundle.js"></script>
-	<style>
-	.dx7-activate-overlay {
-		position: fixed; inset: 0; z-index: 9999;
-		background: rgba(0,0,0,0.85);
-		display: flex; align-items: center; justify-content: center;
-		font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase;
-		letter-spacing: 3px; font-size: 14px; color: #fff;
-	}
-	.dx7-activate-overlay.hidden { display: none; }
-	</style>
-	<div class="dx7-activate-overlay" id="dx7Overlay">CLICK TO ACTIVATE DX7</div>
 	<script>
 	// ==================== IFRAME MIDI/MIXER BRIDGE ====================
 	(function() {
@@ -214,7 +203,6 @@
 		var synthCtrl = null;
 		var audioReady = false;
 		var pendingMidi = [];
-		var overlay = document.getElementById('dx7Overlay');
 
 		// Poll for the angular controller to be ready
 		var findCtrl = setInterval(function() {
@@ -246,13 +234,11 @@
 			if (window._dx7AudioCtx) {
 				if (window._dx7AudioCtx.state === 'running') {
 					audioReady = true;
-					overlay.classList.add('hidden');
 					flushPending();
 					return;
 				}
 				window._dx7AudioCtx.resume().then(function() {
 					audioReady = true;
-					overlay.classList.add('hidden');
 					flushPending();
 				});
 			}
@@ -267,7 +253,6 @@
 		var checkInterval = setInterval(function() {
 			if (window._dx7AudioCtx && window._dx7AudioCtx.state === 'running') {
 				audioReady = true;
-				overlay.classList.add('hidden');
 				flushPending();
 				clearInterval(checkInterval);
 			}
