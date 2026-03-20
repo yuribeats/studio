@@ -250,6 +250,9 @@ function getOrCreateBgFrame(instId) {
     return iframe;
 }
 
+// Preload all instrument iframes so mixer/piano roll can always reach them
+Object.keys(INSTRUMENTS).forEach(id => getOrCreateBgFrame(id));
+
 // BroadcastChannel for popout window communication
 const studioBroadcast = new BroadcastChannel('studio-bus');
 studioBroadcast.onmessage = (e) => {
@@ -288,7 +291,7 @@ function sendToInst(instId, msg) {
         return;
     }
     // Not loaded — create bg frame for important messages
-    if (msg.type === 'midi' || msg.type === 'pedals' || msg.type === 'load-session') {
+    if (msg.type === 'midi' || msg.type === 'mixer' || msg.type === 'pedals' || msg.type === 'load-session') {
         const bgFrame = getOrCreateBgFrame(instId);
         if (bgFrame) {
             bgFrame.addEventListener('load', function once() {
