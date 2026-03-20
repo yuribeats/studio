@@ -259,6 +259,16 @@
             <div class="bar-btn" data-popout="tape">TAPE</div>
         </div>
         <div class="bar-sep"></div>
+        <div class="route-dropdown" id="addInstDropdown" style="position:relative;">
+            <div class="bar-btn" id="btnAddInst">+ ADD</div>
+            <div class="route-menu" id="addInstMenu" style="min-width:80px;">
+                <div class="route-opt" data-add="juno">JUNO</div>
+                <div class="route-opt" data-add="mpc">MPC</div>
+                <div class="route-opt" data-add="dx7">DX7</div>
+                <div class="route-opt" data-add="deck">DECK</div>
+            </div>
+        </div>
+        <div class="bar-sep"></div>
         <div class="bar-btn" id="btnSave">SAVE</div>
         <div class="bar-btn" id="btnLoad">LOAD</div>
         <div class="bar-sep"></div>
@@ -656,8 +666,13 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener('message', (e) => {
     const d = e.data;
     if (d && d.type === 'instrument-ready') {
-        // Map old name 'kr106' to 'juno'
-        const name = d.name === 'kr106' ? 'juno' : d.name;
+        // Find which instrument ID this iframe belongs to
+        let name = d.name === 'kr106' ? 'juno' : d.name;
+        // Check if message came from a dynamic instance iframe
+        for (const id of Object.keys(INSTRUMENTS)) {
+            const frame = getFrame(id);
+            if (frame && frame.contentWindow === e.source) { name = id; break; }
+        }
         sendToInst(name, {type: 'keyboard-focus', enabled: name === keyboardTarget});
     }
     // Handle keyboard focus requests (e.g. piano roll recording)
@@ -779,6 +794,180 @@ document.getElementById('btnLoad').addEventListener('click', () => {
     });
     input.click();
 });
+
+// ============================================
+// DYNAMIC INSTRUMENT INSTANCES
+// ============================================
+const INST_TEMPLATES = {
+    juno: { file: 'kr106.html', label: 'JUNO', minHeight: '420px' },
+    mpc:  { file: 'mpc.html',   label: 'MPC',  minHeight: '90vh' },
+    dx7:  { file: 'dx7/index.html', label: 'DX7', minHeight: '180px' },
+    deck: { file: 'deck.html',  label: 'DECK', minHeight: '300px' },
+};
+const instanceCounts = { juno: 1, mpc: 1, dx7: 1, deck: 1 };
+
+document.getElementById('btnAddInst').addEventListener('click', () => {
+    document.getElementById('addInstMenu').classList.toggle('open');
+});
+document.querySelectorAll('[data-add]').forEach(opt => {
+    opt.addEventListener('click', () => {
+        document.getElementById('addInstMenu').classList.remove('open');
+        addInstance(opt.dataset.add);
+    });
+});
+
+function addInstance(baseType) {
+    const tmpl = INST_TEMPLATES[baseType];
+    if (!tmpl) return;
+    instanceCounts[baseType]++;
+    const num = instanceCounts[baseType];
+    const instId = baseType + '-' + num;
+    const frameId = 'frame-' + instId;
+    const label = tmpl.label + ' ' + num;
+
+    // Register in INSTRUMENTS
+    INSTRUMENTS[instId] = {
+        frame: frameId,
+        label: label,
+        file: tmpl.file,
+        windowName: instId + 'win',
+        baseType: baseType
+    };
+    localInsts.push(instId);
+
+    // Create DOM row
+    const row = document.createElement('div');
+    row.className = 'inst-row';
+    row.dataset.row = document.querySelectorAll('.inst-row').length;
+    row.style.minHeight = tmpl.minHeight;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'inst-wrapper';
+    wrapper.dataset.inst = instId;
+
+    const indicator = document.createElement('div');
+    indicator.className = 'inst-focus-indicator';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'inst-label';
+    labelEl.textContent = label;
+
+    const removeBtn = document.createElement('div');
+    removeBtn.style.cssText = 'position:absolute;top:6px;right:8px;font-size:7px;letter-spacing:1px;color:#555;z-index:5;padding:2px 6px;';
+    removeBtn.textContent = 'X';
+    removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeInstance(instId);
+    });
+
+    const iframe = document.createElement('iframe');
+    iframe.id = frameId;
+    iframe.src = tmpl.file;
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+
+    wrapper.appendChild(indicator);
+    wrapper.appendChild(labelEl);
+    wrapper.appendChild(removeBtn);
+    wrapper.appendChild(iframe);
+    row.appendChild(wrapper);
+
+    // Insert before piano roll row (last row)
+    const pianoRollRow = document.querySelector('[data-inst="pianoroll"]').closest('.inst-row');
+    pianoRollRow.parentNode.insertBefore(row, pianoRollRow);
+
+    // Add KB routing button
+    const kbRoute = document.querySelector('.kb-route');
+    const kbBtn = document.createElement('div');
+    kbBtn.className = 'kb-btn';
+    kbBtn.dataset.target = instId;
+    kbBtn.textContent = label;
+    kbBtn.addEventListener('click', () => setKeyboardTarget(instId));
+    kbRoute.appendChild(kbBtn);
+
+    // Add popout button
+    const popoutRow = document.querySelector('.popout-row');
+    const popBtn = document.createElement('div');
+    popBtn.className = 'bar-btn';
+    popBtn.dataset.popout = instId;
+    popBtn.textContent = label;
+    popBtn.addEventListener('click', () => {
+        if (popoutWindows[instId] && !popoutWindows[instId].closed) {
+            popoutWindows[instId].focus();
+            return;
+        }
+        popoutWindows[instId] = window.open(tmpl.file, instId + 'win', 'width=960,height=700');
+        getWrap(instId).classList.add('hidden-inst');
+        popBtn.textContent = 'X ' + label;
+        const check = setInterval(() => {
+            if (popoutWindows[instId] && popoutWindows[instId].closed) {
+                clearInterval(check);
+                popoutWindows[instId] = null;
+                getWrap(instId).classList.remove('hidden-inst');
+                popBtn.textContent = label;
+            }
+        }, 500);
+    });
+    popoutRow.appendChild(popBtn);
+
+    // Double click for fullscreen
+    wrapper.addEventListener('dblclick', () => {
+        if (fullscreenInst) goSplit();
+        else goFullscreen(instId);
+    });
+    wrapper.addEventListener('mousedown', () => setKeyboardTarget(instId));
+
+    // Send keyboard focus on iframe load
+    iframe.addEventListener('load', () => {
+        sendToInst(instId, {type: 'keyboard-focus', enabled: instId === keyboardTarget});
+    });
+
+    // Notify mixer to add channel
+    sendToInst('mixer', {type: 'add-channel', id: instId, name: label});
+
+    // Add to MIDI route options
+    ROUTE_OPTIONS.splice(ROUTE_OPTIONS.length - 2, 0, {value: instId, label: label});
+}
+
+function removeInstance(instId) {
+    const inst = INSTRUMENTS[instId];
+    if (!inst || !inst.baseType) return; // don't remove base instruments
+
+    // Remove DOM
+    const wrap = getWrap(instId);
+    if (wrap) {
+        const row = wrap.closest('.inst-row');
+        if (row) row.remove();
+    }
+
+    // Close popout
+    if (popoutWindows[instId] && !popoutWindows[instId].closed) {
+        popoutWindows[instId].close();
+    }
+    delete popoutWindows[instId];
+
+    // Remove KB button
+    const kbBtn = document.querySelector(`.kb-btn[data-target="${instId}"]`);
+    if (kbBtn) kbBtn.remove();
+
+    // Remove popout button
+    const popBtn = document.querySelector(`[data-popout="${instId}"]`);
+    if (popBtn) popBtn.remove();
+
+    // Remove from arrays
+    const li = localInsts.indexOf(instId);
+    if (li >= 0) localInsts.splice(li, 1);
+    delete INSTRUMENTS[instId];
+
+    // Remove from route options
+    const ri = ROUTE_OPTIONS.findIndex(o => o.value === instId);
+    if (ri >= 0) ROUTE_OPTIONS.splice(ri, 1);
+
+    // Notify mixer
+    sendToInst('mixer', {type: 'remove-channel', id: instId});
+
+    // Reset keyboard target if needed
+    if (keyboardTarget === instId) setKeyboardTarget('juno');
+}
 
 // ============================================
 // INIT

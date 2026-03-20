@@ -899,6 +899,47 @@ window.addEventListener('message', (e) => {
     if (d && d.type === 'keyboard-focus') {
         window.__kbEnabled = d.enabled;
     }
+    // Dynamic instrument instances
+    if (d && d.type === 'add-channel') {
+        const existing = CHANNELS.find(c => c.id === d.id);
+        if (!existing) {
+            // Insert before separators/returns/master
+            const sepIdx = CHANNELS.findIndex(c => c.type === 'sep');
+            const num = String(CHANNELS.filter(c => c.type === 'input').length + 1);
+            const newCh = { id: d.id, name: d.name, num: num, type: 'input' };
+            if (sepIdx >= 0) CHANNELS.splice(sepIdx, 0, newCh);
+            else CHANNELS.push(newCh);
+            const oldState = JSON.parse(JSON.stringify(state));
+            buildChannels();
+            initButtons();
+            Object.keys(oldState).forEach(k => { if (state[k]) Object.assign(state[k], oldState[k]); });
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.fader-track').forEach(track => {
+                    const chId = track.dataset.ch;
+                    if (chId && state[chId]) setFaderPosition(track, state[chId].volume);
+                });
+                scaleToFit();
+            });
+        }
+    }
+    if (d && d.type === 'remove-channel') {
+        const idx = CHANNELS.findIndex(c => c.id === d.id);
+        if (idx >= 0) {
+            CHANNELS.splice(idx, 1);
+            delete state[d.id];
+            const oldState = JSON.parse(JSON.stringify(state));
+            buildChannels();
+            initButtons();
+            Object.keys(oldState).forEach(k => { if (state[k]) Object.assign(state[k], oldState[k]); });
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.fader-track').forEach(track => {
+                    const chId = track.dataset.ch;
+                    if (chId && state[chId]) setFaderPosition(track, state[chId].volume);
+                });
+                scaleToFit();
+            });
+        }
+    }
     if (d && d.type === 'active-808-kits') {
         const newKits = (d.kits || []).sort();
         const oldKits = active808Kits.sort();
