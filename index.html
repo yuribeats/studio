@@ -169,10 +169,6 @@
                     <span class="panel-tile-name">DRIFT</span>
                     <span class="panel-tile-sub">DECK</span>
                 </div>
-                <div class="panel-tile" data-open="rack" id="rackTile" style="display:none;">
-                    <span class="panel-tile-name">RACK</span>
-                    <span class="panel-tile-sub">AU EFFECTS</span>
-                </div>
             </div>
 
             <!-- INSTRUMENT FRAME -->
@@ -211,7 +207,6 @@ const INSTRUMENTS = {
     cr78:  { label: 'DRUMS',      file: '808.html',        windowName: 'cr78win' },
     rhodes:{ label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
     deck:  { label: 'DECK',       file: 'deck.html',       windowName: 'deckwin' },
-    rack:  { label: 'RACK',       file: 'rack.html',       windowName: 'rackwin' },
 };
 
 // Bottom-bar utilities (always loaded, not in panel)
@@ -254,12 +249,6 @@ function getOrCreateBgFrame(instId) {
     loadedFrames[instId] = iframe;
     iframe.addEventListener('load', () => {
         sendToFrame(iframe, {type: 'keyboard-focus', enabled: instId === keyboardTarget});
-        if (instId === 'rack' && window.studioBridge) {
-            window.studioBridge.getAUPlugins().then(plugins => {
-                sendToFrame(iframe, { type: 'au-plugins', plugins });
-                syncRackChannels();
-            });
-        }
     });
     return iframe;
 }
@@ -583,6 +572,37 @@ document.addEventListener('keyup', (e) => {
 });
 
 // ============================================
+// IFRAME KEYBOARD FORWARDING
+// ============================================
+window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (d && d.type === 'iframe-key') {
+        if (d.event === 'keydown') {
+            if (d.repeat) return;
+            const k = d.key.toLowerCase();
+            if (k === 'z') { qwertyOctave = Math.max(0, qwertyOctave - 1); return; }
+            if (k === 'x') { qwertyOctave = Math.min(8, qwertyOctave + 1); return; }
+            if (k === 'escape' && currentView !== 'panel') { showPanel(); return; }
+            const semi = QWERTY_MAP[k];
+            if (semi === undefined) return;
+            const note = qwertyOctave * 12 + semi;
+            if (note > 127 || qwertyHeld.has(note)) return;
+            qwertyHeld.add(note);
+            sendToInst(keyboardTarget, {type: 'midi', data: [0x90, note, 100]});
+        } else if (d.event === 'keyup') {
+            const k = d.key.toLowerCase();
+            const semi = QWERTY_MAP[k];
+            if (semi === undefined) return;
+            const note = qwertyOctave * 12 + semi;
+            if (!qwertyHeld.has(note)) return;
+            qwertyHeld.delete(note);
+            sendToInst(keyboardTarget, {type: 'midi', data: [0x80, note, 0]});
+        }
+        return;
+    }
+});
+
+// ============================================
 // IFRAME COMMUNICATION
 // ============================================
 window.addEventListener('message', (e) => {
@@ -624,40 +644,7 @@ window.addEventListener('message', (e) => {
     if (d.type === '808-pattern-sync' || d.type === 'mpc-recording-sync') sendToInst('pianoroll', d);
     if (d.type === 'transport') sendToInst('tape', d);
     if (d.type === 'deck-export-mpc') sendToInst('mpc', d);
-    if (d.type === 'rack-rescan') {
-        if (window.studioBridge) {
-            window.studioBridge.getAUPlugins().then(plugins => sendToInst('rack', { type: 'au-plugins', plugins }));
-        }
-    }
-    if (d.type === 'rack-state') window._rackInserts = d.inserts;
 
-    // AU bridge: rack iframe sends requests, we call studioBridge and return results
-    if (d.type === 'au-request' && window.studioBridge) {
-        const { id, action, args } = d;
-        const respond = (result, error) => {
-            e.source.postMessage({ type: 'au-response', id, result, error: error || null }, '*');
-        };
-        try {
-            if (action === 'create') {
-                window.studioBridge.auCreateInstance(args.type, args.subtype, args.mfg)
-                    .then(r => respond(r)).catch(err => respond(null, err.message));
-            } else if (action === 'open') {
-                window.studioBridge.auOpenEditor(args.id, args.title)
-                    .then(r => respond(r)).catch(err => respond(null, err.message));
-            } else if (action === 'close') {
-                window.studioBridge.auCloseEditor(args.id)
-                    .then(r => respond(r)).catch(err => respond(null, err.message));
-            } else if (action === 'destroy') {
-                window.studioBridge.auDestroyInstance(args.id)
-                    .then(r => respond(r)).catch(err => respond(null, err.message));
-            } else {
-                respond(null, 'unknown action: ' + action);
-            }
-        } catch (err) {
-            respond(null, err.message);
-        }
-        return;
-    }
     if (d.type === 'mixer-control') {
         const target = d.channel;
         if (target === 'master') {
@@ -675,7 +662,7 @@ window.addEventListener('message', (e) => {
 // ============================================
 let pendingSave = null;
 const sessionParts = {};
-const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'deck', 'rack', 'rhodes'];
+const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'deck', 'rhodes'];
 
 function requestSessionData() {
     SESSION_SOURCES.forEach(s => { sessionParts[s] = null; });
@@ -693,7 +680,7 @@ function checkSaveReady() {
             version: 2, timestamp: new Date().toISOString(),
             pianoroll: sessionParts.pianoroll, drumMachine: sessionParts.cr78,
             mpc: sessionParts.mpc, deck: sessionParts.deck,
-            rack: sessionParts.rack, rhodes: sessionParts.rhodes
+            rhodes: sessionParts.rhodes
         };
         const blob = new Blob([JSON.stringify(session, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
@@ -710,7 +697,6 @@ function loadSession(session) {
     if (session.drumMachine) sendToInst('cr78', {type: 'load-session', data: session.drumMachine});
     if (session.mpc) sendToInst('mpc', {type: 'load-session', data: session.mpc});
     if (session.deck) sendToInst('deck', {type: 'load-session', data: session.deck});
-    if (session.rack) sendToInst('rack', {type: 'load-session', data: session.rack});
     if (session.rhodes) sendToInst('rhodes', {type: 'load-session', data: session.rhodes});
 }
 
@@ -726,22 +712,8 @@ document.getElementById('btnLoad').addEventListener('click', () => {
 });
 
 // ============================================
-// RACK
-// ============================================
-function syncRackChannels() {
-    const rackChs = [];
-    Object.keys(INSTRUMENTS).forEach(id => {
-        if (id === 'rack') return;
-        rackChs.push({ id, name: INSTRUMENTS[id].label });
-    });
-    rackChs.push({ id: 'master', name: 'MASTER', isMaster: true });
-    sendToInst('rack', { type: 'rack-channels', channels: rackChs });
-}
-
-// ============================================
 // INIT
 // ============================================
-if (window.studioBridge) document.getElementById('rackTile').style.display = '';
 initMIDI();
 </script>
 </body>
