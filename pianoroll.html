@@ -13,7 +13,7 @@
             font-family: Arial, Helvetica, sans-serif;
             font-weight: 700;
             text-transform: uppercase;
-            color: #ccc;
+            color: #fff;
             user-select: none;
             cursor: default;
         }
@@ -47,9 +47,9 @@
         .header-section:last-child { border-right: none; }
 
         .ch-tab {
-            font-size: 9px;
+            font-size: 12px;
             letter-spacing: 1px;
-            color: #555;
+            color: #fff;
             padding: 4px 10px;
             background: #0e0e0e;
             border: 1px solid #222;
@@ -65,9 +65,9 @@
             font-family: Arial, Helvetica, sans-serif;
             font-weight: 700;
             text-transform: uppercase;
-            font-size: 9px;
+            font-size: 12px;
             letter-spacing: 1px;
-            color: #666;
+            color: #fff;
             background: #141414;
             border: 1px solid #2a2a2a;
             padding: 4px 10px;
@@ -99,7 +99,7 @@
             font-family: Arial, Helvetica, sans-serif;
             font-weight: 700;
             text-transform: uppercase;
-            font-size: 10px;
+            font-size: 13px;
             color: #228B22;
             background: #0e0e0e;
             border: 1px solid #2a2a2a;
@@ -116,9 +116,9 @@
         }
 
         .header-label {
-            font-size: 8px;
+            font-size: 11px;
             letter-spacing: 1px;
-            color: #444;
+            color: #fff;
         }
 
         .grid-select {
@@ -129,8 +129,8 @@
         .grid-opt {
             font-family: Arial, Helvetica, sans-serif;
             font-weight: 700;
-            font-size: 8px;
-            color: #444;
+            font-size: 11px;
+            color: #fff;
             background: #0e0e0e;
             border: 1px solid #1a1a1a;
             padding: 3px 5px;
@@ -145,8 +145,8 @@
         .zoom-btn {
             font-family: Arial, Helvetica, sans-serif;
             font-weight: 700;
-            font-size: 11px;
-            color: #666;
+            font-size: 14px;
+            color: #fff;
             background: #111;
             border: 1px solid #2a2a2a;
             width: 20px;
@@ -212,16 +212,16 @@
             align-items: center;
             justify-content: flex-end;
             padding-right: 4px;
-            font-size: 7px;
+            font-size: 10px;
             letter-spacing: 0.5px;
         }
         .piano-key.white {
             background: #bbb;
-            color: #333;
+            color: #fff;
         }
         .piano-key.black {
             background: #333;
-            color: #777;
+            color: #fff;
             width: 65%;
         }
         .piano-key.playing {
@@ -305,7 +305,7 @@
             pointer-events: none;
         }
         .note-rect .note-label {
-            font-size: 7px;
+            font-size: 10px;
             color: rgba(255,255,255,0.7);
             padding: 0 3px;
             overflow: hidden;
@@ -343,8 +343,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 7px;
-            color: #444;
+            font-size: 10px;
+            color: #fff;
             letter-spacing: 1px;
         }
         .velocity-scroll {
@@ -658,13 +658,13 @@
                 wrap.style.cssText = 'position:relative;display:inline-block;';
                 const sel = document.createElement('div');
                 sel.className = 'ch-tab active';
-                sel.style.cssText = 'font-size:7px;letter-spacing:0.5px;margin-left:2px;';
+                sel.style.cssText = 'font-size:10px;letter-spacing:0.5px;margin-left:2px;';
                 sel.textContent = DRUM_KITS[active808Kit].label;
                 const menu = document.createElement('div');
                 menu.style.cssText = 'display:none;position:absolute;top:100%;left:0;background:#111;border:1px solid #228B22;z-index:100;min-width:70px;';
                 DRUM_KIT_IDS.forEach(kid => {
                     const opt = document.createElement('div');
-                    opt.style.cssText = 'padding:4px 8px;font-size:7px;font-weight:700;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;color:' + (kid === active808Kit ? '#228B22' : '#888') + ';';
+                    opt.style.cssText = 'padding:4px 8px;font-size:10px;font-weight:700;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;color:' + (kid === active808Kit ? '#228B22' : '#fff') + ';';
                     opt.textContent = DRUM_KITS[kid].label;
                     opt.addEventListener('mousedown', (e) => {
                         e.stopPropagation();
@@ -674,8 +674,8 @@
                         buildChannelTabs();
                         fullRender();
                     });
-                    opt.addEventListener('mouseenter', () => { opt.style.color = '#ccc'; });
-                    opt.addEventListener('mouseleave', () => { opt.style.color = kid === active808Kit ? '#228B22' : '#888'; });
+                    opt.addEventListener('mouseenter', () => { opt.style.color = '#fff'; });
+                    opt.addEventListener('mouseleave', () => { opt.style.color = kid === active808Kit ? '#228B22' : '#fff'; });
                     menu.appendChild(opt);
                 });
                 sel.addEventListener('mousedown', (e) => {

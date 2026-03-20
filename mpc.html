@@ -50,8 +50,8 @@
             padding: 10px 16px 6px 16px; gap: 14px;
         }
         .logo-area { width: 80px; flex-shrink: 0; }
-        .logo-akai { color: #c0c0c0; font-size: 18px; font-weight: 900; letter-spacing: 2px; }
-        .logo-pro { color: #8888aa; font-size: 6px; letter-spacing: 2px; }
+        .logo-akai { color: #fff; font-size: 18px; font-weight: 900; letter-spacing: 2px; }
+        .logo-pro { color: #8888aa; font-size: 9px; letter-spacing: 2px; }
         .rec-light {
             width: 7px; height: 7px; border-radius: 50%;
             background: #331111; border: 1px solid #220a0a; margin-top: 8px;
@@ -75,9 +75,9 @@
             pointer-events: none; z-index: 2;
         }
         .lcd-row { display: flex; justify-content: space-between; align-items: center; }
-        .lcd-text { color: #3a6aff; font-size: 9px; letter-spacing: 1px; }
+        .lcd-text { color: #3a6aff; font-size: 12px; letter-spacing: 1px; }
         .lcd-big { color: #5588ff; font-size: 14px; letter-spacing: 2px; text-shadow: 0 0 6px rgba(85,136,255,0.3); }
-        .lcd-dim { color: #223366; font-size: 7px; letter-spacing: 1px; }
+        .lcd-dim { color: #223366; font-size: 10px; letter-spacing: 1px; }
 
         /* FILE BROWSER */
         .file-browser {
@@ -89,12 +89,12 @@
             padding: 6px 10px; border-bottom: 1px solid #1a2244;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .fb-title { color: #3a6aff; font-size: 10px; letter-spacing: 2px; }
-        .fb-close { color: #aa3333; font-size: 9px; letter-spacing: 1px; pointer-events: auto; }
+        .fb-title { color: #3a6aff; font-size: 13px; letter-spacing: 2px; }
+        .fb-close { color: #aa3333; font-size: 12px; letter-spacing: 1px; pointer-events: auto; }
         .fb-search {
             background: #0c1220; border: 1px solid #1a2244;
             color: #5588ff; font-family: Arial, sans-serif;
-            font-size: 9px; font-weight: 700; text-transform: uppercase;
+            font-size: 12px; font-weight: 700; text-transform: uppercase;
             padding: 4px 8px; outline: none; width: 200px; pointer-events: auto;
         }
         .fb-list { flex: 1; overflow-y: auto; pointer-events: auto; }
@@ -102,7 +102,7 @@
         .fb-list::-webkit-scrollbar-track { background: #0a0e18; }
         .fb-list::-webkit-scrollbar-thumb { background: #2a3a6a; }
         .fb-item {
-            padding: 4px 10px; color: #4477cc; font-size: 8px; letter-spacing: 0.5px;
+            padding: 4px 10px; color: #4477cc; font-size: 11px; letter-spacing: 0.5px;
             border-bottom: 1px solid #0e1428;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
@@ -124,7 +124,7 @@
         .model-area { width: 130px; flex-shrink: 0; text-align: right; padding-top: 2px; }
         .model-mpc { font-size: 22px; font-weight: 900; font-style: italic; color: #8090cc; }
         .model-4000 { font-size: 16px; color: #aabbee; font-weight: 900; letter-spacing: 2px; }
-        .model-sub { font-size: 5px; color: #5566aa; letter-spacing: 1px; }
+        .model-sub { font-size: 8px; color: #5566aa; letter-spacing: 1px; }
         .vent-grille { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
         .vent-row { display: flex; gap: 2px; justify-content: flex-end; }
         .vent-slot { width: 12px; height: 2px; background: #111833; border: 1px solid #0e1530; }
@@ -137,13 +137,13 @@
             background: #182450;
         }
         .cs-group { display: flex; align-items: center; gap: 4px; }
-        .cs-label { font-size: 6px; color: #5566aa; letter-spacing: 1px; }
-        .cs-value { font-size: 10px; color: #5588ff; letter-spacing: 1px; min-width: 30px; text-align: center; }
+        .cs-label { font-size: 9px; color: #5566aa; letter-spacing: 1px; }
+        .cs-value { font-size: 13px; color: #5588ff; letter-spacing: 1px; min-width: 30px; text-align: center; }
         .cs-input {
             width: 50px; height: 18px;
             background: #0c1220; border: 1px solid #2a3a6a;
             color: #5588ff; font-family: Arial, sans-serif;
-            font-size: 10px; font-weight: 700; text-align: center;
+            font-size: 13px; font-weight: 700; text-align: center;
             text-transform: uppercase; outline: none; padding: 0;
         }
         .cs-input:focus { border-color: #5588ff; }
@@ -159,7 +159,7 @@
         .cs-btn {
             height: 18px; padding: 0 8px;
             background: #d0c8b8; border: 1px solid #999;
-            font-size: 6px; font-family: Arial, sans-serif;
+            font-size: 9px; font-family: Arial, sans-serif;
             font-weight: 700; color: #333; letter-spacing: 0.5px; text-transform: uppercase;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.3);
@@ -167,7 +167,7 @@
         .cs-btn:active { background: #aaa; }
         .cs-btn.on { background: #228B22; color: #fff; border-color: #1a6a1a; }
         .cs-sep { width: 1px; height: 18px; background: #2a3a6a; }
-        .slice-count { font-size: 9px; color: #ffaa33; letter-spacing: 1px; }
+        .slice-count { font-size: 12px; color: #ffaa33; letter-spacing: 1px; }
 
         /* MAIN BODY */
         .main-body {
@@ -198,17 +198,17 @@
         }
         .pad.has-slice { border-color: #4466aa; }
         .pad.has-slice .pad-label { color: #1c2b5e; }
-        .pad-label { color: #888; font-size: 6px; letter-spacing: 0.3px; }
-        .pad-num { font-size: 5px; color: #777; position: absolute; top: 3px; left: 4px; }
-        .pad-key { color: rgba(28,43,94,0.35); font-size: 8px; position: absolute; top: 3px; right: 5px; }
+        .pad-label { color: #555; font-size: 9px; letter-spacing: 0.3px; }
+        .pad-num { font-size: 8px; color: #555; position: absolute; top: 3px; left: 4px; }
+        .pad-key { color: rgba(28,43,94,0.35); font-size: 11px; position: absolute; top: 3px; right: 5px; }
         .pad.active .pad-label { color: #000; }
 
         .pad-bank-row { display: flex; gap: 3px; justify-content: center; margin-top: 3px; }
-        .pad-bank-label { font-size: 5px; color: #6670aa; letter-spacing: 1px; display: flex; align-items: center; margin-right: 4px; }
+        .pad-bank-label { font-size: 8px; color: #6670aa; letter-spacing: 1px; display: flex; align-items: center; margin-right: 4px; }
         .pad-bank-btn {
             width: 30px; height: 13px;
             background: #d0c8b8; border: 1px solid #888;
-            font-size: 5.5px; color: #444;
+            font-size: 5.5px; color: #333;
             display: flex; align-items: center; justify-content: center; letter-spacing: 1px;
         }
         .pad-bank-btn.active-bank { background: #8a8070; color: #fff; }
@@ -238,7 +238,7 @@
             content: ''; position: absolute; top: 7px; left: 50%;
             transform: translateX(-50%); width: 2px; height: 10px; background: #666;
         }
-        .jog-label { font-size: 5px; color: #6670aa; letter-spacing: 1px; text-align: center; margin-bottom: 3px; }
+        .jog-label { font-size: 8px; color: #6670aa; letter-spacing: 1px; text-align: center; margin-bottom: 3px; }
 
         .transport-section {
             display: flex; flex-direction: column; gap: 4px; margin-top: auto;
@@ -247,7 +247,7 @@
         .transport-btn {
             width: 50px; height: 26px;
             background: #d0c8b8; border: 1px solid #999;
-            font-size: 7px; color: #333;
+            font-size: 10px; color: #333;
             display: flex; align-items: center; justify-content: center;
             letter-spacing: 0.5px; gap: 3px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.3);
@@ -258,7 +258,7 @@
         .transport-led.on-red { background: #ff3333; box-shadow: 0 0 4px #ff3333; }
         .transport-led.on-green { background: #33ff33; box-shadow: 0 0 4px #33ff33; }
         .transport-label {
-            font-size: 5px; color: #5566aa; letter-spacing: 1px; text-align: center; margin-bottom: 2px;
+            font-size: 8px; color: #5566aa; letter-spacing: 1px; text-align: center; margin-bottom: 2px;
         }
 
         /* BOTTOM */
@@ -266,7 +266,7 @@
             display: flex; justify-content: space-between; align-items: center;
             padding: 5px 16px; border-top: 1px solid #15214a;
         }
-        .bottom-text { font-size: 6px; color: #334477; letter-spacing: 1.5px; }
+        .bottom-text { font-size: 9px; color: #334477; letter-spacing: 1.5px; }
         .status-led { width: 4px; height: 4px; background: #228B22; box-shadow: 0 0 3px rgba(34,139,34,0.5); }
 
         .beat-flash {
@@ -1120,7 +1120,7 @@ function showFolderPrompt(savedHandle) {
     list.innerHTML = '';
     const msg = document.createElement('div');
     msg.className = 'fb-item';
-    msg.style.cssText = 'padding:16px;color:#5588ff;text-align:center;font-size:10px;letter-spacing:1px;pointer-events:auto';
+    msg.style.cssText = 'padding:16px;color:#5588ff;text-align:center;font-size:13px;letter-spacing:1px;pointer-events:auto';
     msg.textContent = savedHandle ? 'CLICK TO RECONNECT YOUR FOLDER' : 'SELECT YOUR MUSIC FOLDER';
     msg.addEventListener('click', async () => {
         if (savedHandle) {
@@ -1137,7 +1137,7 @@ function showFolderPrompt(savedHandle) {
 
     const dragMsg = document.createElement('div');
     dragMsg.className = 'fb-item';
-    dragMsg.style.cssText = 'padding:8px;color:#334477;text-align:center;font-size:8px;pointer-events:none';
+    dragMsg.style.cssText = 'padding:8px;color:#334477;text-align:center;font-size:11px;pointer-events:none';
     dragMsg.textContent = 'OR DRAG AND DROP AN AUDIO FILE ONTO THE MPC';
     list.appendChild(dragMsg);
 }

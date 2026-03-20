@@ -13,7 +13,7 @@
             font-family: Arial, Helvetica, sans-serif;
             font-weight: 700;
             text-transform: uppercase;
-            color: #ccc;
+            color: #fff;
             user-select: none;
         }
 
@@ -38,7 +38,7 @@
         .routing-title {
             font-size: 14px;
             letter-spacing: 3px;
-            color: #999;
+            color: #fff;
         }
         .midi-devices {
             display: flex;
@@ -58,9 +58,9 @@
             flex-shrink: 0;
         }
         .midi-device-name {
-            font-size: 10px;
+            font-size: 13px;
             letter-spacing: 1px;
-            color: #aaa;
+            color: #fff;
             max-width: 140px;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -82,9 +82,9 @@
         .route-selected {
             background: #111;
             border: 1px solid #444;
-            color: #aaa;
+            color: #fff;
             font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-size: 13px;
             font-weight: 700;
             text-transform: uppercase;
             padding: 3px 6px;
@@ -106,14 +106,14 @@
         .route-menu.open { display: block; }
         .route-opt {
             padding: 3px 6px;
-            font-size: 10px;
+            font-size: 13px;
             font-weight: 700;
             font-family: Arial, sans-serif;
             text-transform: uppercase;
-            color: #aaa;
+            color: #fff;
             letter-spacing: 0.5px;
         }
-        .route-opt:hover { background: #1a1a1a; color: #ccc; }
+        .route-opt:hover { background: #1a1a1a; color: #fff; }
         .route-opt.active-route { color: #228B22; }
 
         /* KEYBOARD ROUTING */
@@ -125,16 +125,16 @@
             flex-shrink: 0;
         }
         .kb-label {
-            font-size: 10px;
-            color: #999;
+            font-size: 13px;
+            color: #fff;
             letter-spacing: 1px;
         }
         .kb-btn {
             padding: 6px 10px;
             background: #1a1a1a;
             border: 1px solid #333;
-            font-size: 10px;
-            color: #888;
+            font-size: 13px;
+            color: #fff;
             letter-spacing: 1px;
             font-family: Arial, sans-serif;
             font-weight: 700;
@@ -146,8 +146,8 @@
             background: #0a1a0a;
         }
         .no-midi {
-            font-size: 10px;
-            color: #666;
+            font-size: 13px;
+            color: #fff;
             letter-spacing: 1px;
         }
 
@@ -156,15 +156,15 @@
             padding: 6px 10px;
             background: #1a1a1a;
             border: 1px solid #333;
-            font-size: 10px;
-            color: #aaa;
+            font-size: 13px;
+            color: #fff;
             letter-spacing: 1px;
             font-family: Arial, sans-serif;
             font-weight: 700;
             text-transform: uppercase;
             flex-shrink: 0;
         }
-        .bar-btn:hover { color: #ccc; border-color: #555; }
+        .bar-btn:hover { color: #fff; border-color: #555; }
         .bar-btn.hidden-btn { display: none; }
         .bar-sep { width: 1px; height: 20px; background: #333; flex-shrink: 0; }
         .popout-row { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -224,9 +224,9 @@
             position: absolute;
             top: 6px;
             left: 8px;
-            font-size: 10px;
+            font-size: 13px;
             letter-spacing: 2px;
-            color: #555;
+            color: #fff;
             z-index: 5;
             pointer-events: none;
         }
@@ -887,7 +887,7 @@ function addInstance(baseType) {
     labelEl.textContent = label;
 
     const removeBtn = document.createElement('div');
-    removeBtn.style.cssText = 'position:absolute;top:6px;right:8px;font-size:7px;letter-spacing:1px;color:#555;z-index:5;padding:2px 6px;';
+    removeBtn.style.cssText = 'position:absolute;top:6px;right:8px;font-size:10px;letter-spacing:1px;color:#fff;z-index:5;padding:2px 6px;';
     removeBtn.textContent = 'X';
     removeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
