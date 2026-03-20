@@ -391,6 +391,11 @@
             <div class="grid-select" id="gridSelect"></div>
         </div>
         <div class="header-section">
+            <span class="header-label">VEL</span>
+            <button class="zoom-btn" id="velDown">&minus;</button>
+            <button class="zoom-btn" id="velUp">+</button>
+        </div>
+        <div class="header-section">
             <span class="header-label">H</span>
             <button class="zoom-btn" id="zoomHOut">&minus;</button>
             <button class="zoom-btn" id="zoomHIn">+</button>
@@ -718,6 +723,18 @@
     });
     document.getElementById('zoomVOut').addEventListener('mousedown', () => {
         if (zoomVIndex > 0) { zoomVIndex--; cellH = ZOOM_V_LEVELS[zoomVIndex]; fullRender(); }
+    });
+
+    // Velocity +/- for selected notes
+    document.getElementById('velUp').addEventListener('mousedown', () => {
+        if (selectedNotes.size === 0) return;
+        selectedNotes.forEach(n => { n.velocity = Math.min(127, n.velocity + 10); });
+        renderNotes(); renderVelocity();
+    });
+    document.getElementById('velDown').addEventListener('mousedown', () => {
+        if (selectedNotes.size === 0) return;
+        selectedNotes.forEach(n => { n.velocity = Math.max(1, n.velocity - 10); });
+        renderNotes(); renderVelocity();
     });
 
     // ==================== BPM ====================

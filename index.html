@@ -274,7 +274,7 @@
     <!-- INSTRUMENTS -->
     <div class="instruments" id="instruments">
         <!-- ROW 1: JUNO SYNTH (full width) -->
-        <div class="inst-row tall" data-row="0">
+        <div class="inst-row tall" data-row="0" style="border-bottom:none;">
             <div class="inst-wrapper focused" data-inst="juno">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">JUNO SYNTH</div>
@@ -282,8 +282,17 @@
             </div>
         </div>
 
-        <!-- ROW 2: MPC (full width) -->
+        <!-- ROW 2: DX7 (right below JUNO) -->
         <div class="inst-row tall" data-row="1">
+            <div class="inst-wrapper" data-inst="dx7">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">YAMAHA DX7</div>
+                <iframe id="frameDx7" src="dx7/index.html"></iframe>
+            </div>
+        </div>
+
+        <!-- ROW 3: MPC (full width) -->
+        <div class="inst-row tall" data-row="2">
             <div class="inst-wrapper" data-inst="mpc">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">AKAI MPC 4000</div>
@@ -291,21 +300,12 @@
             </div>
         </div>
 
-        <!-- ROW 3: 808 SEQUENCER (full width) -->
-        <div class="inst-row tall" data-row="2">
+        <!-- ROW 4: 808 SEQUENCER (full width) -->
+        <div class="inst-row tall" data-row="3">
             <div class="inst-wrapper" data-inst="cr78">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">STEP SEQUENCER</div>
                 <iframe id="frameCr78" src="808.html"></iframe>
-            </div>
-        </div>
-
-        <!-- ROW 4: DX7 (full width) -->
-        <div class="inst-row tall" data-row="3">
-            <div class="inst-wrapper" data-inst="dx7">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">YAMAHA DX7</div>
-                <iframe id="frameDx7" src="dx7/index.html"></iframe>
             </div>
         </div>
 
