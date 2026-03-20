@@ -240,7 +240,7 @@ function getOrCreateBgFrame(instId) {
     if (!inst) return null;
     const iframe = document.createElement('iframe');
     iframe.id = 'bg-' + instId;
-    iframe.style.cssText = 'width:1px;height:1px;border:none;';
+    iframe.style.cssText = 'width:1px;height:1px;border:none;position:absolute;';
     iframe.src = inst.file;
     bgContainer.appendChild(iframe);
     loadedFrames[instId] = iframe;
@@ -380,6 +380,11 @@ function openInstrument(instId) {
         // Position over instArea without moving in DOM (moving reloads iframes)
         frame.style.cssText = 'position:fixed;border:none;z-index:50;pointer-events:auto;';
         positionInstFrame(frame);
+        // Trigger resize inside iframe so instruments can re-scale
+        try { frame.contentWindow.dispatchEvent(new Event('resize')); } catch(e) {}
+        setTimeout(() => {
+            try { frame.contentWindow.dispatchEvent(new Event('resize')); } catch(e) {}
+        }, 200);
     }
     instFrameId = instId;
     setKeyboardTarget(instId);
