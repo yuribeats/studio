@@ -240,7 +240,7 @@
             <div class="kb-btn active" data-target="juno">JUNO</div>
             <div class="kb-btn" data-target="mpc">MPC</div>
             <div class="kb-btn" data-target="cr78">808</div>
-            <div class="kb-btn" data-target="dx7">DX7</div>
+
             <div class="kb-btn" data-target="rhodes">RHODES</div>
             <div class="kb-btn" data-target="deck">DECK</div>
         </div>
@@ -260,10 +260,7 @@
             <span class="panel-tile-name">JUNO</span>
             <span class="panel-tile-sub">POLYSYNTH</span>
         </div>
-        <div class="panel-tile" data-open="dx7">
-            <span class="panel-tile-name">DX7</span>
-            <span class="panel-tile-sub">FM SYNTH</span>
-        </div>
+
         <div class="panel-tile" data-open="rhodes">
             <span class="panel-tile-name">RHODES</span>
             <span class="panel-tile-sub">ELECTRIC PIANO</span>
@@ -316,7 +313,7 @@ const INSTRUMENTS = {
     juno:  { label: 'JUNO',       file: 'kr106.html',      windowName: 'junowin' },
     mpc:   { label: 'MPC',        file: 'mpc.html',        windowName: 'mpc4000' },
     cr78:  { label: '808',        file: '808.html',        windowName: 'cr78win' },
-    dx7:   { label: 'DX7',        file: 'dx7/index.html',  windowName: 'dx7win' },
+
     rhodes:{ label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
     pianoroll: { label: 'PIANO ROLL', file: 'pianoroll.html', windowName: 'pianorollwin' },
     pedals:{ label: 'PEDALS',     file: 'pedals.html',     windowName: 'pedalswin' },
@@ -518,7 +515,7 @@ const ROUTE_OPTIONS = [
     {value: 'juno', label: 'JUNO'},
     {value: 'mpc', label: 'MPC'},
     {value: 'cr78', label: '808'},
-    {value: 'dx7', label: 'DX7'},
+
     {value: 'rhodes', label: 'RHODES'},
     {value: 'deck', label: 'DECK'},
     {value: 'all', label: 'ALL'},
@@ -652,7 +649,7 @@ window.addEventListener('message', (e) => {
         setKeyboardTarget(d.target);
     }
     if (d.type === 'pedal-control') {
-        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', dx7: 'dx7', rhodes: 'rhodes', deck: 'deck'};
+        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', rhodes: 'rhodes', deck: 'deck'};
         var ch = d.channel;
         if (ch && ch.startsWith('808-')) ch = '808';
         const instId = idMap[ch] || ch;
@@ -661,7 +658,7 @@ window.addEventListener('message', (e) => {
         }
     }
     if (d.type === 'pianoroll-note') {
-        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', dx7: 'dx7', rhodes: 'rhodes', deck: 'deck'};
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', rhodes: 'rhodes', deck: 'deck'};
         const instId = idMap[d.channel] || d.channel;
         if (INSTRUMENTS[instId]) {
             const midiData = d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0];
