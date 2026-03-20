@@ -24,6 +24,12 @@ body {
   -webkit-user-select: none;
   overflow: hidden;
 }
+.scale-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: center center;
+}
 
 /* ====== SYNTH BODY ====== */
 .synth {
@@ -551,6 +557,9 @@ body {
   <div class="start-hint">KEYBOARD: A-L NOTES &middot; Z/X OCTAVE &middot; ARROW KEYS PRESETS &middot; MIDI AUTO-DETECTS</div>
 </div>
 
+<!-- SCALE WRAPPER -->
+<div class="scale-wrap" id="scaleWrap">
+
 <!-- SYNTH BODY -->
 <div class="synth">
   <div class="accent-bar"></div>
@@ -839,6 +848,8 @@ body {
   <div class="midi-status" id="midiStatus">MIDI: NOT CONNECTED</div>
   <div>KEYS: A-L NOTES &middot; Z/X OCTAVE &middot; &larr;&rarr; PRESETS</div>
 </div>
+
+</div><!-- /scale-wrap -->
 
 <script>
 // ==================== PRESETS ====================
@@ -1245,24 +1256,13 @@ drawScope(new Array(256).fill(0));
 
 // ==================== AUTO-SCALE TO FIT VIEWPORT ====================
 function scaleToFit() {
-  const synth = document.querySelector('.synth');
-  const statusBar = document.querySelector('.status-bar');
-  if (!synth) return;
-  // Measure natural size
-  synth.style.transform = 'none';
-  if (statusBar) statusBar.style.transform = 'none';
-  const totalW = 960;
-  const totalH = synth.offsetHeight + (statusBar ? statusBar.offsetHeight + 60 : 60);
-  const scaleX = window.innerWidth / totalW;
-  const scaleY = window.innerHeight / totalH;
-  const scale = Math.min(scaleX, scaleY, 1);
-  synth.style.transform = `scale(${scale})`;
-  synth.style.transformOrigin = 'top center';
-  synth.style.margin = '10px auto 0';
-  if (statusBar) {
-    statusBar.style.transform = `scale(${scale})`;
-    statusBar.style.transformOrigin = 'top center';
-  }
+  const wrap = document.getElementById('scaleWrap');
+  if (!wrap) return;
+  wrap.style.transform = 'none';
+  const w = wrap.scrollWidth;
+  const h = wrap.scrollHeight;
+  const scale = Math.min(window.innerWidth / w, window.innerHeight / h, 1);
+  wrap.style.transform = `scale(${scale})`;
 }
 window.addEventListener('resize', scaleToFit);
 setTimeout(scaleToFit, 100);
