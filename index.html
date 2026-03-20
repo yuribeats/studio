@@ -630,6 +630,34 @@ window.addEventListener('message', (e) => {
         }
     }
     if (d.type === 'rack-state') window._rackInserts = d.inserts;
+
+    // AU bridge: rack iframe sends requests, we call studioBridge and return results
+    if (d.type === 'au-request' && window.studioBridge) {
+        const { id, action, args } = d;
+        const respond = (result, error) => {
+            e.source.postMessage({ type: 'au-response', id, result, error: error || null }, '*');
+        };
+        try {
+            if (action === 'create') {
+                window.studioBridge.auCreateInstance(args.type, args.subtype, args.mfg)
+                    .then(r => respond(r)).catch(err => respond(null, err.message));
+            } else if (action === 'open') {
+                window.studioBridge.auOpenEditor(args.id, args.title)
+                    .then(r => respond(r)).catch(err => respond(null, err.message));
+            } else if (action === 'close') {
+                window.studioBridge.auCloseEditor(args.id)
+                    .then(r => respond(r)).catch(err => respond(null, err.message));
+            } else if (action === 'destroy') {
+                window.studioBridge.auDestroyInstance(args.id)
+                    .then(r => respond(r)).catch(err => respond(null, err.message));
+            } else {
+                respond(null, 'unknown action: ' + action);
+            }
+        } catch (err) {
+            respond(null, err.message);
+        }
+        return;
+    }
     if (d.type === 'mixer-control') {
         const target = d.channel;
         if (target === 'master') {

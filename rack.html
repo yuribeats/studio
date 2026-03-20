@@ -468,8 +468,8 @@ function renderChain() {
             const idx = parseInt(remove.dataset.idx);
             const slot = chain[idx];
             // Destroy native AU instance if it exists
-            if (slot && slot.instanceId && window.parent && window.parent.studioBridge) {
-                window.parent.studioBridge.auDestroyInstance(slot.instanceId)
+            if (slot && slot.instanceId) {
+                auRequest('destroy', { id: slot.instanceId })
                     .catch(err => console.warn('[RACK] AU destroy failed:', err.message));
             }
             chain.splice(idx, 1);
@@ -498,8 +498,8 @@ function renderChain() {
             if (slotEl) {
                 const idx = parseInt(slotEl.querySelector('.slot-num').textContent) - 1;
                 const slot = chain[idx];
-                if (slot && slot.instanceId && window.parent && window.parent.studioBridge) {
-                    window.parent.studioBridge.auOpenEditor(slot.instanceId, slot.plugin.name)
+                if (slot && slot.instanceId) {
+                    auRequest('open', { id: slot.instanceId, title: slot.plugin.name })
                         .catch(err => console.warn('[RACK] AU openEditor failed:', err.message));
                 }
             }
@@ -550,6 +550,25 @@ function renderPlugins() {
     });
 }
 
+// AU bridge: send requests to parent, parent calls studioBridge
+let auRequestId = 0;
+const auPendingRequests = {};
+
+function auRequest(action, args) {
+    return new Promise((resolve, reject) => {
+        if (window === window.parent) { reject(new Error('no parent')); return; }
+        const id = ++auRequestId;
+        auPendingRequests[id] = { resolve, reject };
+        window.parent.postMessage({ type: 'au-request', id, action, args }, '*');
+        setTimeout(() => {
+            if (auPendingRequests[id]) {
+                delete auPendingRequests[id];
+                reject(new Error('timeout'));
+            }
+        }, 5000);
+    });
+}
+
 async function addInsert(plugin) {
     if (!inserts[activeChannel]) inserts[activeChannel] = [];
     const slot = {
@@ -563,11 +582,10 @@ async function addInsert(plugin) {
         instanceId: null
     };
 
-    // Try to create native AU instance via Electron bridge
-    if (window.parent && window.parent.studioBridge && plugin.auType && plugin.subtype && plugin.auMfg) {
+    // Try to create native AU instance via parent bridge
+    if (plugin.auType && plugin.subtype && plugin.auMfg) {
         try {
-            const id = await window.parent.studioBridge.auCreateInstance(
-                plugin.auType, plugin.subtype, plugin.auMfg);
+            const id = await auRequest('create', { type: plugin.auType, subtype: plugin.subtype, mfg: plugin.auMfg });
             slot.instanceId = id;
             console.log('[RACK] Created AU instance', id, 'for', plugin.name);
         } catch (e) {
@@ -617,6 +635,15 @@ function sendRackState() {
 window.addEventListener('message', (e) => {
     const d = e.data;
     if (!d) return;
+
+    // AU bridge responses
+    if (d.type === 'au-response' && d.id && auPendingRequests[d.id]) {
+        const req = auPendingRequests[d.id];
+        delete auPendingRequests[d.id];
+        if (d.error) req.reject(new Error(d.error));
+        else req.resolve(d.result);
+        return;
+    }
 
     if (d.type === 'keyboard-focus') {
         window.__kbEnabled = d.enabled;
