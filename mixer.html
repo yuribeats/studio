@@ -881,9 +881,10 @@ function drawMeter(meterId, level) {
 // ============================================
 function sendMixerParam(chId, param, value) {
     const msg = { type: 'mixer-control', channel: chId, param, value };
-    // Send to parent if in iframe
     if (window !== window.parent) {
         window.parent.postMessage(msg, '*');
+    } else if (window._sendToParent) {
+        window._sendToParent(msg);
     }
 }
 
@@ -1014,6 +1015,9 @@ if (window !== window.parent) {
         if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
     }, true);
     window.parent.postMessage({type: 'instrument-ready', name: 'mixer'}, '*');
+} else if (window.opener) {
+    // Popout mode — tell studio-bus.js our name so BroadcastChannel messages arrive
+    window.dispatchEvent(new MessageEvent('message', {data: {type: 'instrument-ready', name: 'mixer'}}));
 }
 </script>
 
