@@ -251,8 +251,11 @@
             <div class="bar-btn" data-popout="mpc">MPC</div>
             <div class="bar-btn" data-popout="cr78">808</div>
             <div class="bar-btn" data-popout="dx7">DX7</div>
+            <div class="bar-btn" data-popout="pianoroll">PIANO ROLL</div>
+            <div class="bar-btn" id="togglePedals">SHOW PEDALS</div>
             <div class="bar-btn" data-popout="pedals">PEDALS</div>
             <div class="bar-btn" data-popout="mixer">MIXER</div>
+            <div class="bar-btn" data-popout="tape">TAPE</div>
         </div>
         <div class="bar-sep"></div>
         <span class="routing-title">MIDI</span>
@@ -306,9 +309,18 @@
             </div>
         </div>
 
-        <!-- ROW 5: PEDALS + MIXER (side by side) -->
-        <div class="inst-row" data-row="5">
-            <div class="inst-wrapper" data-inst="pedals">
+        <!-- ROW 5: PIANO ROLL (full width) -->
+        <div class="inst-row tall" data-row="4">
+            <div class="inst-wrapper" data-inst="pianoroll">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">PIANO ROLL</div>
+                <iframe id="framePianoroll" src="pianoroll.html"></iframe>
+            </div>
+        </div>
+
+        <!-- ROW 6: PEDALS (hidden by default) + MIXER -->
+        <div class="inst-row tall" data-row="5">
+            <div class="inst-wrapper hidden-inst" data-inst="pedals">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">PEDALBOARD</div>
                 <iframe id="framePedals" src="pedals.html"></iframe>
@@ -317,6 +329,15 @@
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">MIXING CONSOLE</div>
                 <iframe id="frameMixer" src="mixer.html"></iframe>
+            </div>
+        </div>
+
+        <!-- ROW 7: TAPE MACHINE (full width) -->
+        <div class="inst-row" data-row="6">
+            <div class="inst-wrapper" data-inst="tape">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">TAPE MACHINE</div>
+                <iframe id="frameTape" src="tape.html"></iframe>
             </div>
         </div>
     </div>
@@ -331,11 +352,13 @@ const INSTRUMENTS = {
     mpc:   { frame: 'frameMpc',   label: 'MPC',     file: 'mpc.html',        windowName: 'mpc4000' },
     cr78:  { frame: 'frameCr78',  label: '808',     file: '808.html',        windowName: 'cr78win' },
     dx7:   { frame: 'frameDx7',   label: 'DX7',     file: 'dx7/index.html',  windowName: 'dx7win' },
+    pianoroll: { frame: 'framePianoroll', label: 'PIANO ROLL', file: 'pianoroll.html', windowName: 'pianorollwin' },
     pedals:{ frame: 'framePedals',label: 'PEDALS',  file: 'pedals.html',     windowName: 'pedalswin' },
     mixer: { frame: 'frameMixer', label: 'MIXER',   file: 'mixer.html',      windowName: 'mixerwin' },
+    tape:  { frame: 'frameTape',  label: 'TAPE',    file: 'tape.html',       windowName: 'tapewin' },
 };
 const instIds = Object.keys(INSTRUMENTS);
-const localInsts = ['juno', 'mpc', 'cr78', 'pedals', 'mixer'];
+const localInsts = ['juno', 'mpc', 'cr78', 'pianoroll', 'pedals', 'mixer', 'tape'];
 
 // ============================================
 // STATE
@@ -408,9 +431,13 @@ function goSplit() {
     document.querySelectorAll('.inst-wrapper').forEach(w => {
         w.classList.remove('hidden-inst');
         w.style.flex = '';
-        // Re-hide if popped out
         const id = w.dataset.inst;
+        // Re-hide if popped out
         if (popoutWindows[id] && !popoutWindows[id].closed) {
+            w.classList.add('hidden-inst');
+        }
+        // Keep pedals hidden unless toggled on
+        if (id === 'pedals' && !pedalsVisible) {
             w.classList.add('hidden-inst');
         }
     });
@@ -452,6 +479,17 @@ document.querySelectorAll('[data-popout]').forEach(btn => {
             }
         }, 500);
     });
+});
+
+// ============================================
+// PEDALS TOGGLE
+// ============================================
+let pedalsVisible = false;
+document.getElementById('togglePedals').addEventListener('click', () => {
+    pedalsVisible = !pedalsVisible;
+    const wrap = getWrap('pedals');
+    wrap.classList.toggle('hidden-inst', !pedalsVisible);
+    document.getElementById('togglePedals').textContent = pedalsVisible ? 'HIDE PEDALS' : 'SHOW PEDALS';
 });
 
 // ============================================
@@ -615,6 +653,18 @@ window.addEventListener('message', (e) => {
         if (INSTRUMENTS[instId]) {
             sendToInst(instId, {type: 'pedals', pedals: d.pedals});
         }
+    }
+    // Route piano roll notes to target instruments
+    if (d && d.type === 'pianoroll-note') {
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', dx7: 'dx7'};
+        const instId = idMap[d.channel] || d.channel;
+        if (INSTRUMENTS[instId]) {
+            sendToInst(instId, {type: 'midi', data: d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0]});
+        }
+    }
+    // Route transport messages to tape machine
+    if (d && d.type === 'transport') {
+        sendToInst('tape', d);
     }
     if (d && d.type === 'mixer-control') {
         const target = d.channel;

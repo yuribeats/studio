@@ -3,6 +3,9 @@
 <head>
 	<title>DX7 Synth</title>
 	<link rel="stylesheet" type="text/css" href="synth.css">
+	<style>
+		.dx7-operators.ops-hidden, .dx7-bottom-panel.ops-hidden { display: none !important; }
+	</style>
 </head>
 <body ng-controller="MidiCtrl as midiCtrl">
 		<div class="dx7-container" ng-controller="PresetCtrl as presetCtrl">
@@ -18,16 +21,15 @@
 				</div>
 				<div class="dx7-buttons-row-1">
 					<button class="dx7-button purple" ng-click="midiCtrl.onVizClick()">Viz</button>
-					<button class="dx7-button teal" ng-click="midiCtrl.onDemoClick(0)">Demo 1</button>
-					<button class="dx7-button teal" ng-click="midiCtrl.onDemoClick(1)">Demo 2</button>
 					<button class="dx7-button pink" ng-click="presetCtrl.save()">Save</button>
 					<button class="dx7-button pink" ng-click="presetCtrl.reset()">Reset</button>
+					<button class="dx7-button teal" id="toggleOps" onclick="document.querySelector('.dx7-operators').classList.toggle('ops-hidden');document.querySelector('.dx7-bottom-panel').classList.toggle('ops-hidden');this.textContent=document.querySelector('.dx7-operators').classList.contains('ops-hidden')?'Show Operators':'Hide Operators'">Show Operators</button>
 				</div>
 				<div class="dx7-buttons-row-2">
 					MIDI Device: <select class="dx7-button" id="midiIn"></select>
 				</div>
 			</div>
-			<div class="dx7-operators">
+			<div class="dx7-operators ops-hidden">
 				<div class="algorithm-diagram" style="background-image: url(images/algorithm-{{ ('0' + presetCtrl.params.algorithm).slice(-2) }}.svg)"></div>
 				<div class="operator" ng-repeat="operator in presetCtrl.presets[presetCtrl.selectedIndex].operators | reverse" ng-controller="OperatorCtrl">
 					<div class="param-group">
@@ -103,7 +105,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="dx7-bottom-panel">
+			<div class="dx7-bottom-panel ops-hidden">
 				<div class="param wide">
 					<knob step="1" min="1" max="32" to-number label="Algorithm" ng-model="presetCtrl.params.algorithm"></knob>
 				</div>
