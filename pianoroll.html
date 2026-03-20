@@ -948,15 +948,21 @@
             const fn = GROOVE_TEMPLATES[groove];
             if (!fn) return;
             const channelNotes = notes[getStorageChannel()];
-            if (!channelNotes || channelNotes.length === 0) return;
+            if (!channelNotes || channelNotes.length === 0) {
+                grooveMenuOpen = false;
+                document.getElementById('grooveMenu').style.display = 'none';
+                return;
+            }
             fn(channelNotes, grooveAmount);
             renderNotes();
             renderVelocity();
+            grooveMenuOpen = false;
             document.getElementById('grooveMenu').style.display = 'none';
-            // Flash the groove button
+            // Show applied template name on the button
             const btn = document.getElementById('btnGroove');
+            btn.textContent = opt.textContent;
             btn.classList.add('active');
-            setTimeout(() => btn.classList.remove('active'), 400);
+            setTimeout(() => btn.classList.remove('active'), 2000);
         });
     });
 
