@@ -46,19 +46,58 @@
         }
         .header-section:last-child { border-right: none; }
 
-        .ch-tab {
+        .ch-dropdown-wrap { position: relative; }
+        .ch-dropdown-btn {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
             font-size: 12px;
             letter-spacing: 1px;
-            color: #fff;
-            padding: 4px 10px;
-            background: #0e0e0e;
-            border: 1px solid #222;
-        }
-        .ch-tab.active {
-            color: #fff;
-            background: #1a1a1a;
-            border-color: #228B22;
             color: #228B22;
+            background: #0e0e0e;
+            border: 1px solid #228B22;
+            padding: 4px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ch-dropdown-arrow { font-size: 8px; color: #555; }
+        .ch-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #111;
+            border: 1px solid #333;
+            z-index: 200;
+            min-width: 160px;
+        }
+        .ch-dropdown-menu.open { display: block; }
+        .ch-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+        .ch-menu-item:hover { background: #1a1a1a; }
+        .ch-menu-check {
+            width: 10px;
+            height: 10px;
+            border: 1px solid #444;
+            flex-shrink: 0;
+        }
+        .ch-menu-check.on { background: #228B22; border-color: #228B22; }
+        .ch-menu-item.primary .ch-menu-label { color: #228B22; }
+        .ch-menu-swatch {
+            width: 8px;
+            height: 8px;
+            flex-shrink: 0;
         }
 
         .btn {
@@ -282,13 +321,13 @@
         .note-rect {
             position: absolute;
             background: #228B22;
-            border: 1px solid #33aa33;
+            border: 1px solid transparent;
             border-radius: 2px;
             min-width: 4px;
         }
         .note-rect.selected {
-            border-color: #33ff33;
-            box-shadow: 0 0 6px rgba(51, 255, 51, 0.5);
+            border-color: #fff !important;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
             z-index: 2;
         }
         .note-rect .note-resize {
@@ -514,8 +553,19 @@
         { label: '1/32', value: 0.125 }
     ];
 
+    // ==================== CHANNEL COLORS ====================
+    const CH_COLORS = {
+        juno: '#228B22', fm: '#4488ff', mpc: '#ff8800',
+        '808': '#ff3344', rhodes: '#aa44ff', deck: '#ccaa00'
+    };
+    function chColor(ch) {
+        if (ch.startsWith('808-')) return CH_COLORS['808'];
+        return CH_COLORS[ch] || '#228B22';
+    }
+
     // ==================== STATE ====================
     let activeChannel = 'juno';
+    const visibleChannels = new Set(['juno']);
     let bpm = 120;
     let gridResolution = 0.25; // 1/16 default
     let cellW = 20;   // pixels per grid subdivision
@@ -638,36 +688,95 @@
         return getRowCount() * cellH;
     }
 
-    // ==================== CHANNEL TABS ====================
+    // ==================== CHANNEL DROPDOWN ====================
+    let chMenuOpen = false;
     function buildChannelTabs() {
         const container = document.getElementById('channelTabs');
         container.innerHTML = '';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'ch-dropdown-wrap';
+
+        // Button shows active channel name + count of visible
+        const btn = document.createElement('div');
+        btn.className = 'ch-dropdown-btn';
+        let label = CHANNEL_LABELS[activeChannel];
+        if (activeChannel === '808') label += ' / ' + DRUM_KITS[active808Kit].label;
+        if (visibleChannels.size > 1) label += ' +' + (visibleChannels.size - 1);
+        btn.innerHTML = label + ' <span class="ch-dropdown-arrow">&#9660;</span>';
+
+        const menu = document.createElement('div');
+        menu.className = 'ch-dropdown-menu' + (chMenuOpen ? ' open' : '');
+
         CHANNELS.forEach(ch => {
-            const tab = document.createElement('div');
-            tab.className = 'ch-tab' + (ch === activeChannel ? ' active' : '');
-            tab.textContent = CHANNEL_LABELS[ch];
-            tab.addEventListener('mousedown', () => {
-                activeChannel = ch;
+            const item = document.createElement('div');
+            const isVisible = visibleChannels.has(ch);
+            const isPrimary = ch === activeChannel;
+            item.className = 'ch-menu-item' + (isPrimary ? ' primary' : '');
+
+            const check = document.createElement('div');
+            check.className = 'ch-menu-check' + (isVisible ? ' on' : '');
+            check.style.borderColor = isVisible ? chColor(ch) : '';
+            check.style.background = isVisible ? chColor(ch) : '';
+
+            const swatch = document.createElement('div');
+            swatch.className = 'ch-menu-swatch';
+            swatch.style.background = chColor(ch);
+
+            const lbl = document.createElement('span');
+            lbl.className = 'ch-menu-label';
+            lbl.textContent = CHANNEL_LABELS[ch];
+            if (isPrimary) lbl.style.color = chColor(ch);
+
+            // Click checkbox = toggle visibility
+            check.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                if (isVisible && visibleChannels.size === 1) return; // keep at least one
+                if (isVisible) {
+                    visibleChannels.delete(ch);
+                    if (activeChannel === ch) {
+                        activeChannel = [...visibleChannels][0];
+                    }
+                } else {
+                    visibleChannels.add(ch);
+                }
                 buildChannelTabs();
                 fullRender();
             });
-            container.appendChild(tab);
 
-            // Kit dropdown for 808
-            if (ch === '808' && activeChannel === '808') {
-                const wrap = document.createElement('div');
-                wrap.style.cssText = 'position:relative;display:inline-block;';
-                const sel = document.createElement('div');
-                sel.className = 'ch-tab active';
-                sel.style.cssText = 'font-size:10px;letter-spacing:0.5px;margin-left:2px;';
-                sel.textContent = DRUM_KITS[active808Kit].label;
-                const menu = document.createElement('div');
-                menu.style.cssText = 'display:none;position:absolute;top:100%;left:0;background:#111;border:1px solid #228B22;z-index:100;min-width:70px;';
+            // Click label = make primary (and ensure visible)
+            lbl.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                activeChannel = ch;
+                visibleChannels.add(ch);
+                buildChannelTabs();
+                fullRender();
+            });
+
+            item.appendChild(check);
+            item.appendChild(swatch);
+            item.appendChild(lbl);
+
+            // 808 kit sub-menu
+            if (ch === '808') {
+                const kitSel = document.createElement('span');
+                kitSel.style.cssText = 'margin-left:auto;font-size:10px;color:#777;letter-spacing:0.5px;';
+                kitSel.textContent = DRUM_KITS[active808Kit].label;
+                item.appendChild(kitSel);
+            }
+
+            menu.appendChild(item);
+
+            // 808 kit options (indented)
+            if (ch === '808' && isVisible) {
                 DRUM_KIT_IDS.forEach(kid => {
-                    const opt = document.createElement('div');
-                    opt.style.cssText = 'padding:4px 8px;font-size:10px;font-weight:700;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;color:' + (kid === active808Kit ? '#228B22' : '#fff') + ';';
-                    opt.textContent = DRUM_KITS[kid].label;
-                    opt.addEventListener('mousedown', (e) => {
+                    const kitItem = document.createElement('div');
+                    kitItem.className = 'ch-menu-item';
+                    kitItem.style.paddingLeft = '32px';
+                    kitItem.style.fontSize = '11px';
+                    if (kid === active808Kit) kitItem.style.color = CH_COLORS['808'];
+                    kitItem.textContent = DRUM_KITS[kid].label;
+                    kitItem.addEventListener('mousedown', (e) => {
                         e.stopPropagation();
                         active808Kit = kid;
                         drumTrackNames = DRUM_KITS[kid].tracks;
@@ -675,25 +784,30 @@
                         buildChannelTabs();
                         fullRender();
                     });
-                    opt.addEventListener('mouseenter', () => { opt.style.color = '#fff'; });
-                    opt.addEventListener('mouseleave', () => { opt.style.color = kid === active808Kit ? '#228B22' : '#fff'; });
-                    menu.appendChild(opt);
+                    menu.appendChild(kitItem);
                 });
-                sel.addEventListener('mousedown', (e) => {
-                    e.stopPropagation();
-                    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-                });
-                wrap.appendChild(sel);
-                wrap.appendChild(menu);
-                container.appendChild(wrap);
             }
         });
-        // Close kit menu on outside click
-        document.addEventListener('mousedown', () => {
-            const menus = container.querySelectorAll('div[style*="position:absolute"]');
-            menus.forEach(m => m.style.display = 'none');
-        }, { once: true });
+
+        btn.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            chMenuOpen = !chMenuOpen;
+            menu.classList.toggle('open', chMenuOpen);
+        });
+
+        wrap.appendChild(btn);
+        wrap.appendChild(menu);
+        container.appendChild(wrap);
     }
+
+    // Close dropdown on outside click
+    document.addEventListener('mousedown', () => {
+        if (chMenuOpen) {
+            chMenuOpen = false;
+            const m = document.querySelector('.ch-dropdown-menu');
+            if (m) m.classList.remove('open');
+        }
+    });
 
     // ==================== GRID RESOLUTION ====================
     function buildGridSelect() {
@@ -1362,14 +1476,15 @@
         }
 
         // Draw velocity bars for current channel
-        const channelNotes = notes[getStorageChannel()];
+        const activeColor = chColor(activeChannel);
+        const channelNotes = notes[getStorageChannel()] || [];
         channelNotes.forEach(n => {
             const x = beatToX(n.start);
             const noteW = Math.max(4, beatToX(n.duration) - 1);
             const barH = (n.velocity / 127) * (h - 4);
             const isSelected = selectedNotes.has(n);
 
-            velocityCtx.fillStyle = isSelected ? '#33ff33' : '#228B22';
+            velocityCtx.fillStyle = isSelected ? '#33ff33' : activeColor;
             velocityCtx.fillRect(x + 1, h - barH - 2, Math.min(noteW, 8), barH);
         });
     }
@@ -1377,16 +1492,34 @@
     // ==================== NOTE RENDERING ====================
     function renderNotes() {
         noteLayer.innerHTML = '';
-        const channelNotes = notes[getStorageChannel()];
 
+        // Render background (non-active) visible channels first
+        visibleChannels.forEach(ch => {
+            if (ch === activeChannel) return;
+            // Skip fixed-row channels if active is chromatic and vice versa
+            const activeFixed = isFixedRowChannel(activeChannel);
+            const chFixed = isFixedRowChannel(ch);
+            if (activeFixed !== chFixed) return;
+            const key = ch === '808' ? '808-' + active808Kit : ch;
+            const chNotes = notes[key] || [];
+            const color = chColor(ch);
+            chNotes.forEach(n => {
+                const el = createNoteElement(n, color, false);
+                noteLayer.appendChild(el);
+            });
+        });
+
+        // Render active channel on top
+        const channelNotes = notes[getStorageChannel()] || [];
+        const activeColor = chColor(activeChannel);
         channelNotes.forEach(n => {
-            const el = createNoteElement(n);
+            const el = createNoteElement(n, activeColor, true);
             noteLayer.appendChild(el);
         });
         notifyActiveKits();
     }
 
-    function createNoteElement(n) {
+    function createNoteElement(n, color, isActive) {
         const row = midiToRow(n.pitch);
         const x = beatToX(n.start);
         const w = Math.max(4, beatToX(n.duration));
@@ -1398,10 +1531,16 @@
         el.style.top = y + 'px';
         el.style.width = w + 'px';
         el.style.height = (cellH - 1) + 'px';
+        el.style.background = color || '#228B22';
+        el.style.borderColor = isActive ? (color || '#228B22') : 'transparent';
 
-        // Opacity based on velocity
+        // Opacity: non-active channels are dimmer
         const velOpacity = 0.5 + (n.velocity / 127) * 0.5;
-        el.style.opacity = velOpacity;
+        el.style.opacity = isActive ? velOpacity : velOpacity * 0.4;
+
+        if (!isActive) {
+            el.style.pointerEvents = 'none';
+        }
 
         // Label
         if (w > 20) {
@@ -1412,10 +1551,12 @@
             el.appendChild(label);
         }
 
-        // Resize handle
-        const handle = document.createElement('div');
-        handle.className = 'note-resize';
-        el.appendChild(handle);
+        // Resize handle (only for active channel)
+        if (isActive) {
+            const handle = document.createElement('div');
+            handle.className = 'note-resize';
+            el.appendChild(handle);
+        }
 
         el.dataset.noteRef = 'true';
         el._noteData = n;
