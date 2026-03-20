@@ -839,16 +839,7 @@ function updateSyncedDelay() {
 // METERS (animated demo)
 // ============================================
 function animateMeters() {
-    CHANNELS.forEach(ch => {
-        if (ch.type === 'sep') return;
-        const s = state[ch.id];
-        // Simulate meter activity based on volume
-        const base = s.volume * (s.mute ? 0 : 1);
-        const levelL = base * (0.3 + Math.random() * 0.7);
-        const levelR = base * (0.3 + Math.random() * 0.7);
-        drawMeter(ch.id, levelL);
-        drawMeter(ch.id + '-r', levelR);
-    });
+    // Meters only light up when receiving real audio data from instruments
     meterRAF = requestAnimationFrame(animateMeters);
 }
 

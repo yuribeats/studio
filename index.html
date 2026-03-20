@@ -27,12 +27,13 @@
         .routing-bar {
             background: #141414;
             border-bottom: 1px solid #2a2a2a;
-            padding: 8px 16px;
+            padding: 6px 16px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             flex-shrink: 0;
             z-index: 10;
+            flex-wrap: wrap;
         }
         .routing-title {
             font-size: 12px;
@@ -45,6 +46,7 @@
             flex: 1;
             overflow-x: auto;
             align-items: center;
+            min-width: 100px;
         }
         .midi-device {
             background: #1a1a1a;
@@ -59,7 +61,7 @@
             font-size: 8px;
             letter-spacing: 1px;
             color: #888;
-            max-width: 160px;
+            max-width: 140px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -118,7 +120,7 @@
         .kb-route {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             margin-left: auto;
             flex-shrink: 0;
         }
@@ -128,10 +130,10 @@
             letter-spacing: 1px;
         }
         .kb-btn {
-            padding: 5px 12px;
+            padding: 4px 8px;
             background: #1a1a1a;
             border: 1px solid #333;
-            font-size: 8px;
+            font-size: 7px;
             color: #666;
             letter-spacing: 1px;
             font-family: Arial, sans-serif;
@@ -151,10 +153,10 @@
 
         /* TOOLBAR BUTTONS */
         .bar-btn {
-            padding: 5px 12px;
+            padding: 4px 8px;
             background: #1a1a1a;
             border: 1px solid #333;
-            font-size: 8px;
+            font-size: 7px;
             color: #888;
             letter-spacing: 1px;
             font-family: Arial, sans-serif;
@@ -164,10 +166,10 @@
         }
         .bar-btn:hover { color: #ccc; border-color: #555; }
         .bar-btn.hidden-btn { display: none; }
-
         .bar-sep { width: 1px; height: 20px; background: #333; flex-shrink: 0; }
+        .popout-row { display: flex; gap: 4px; flex-wrap: wrap; }
 
-        /* INSTRUMENT FRAMES */
+        /* INSTRUMENT AREA */
         .instruments {
             flex: 1;
             display: flex;
@@ -179,15 +181,23 @@
         .instruments::-webkit-scrollbar-track { background: #0a0a0a; }
         .instruments::-webkit-scrollbar-thumb { background: #333; }
         .instruments::-webkit-scrollbar-thumb:hover { background: #444; }
+
+        /* INSTRUMENT ROWS */
+        .inst-row {
+            display: flex;
+            min-height: 300px;
+            border-bottom: 1px solid #222;
+        }
+        .inst-row:last-child { border-bottom: none; }
+        .inst-row.tall { min-height: 450px; }
+
         .inst-wrapper {
             flex: 1;
             position: relative;
-            border-bottom: 1px solid #222;
-            min-height: 300px;
-            transition: flex 0.25s ease;
+            min-height: 0;
         }
-        .inst-wrapper:last-child {
-            border-bottom: none;
+        .inst-wrapper + .inst-wrapper {
+            border-left: 1px solid #222;
         }
         .inst-wrapper iframe {
             width: 100%;
@@ -225,21 +235,8 @@
         }
 
         /* FULLSCREEN MODE */
-        .inst-wrapper.fullscreen {
-            flex: 1;
-        }
-        .inst-wrapper.hidden-inst {
-            flex: 0;
-            min-height: 0;
-            overflow: hidden;
-            border: none;
-        }
-
-        /* POPOUT BUTTONS ROW */
-        .popout-row {
-            display: flex;
-            gap: 6px;
-        }
+        .inst-row.hidden-row { display: none; }
+        .inst-wrapper.hidden-inst { display: none; }
     </style>
 </head>
 <body>
@@ -250,46 +247,74 @@
         <div class="bar-btn hidden-btn" id="backBtn">SPLIT VIEW</div>
         <div class="bar-sep"></div>
         <div class="popout-row">
-            <div class="bar-btn" data-popout="kr106">KR-106 WINDOW</div>
-            <div class="bar-btn" data-popout="mpc">MPC WINDOW</div>
-            <div class="bar-btn" data-popout="cr78">808 WINDOW</div>
-            <div class="bar-btn" data-popout="mixer">MIXER WINDOW</div>
+            <div class="bar-btn" data-popout="juno">JUNO</div>
+            <div class="bar-btn" data-popout="mpc">MPC</div>
+            <div class="bar-btn" data-popout="cr78">808</div>
+            <div class="bar-btn" data-popout="dx7">DX7</div>
+            <div class="bar-btn" data-popout="bass">BASS</div>
+            <div class="bar-btn" data-popout="mixer">MIXER</div>
         </div>
         <div class="bar-sep"></div>
         <span class="routing-title">MIDI</span>
         <div class="midi-devices" id="midiDevices">
-            <span class="no-midi" id="noMidi">NO MIDI DEVICES DETECTED</span>
+            <span class="no-midi" id="noMidi">NO MIDI DEVICES</span>
         </div>
         <div class="kb-route">
-            <span class="kb-label">KEYBOARD</span>
-            <div class="kb-btn active" data-target="kr106">KR-106</div>
+            <span class="kb-label">KB</span>
+            <div class="kb-btn active" data-target="juno">JUNO</div>
             <div class="kb-btn" data-target="mpc">MPC</div>
             <div class="kb-btn" data-target="cr78">808</div>
-            <div class="kb-btn" data-target="mixer">MIXER</div>
+            <div class="kb-btn" data-target="dx7">DX7</div>
+            <div class="kb-btn" data-target="bass">BASS</div>
         </div>
     </div>
 
     <!-- INSTRUMENTS -->
     <div class="instruments" id="instruments">
-        <div class="inst-wrapper focused" data-inst="kr106">
-            <div class="inst-focus-indicator"></div>
-            <div class="inst-label">ULTRAMASTER KR-106</div>
-            <iframe id="frameKr106" src="kr106.html"></iframe>
+        <!-- ROW 1: JUNO SYNTH (full width) -->
+        <div class="inst-row tall" data-row="0">
+            <div class="inst-wrapper focused" data-inst="juno">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">JUNO SYNTH</div>
+                <iframe id="frameJuno" src="kr106.html"></iframe>
+            </div>
         </div>
-        <div class="inst-wrapper" data-inst="mpc">
-            <div class="inst-focus-indicator"></div>
-            <div class="inst-label">AKAI MPC 4000</div>
-            <iframe id="frameMpc" src="mpc.html"></iframe>
+
+        <!-- ROW 2: MPC + MIXER (side by side) -->
+        <div class="inst-row tall" data-row="1">
+            <div class="inst-wrapper" data-inst="mpc">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">AKAI MPC 4000</div>
+                <iframe id="frameMpc" src="mpc.html"></iframe>
+            </div>
+            <div class="inst-wrapper" data-inst="mixer">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">MIXING CONSOLE</div>
+                <iframe id="frameMixer" src="mixer.html"></iframe>
+            </div>
         </div>
-        <div class="inst-wrapper" data-inst="cr78">
-            <div class="inst-focus-indicator"></div>
-            <div class="inst-label">STEP SEQUENCER</div>
-            <iframe id="frameCr78" src="808.html"></iframe>
+
+        <!-- ROW 3: 808 SEQUENCER (full width) -->
+        <div class="inst-row" data-row="2">
+            <div class="inst-wrapper" data-inst="cr78">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">STEP SEQUENCER</div>
+                <iframe id="frameCr78" src="808.html"></iframe>
+            </div>
         </div>
-        <div class="inst-wrapper" data-inst="mixer">
-            <div class="inst-focus-indicator"></div>
-            <div class="inst-label">MIXING CONSOLE</div>
-            <iframe id="frameMixer" src="mixer.html"></iframe>
+
+        <!-- ROW 4: DX7 + BASS SYNTH (side by side) -->
+        <div class="inst-row tall" data-row="3">
+            <div class="inst-wrapper" data-inst="dx7">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">YAMAHA DX7</div>
+                <iframe id="frameDx7" src="dx7/index.html"></iframe>
+            </div>
+            <div class="inst-wrapper" data-inst="bass">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">BASS SYNTH</div>
+                <iframe id="frameBass" src="bass/index.html"></iframe>
+            </div>
         </div>
     </div>
 </div>
@@ -299,21 +324,25 @@
 // INSTRUMENT REGISTRY
 // ============================================
 const INSTRUMENTS = {
-    kr106: { frame: 'frameKr106', label: 'KR-106', file: 'kr106.html', windowName: 'kr106win' },
-    mpc:   { frame: 'frameMpc',   label: 'MPC 4000', file: 'mpc.html',   windowName: 'mpc4000' },
-    cr78:  { frame: 'frameCr78',  label: '808',     file: '808.html',   windowName: 'cr78win' },
-    mixer: { frame: 'frameMixer', label: 'MIXER',   file: 'mixer.html', windowName: 'mixerwin' },
+    juno:  { frame: 'frameJuno',  label: 'JUNO',    file: 'kr106.html',      windowName: 'junowin' },
+    mpc:   { frame: 'frameMpc',   label: 'MPC',     file: 'mpc.html',        windowName: 'mpc4000' },
+    cr78:  { frame: 'frameCr78',  label: '808',     file: '808.html',        windowName: 'cr78win' },
+    dx7:   { frame: 'frameDx7',   label: 'DX7',     file: 'dx7/index.html',  windowName: 'dx7win' },
+    bass:  { frame: 'frameBass',  label: 'BASS',    file: 'bass/index.html', windowName: 'basswin' },
+    mixer: { frame: 'frameMixer', label: 'MIXER',   file: 'mixer.html',      windowName: 'mixerwin' },
 };
 const instIds = Object.keys(INSTRUMENTS);
+// Instruments that support our postMessage protocol (local builds)
+const localInsts = ['juno', 'mpc', 'cr78', 'mixer'];
 
 // ============================================
 // STATE
 // ============================================
 let midiAccess = null;
-const midiRouting = {}; // deviceId -> instId or 'all' or 'none'
-let keyboardTarget = 'kr106';
+const midiRouting = {};
+let keyboardTarget = 'juno';
 let fullscreenInst = null;
-const popoutWindows = {}; // instId -> Window
+const popoutWindows = {};
 
 function getFrame(instId) {
     const inst = INSTRUMENTS[instId];
@@ -322,16 +351,19 @@ function getFrame(instId) {
 function getWrap(instId) {
     return document.querySelector(`.inst-wrapper[data-inst="${instId}"]`);
 }
+function getRow(instId) {
+    const wrap = getWrap(instId);
+    return wrap ? wrap.closest('.inst-row') : null;
+}
 
-// Send message to an instrument (iframe or popout)
 function sendToInst(instId, msg) {
     const pop = popoutWindows[instId];
     if (pop && !pop.closed) {
-        pop.postMessage(msg, '*');
+        try { pop.postMessage(msg, '*'); } catch(e) {}
     } else {
         const frame = getFrame(instId);
         if (frame && frame.contentWindow) {
-            frame.contentWindow.postMessage(msg, '*');
+            try { frame.contentWindow.postMessage(msg, '*'); } catch(e) {}
         }
     }
 }
@@ -341,28 +373,43 @@ function sendToInst(instId, msg) {
 // ============================================
 function goFullscreen(inst) {
     fullscreenInst = inst;
-    instIds.forEach(id => {
-        const wrap = getWrap(id);
-        if (id === inst) {
-            wrap.classList.add('fullscreen');
-            wrap.classList.remove('hidden-inst');
+    const targetRow = getRow(inst);
+    document.querySelectorAll('.inst-row').forEach(row => {
+        if (row === targetRow) {
+            row.classList.remove('hidden-row');
+            row.style.flex = '1';
         } else {
-            wrap.classList.add('hidden-inst');
-            wrap.classList.remove('fullscreen');
+            row.classList.add('hidden-row');
         }
     });
+    // Hide siblings in same row
+    if (targetRow) {
+        targetRow.querySelectorAll('.inst-wrapper').forEach(w => {
+            if (w.dataset.inst === inst) {
+                w.classList.remove('hidden-inst');
+                w.style.flex = '1';
+            } else {
+                w.classList.add('hidden-inst');
+            }
+        });
+    }
     document.getElementById('backBtn').classList.remove('hidden-btn');
     setKeyboardTarget(inst);
 }
 
 function goSplit() {
     fullscreenInst = null;
-    instIds.forEach(id => {
-        const wrap = getWrap(id);
-        wrap.classList.remove('fullscreen', 'hidden-inst');
+    document.querySelectorAll('.inst-row').forEach(row => {
+        row.classList.remove('hidden-row');
+        row.style.flex = '';
+    });
+    document.querySelectorAll('.inst-wrapper').forEach(w => {
+        w.classList.remove('hidden-inst');
+        w.style.flex = '';
         // Re-hide if popped out
+        const id = w.dataset.inst;
         if (popoutWindows[id] && !popoutWindows[id].closed) {
-            wrap.style.display = 'none';
+            w.classList.add('hidden-inst');
         }
     });
     document.getElementById('backBtn').classList.add('hidden-btn');
@@ -370,7 +417,6 @@ function goSplit() {
 
 document.getElementById('backBtn').addEventListener('click', goSplit);
 
-// Double-click on instrument to fullscreen/split toggle
 document.querySelectorAll('.inst-wrapper').forEach(wrapper => {
     wrapper.addEventListener('dblclick', () => {
         if (fullscreenInst) goSplit();
@@ -379,41 +425,28 @@ document.querySelectorAll('.inst-wrapper').forEach(wrapper => {
 });
 
 // ============================================
-// POP-OUT WINDOWS (generic for all instruments)
+// POP-OUT WINDOWS
 // ============================================
 document.querySelectorAll('[data-popout]').forEach(btn => {
     btn.addEventListener('click', () => {
         const instId = btn.dataset.popout;
         const inst = INSTRUMENTS[instId];
 
-        // If already open, focus it
         if (popoutWindows[instId] && !popoutWindows[instId].closed) {
             popoutWindows[instId].focus();
             return;
         }
 
         popoutWindows[instId] = window.open(inst.file, inst.windowName, 'width=960,height=700');
-        getWrap(instId).style.display = 'none';
-        btn.textContent = 'CLOSE ' + inst.label;
+        getWrap(instId).classList.add('hidden-inst');
+        btn.textContent = 'X ' + inst.label;
 
-        // Check remaining visible instruments
-        const visible = instIds.filter(id => !(popoutWindows[id] && !popoutWindows[id].closed));
-        if (visible.length === 1) {
-            goFullscreen(visible[0]);
-        } else if (visible.length === 0) {
-            // All popped out, nothing to show
-        } else {
-            goSplit();
-        }
-
-        // Poll for window close
         const check = setInterval(() => {
             if (popoutWindows[instId] && popoutWindows[instId].closed) {
                 clearInterval(check);
                 popoutWindows[instId] = null;
-                getWrap(instId).style.display = '';
-                btn.textContent = inst.label + ' WINDOW';
-                goSplit();
+                getWrap(instId).classList.remove('hidden-inst');
+                btn.textContent = inst.label;
             }
         }, 500);
     });
@@ -431,6 +464,16 @@ async function initMIDI() {
     } catch(e) {}
 }
 
+const ROUTE_OPTIONS = [
+    {value: 'juno', label: 'JUNO'},
+    {value: 'mpc', label: 'MPC'},
+    {value: 'cr78', label: '808'},
+    {value: 'dx7', label: 'DX7'},
+    {value: 'bass', label: 'BASS'},
+    {value: 'all', label: 'ALL'},
+    {value: 'none', label: 'NONE'},
+];
+
 function refreshMIDI() {
     const container = document.getElementById('midiDevices');
     const noMidi = document.getElementById('noMidi');
@@ -439,9 +482,7 @@ function refreshMIDI() {
     let hasDevices = false;
     for (const [id, input] of midiAccess.inputs) {
         hasDevices = true;
-        if (!(id in midiRouting)) {
-            midiRouting[id] = instIds[Object.keys(midiRouting).length % instIds.length];
-        }
+        if (!(id in midiRouting)) midiRouting[id] = 'juno';
 
         const dev = document.createElement('div');
         dev.className = 'midi-device';
@@ -454,7 +495,6 @@ function refreshMIDI() {
         name.className = 'midi-device-name';
         name.textContent = input.name;
 
-        // Custom route dropdown
         const dropdown = document.createElement('div');
         dropdown.className = 'route-dropdown';
         const selected = document.createElement('div');
@@ -463,14 +503,7 @@ function refreshMIDI() {
         const menu = document.createElement('div');
         menu.className = 'route-menu';
 
-        const options = [
-            {value: 'kr106', label: 'KR-106'},
-            {value: 'mpc', label: 'MPC 4000'},
-            {value: 'cr78', label: '808'},
-            {value: 'all', label: 'ALL'},
-            {value: 'none', label: 'NONE'},
-        ];
-        options.forEach(opt => {
+        ROUTE_OPTIONS.forEach(opt => {
             const el = document.createElement('div');
             el.className = 'route-opt' + (midiRouting[id] === opt.value ? ' active-route' : '');
             el.textContent = opt.label;
@@ -503,7 +536,6 @@ function refreshMIDI() {
                 ledEl.classList.add('active');
                 setTimeout(() => ledEl.classList.remove('active'), 80);
             }
-
             const midiMsg = {type: 'midi', data: Array.from(msg.data)};
             if (route === 'all') {
                 instIds.forEach(instId => sendToInst(instId, midiMsg));
@@ -512,19 +544,14 @@ function refreshMIDI() {
             }
         };
     }
-
     noMidi.style.display = hasDevices ? 'none' : 'block';
 }
 
 function routeLabel(route) {
-    if (route === 'kr106') return 'KR-106';
-    if (route === 'mpc') return 'MPC 4000';
-    if (route === 'cr78') return '808';
-    if (route === 'all') return 'ALL';
-    return 'NONE';
+    const opt = ROUTE_OPTIONS.find(o => o.value === route);
+    return opt ? opt.label : 'NONE';
 }
 
-// Close route menus on outside click
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.route-dropdown')) {
         document.querySelectorAll('.route-menu.open').forEach(m => m.classList.remove('open'));
@@ -544,7 +571,7 @@ function setKeyboardTarget(target) {
     const wrap = getWrap(target);
     if (wrap) wrap.classList.add('focused');
 
-    instIds.forEach(id => {
+    localInsts.forEach(id => {
         sendToInst(id, {type: 'keyboard-focus', enabled: id === target});
     });
 }
@@ -553,14 +580,12 @@ document.querySelectorAll('.kb-btn').forEach(btn => {
     btn.addEventListener('click', () => setKeyboardTarget(btn.dataset.target));
 });
 
-// Single click on instrument: focus keyboard
 document.querySelectorAll('.inst-wrapper').forEach(wrapper => {
     wrapper.addEventListener('mousedown', () => {
         setKeyboardTarget(wrapper.dataset.inst);
     });
 });
 
-// Tab to cycle keyboard, Escape to return to split
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') {
         e.preventDefault();
@@ -578,18 +603,21 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener('message', (e) => {
     const d = e.data;
     if (d && d.type === 'instrument-ready') {
-        sendToInst(d.name, {type: 'keyboard-focus', enabled: d.name === keyboardTarget});
+        // Map old name 'kr106' to 'juno'
+        const name = d.name === 'kr106' ? 'juno' : d.name;
+        sendToInst(name, {type: 'keyboard-focus', enabled: name === keyboardTarget});
     }
-    // Route mixer control messages to target instruments
     if (d && d.type === 'mixer-control') {
         const target = d.channel;
         if (target === 'master') {
-            // Master affects all instruments
-            instIds.forEach(id => {
+            localInsts.forEach(id => {
                 if (id !== 'mixer') sendToInst(id, {type: 'mixer', param: d.param, value: d.value, bus: 'master'});
             });
-        } else if (INSTRUMENTS[target]) {
-            sendToInst(target, {type: 'mixer', param: d.param, value: d.value});
+        } else {
+            // Map mixer channel names to instrument IDs
+            const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78'};
+            const instId = idMap[target] || target;
+            if (INSTRUMENTS[instId]) sendToInst(instId, {type: 'mixer', param: d.param, value: d.value});
         }
     }
 });
@@ -603,7 +631,9 @@ instIds.forEach(id => {
     const frame = getFrame(id);
     if (frame) {
         frame.addEventListener('load', () => {
-            sendToInst(id, {type: 'keyboard-focus', enabled: id === keyboardTarget});
+            if (localInsts.includes(id)) {
+                sendToInst(id, {type: 'keyboard-focus', enabled: id === keyboardTarget});
+            }
         });
     }
 });
