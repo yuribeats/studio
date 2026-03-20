@@ -216,6 +216,7 @@
     <!-- MIDI ROUTING BAR -->
     <div class="routing-bar">
         <div class="back-btn" id="backBtn">SPLIT VIEW</div>
+        <div class="back-btn visible" id="popoutBtn" style="display:block">MPC WINDOW</div>
         <span class="routing-title">MIDI</span>
         <div class="midi-devices" id="midiDevices">
             <span class="no-midi" id="noMidi">NO MIDI DEVICES DETECTED</span>
@@ -304,6 +305,33 @@ document.querySelectorAll('.inst-wrapper').forEach(wrapper => {
 });
 
 // ============================================
+// POP-OUT MPC WINDOW
+// ============================================
+let mpcWindow = null;
+document.getElementById('popoutBtn').addEventListener('click', () => {
+    if (mpcWindow && !mpcWindow.closed) {
+        mpcWindow.focus();
+        return;
+    }
+    mpcWindow = window.open('mpc.html', 'mpc4000', 'width=960,height=700');
+    // Hide MPC in main view, fullscreen KR-106
+    goFullscreen('kr106');
+    wrapMpc.style.display = 'none';
+    document.getElementById('popoutBtn').textContent = 'CLOSE MPC WINDOW';
+
+    // Forward MIDI to popup window
+    const checkClosed = setInterval(() => {
+        if (mpcWindow && mpcWindow.closed) {
+            clearInterval(checkClosed);
+            mpcWindow = null;
+            wrapMpc.style.display = '';
+            goSplit();
+            document.getElementById('popoutBtn').textContent = 'MPC WINDOW';
+        }
+    }, 500);
+});
+
+// ============================================
 // MIDI ROUTING
 // ============================================
 async function initMIDI() {
@@ -361,7 +389,11 @@ function refreshMIDI() {
                 frameKr106.contentWindow.postMessage(midiMsg, '*');
             }
             if (route === 'mpc' || route === 'both') {
-                frameMpc.contentWindow.postMessage(midiMsg, '*');
+                if (mpcWindow && !mpcWindow.closed) {
+                    mpcWindow.postMessage(midiMsg, '*');
+                } else {
+                    frameMpc.contentWindow.postMessage(midiMsg, '*');
+                }
             }
         };
     }
