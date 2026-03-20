@@ -16,7 +16,6 @@
             color: #fff;
             user-select: none;
         }
-
         .studio {
             display: flex;
             flex-direction: column;
@@ -35,11 +34,7 @@
             z-index: 10;
             flex-wrap: wrap;
         }
-        .top-title {
-            font-size: 14px;
-            letter-spacing: 4px;
-            color: #fff;
-        }
+        .top-title { font-size: 14px; letter-spacing: 4px; }
         .bar-btn {
             padding: 6px 10px;
             background: #1a1a1a;
@@ -53,176 +48,65 @@
             flex-shrink: 0;
         }
         .bar-btn:hover { border-color: #555; }
+        .bar-btn.active-tab { border-color: #228B22; color: #228B22; background: #0a1a0a; }
         .bar-sep { width: 1px; height: 20px; background: #333; flex-shrink: 0; }
 
         /* MIDI */
-        .midi-devices {
-            display: flex;
-            gap: 8px;
-            flex: 1;
-            overflow-x: auto;
-            align-items: center;
-            min-width: 100px;
-        }
-        .midi-device {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            padding: 6px 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        .midi-device-name {
-            font-size: 13px;
-            letter-spacing: 1px;
-            color: #fff;
-            max-width: 140px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .midi-device-led {
-            width: 5px; height: 5px;
-            background: #333;
-            flex-shrink: 0;
-        }
-        .midi-device-led.active {
-            background: #33ff33;
-            box-shadow: 0 0 4px #33ff33;
-        }
+        .midi-devices { display: flex; gap: 8px; flex: 1; overflow-x: auto; align-items: center; min-width: 80px; }
+        .midi-device { background: #1a1a1a; border: 1px solid #333; padding: 6px 10px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .midi-device-name { font-size: 13px; letter-spacing: 1px; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .midi-device-led { width: 5px; height: 5px; background: #333; flex-shrink: 0; }
+        .midi-device-led.active { background: #33ff33; box-shadow: 0 0 4px #33ff33; }
         .no-midi { font-size: 13px; color: #555; letter-spacing: 1px; }
-
         .route-dropdown { position: relative; }
-        .route-selected {
-            background: #111;
-            border: 1px solid #444;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 3px 6px;
-            letter-spacing: 0.5px;
-            min-width: 50px;
-            text-align: center;
-        }
-        .route-menu {
-            display: none;
-            position: absolute;
-            top: 100%; left: 0; right: 0;
-            background: #111;
-            border: 1px solid #444;
-            border-top: none;
-            z-index: 100;
-        }
+        .route-selected { background: #111; border: 1px solid #444; color: #fff; font-family: Arial, sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; padding: 3px 6px; letter-spacing: 0.5px; min-width: 50px; text-align: center; }
+        .route-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #111; border: 1px solid #444; border-top: none; z-index: 100; }
         .route-menu.open { display: block; }
-        .route-opt {
-            padding: 3px 6px;
-            font-size: 13px;
-            font-weight: 700;
-            font-family: Arial, sans-serif;
-            text-transform: uppercase;
-            color: #fff;
-            letter-spacing: 0.5px;
-        }
+        .route-opt { padding: 3px 6px; font-size: 13px; font-weight: 700; font-family: Arial, sans-serif; text-transform: uppercase; color: #fff; letter-spacing: 0.5px; }
         .route-opt:hover { background: #1a1a1a; }
         .route-opt.active-route { color: #228B22; }
 
         /* KB ROUTING */
-        .kb-route {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-left: auto;
-            flex-shrink: 0;
-        }
+        .kb-route { display: flex; align-items: center; gap: 4px; margin-left: auto; flex-shrink: 0; }
         .kb-label { font-size: 13px; color: #fff; letter-spacing: 1px; }
-        .kb-btn {
-            padding: 6px 10px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            font-size: 13px;
-            color: #fff;
-            letter-spacing: 1px;
-            font-family: Arial, sans-serif;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .kb-btn.active {
-            border-color: #228B22;
-            color: #228B22;
-            background: #0a1a0a;
-        }
+        .kb-btn { padding: 6px 10px; background: #1a1a1a; border: 1px solid #333; font-size: 13px; color: #fff; letter-spacing: 1px; font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase; }
+        .kb-btn.active { border-color: #228B22; color: #228B22; background: #0a1a0a; }
+
+        /* MAIN AREA: top (panel/instrument) + bottom (utilities) */
+        .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+
+        /* TOP SECTION: panel or instrument */
+        .top-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
         /* CONTROL PANEL */
-        .panel {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2px;
-            padding: 2px;
-            overflow-y: auto;
-            background: #0a0a0a;
-        }
+        .panel { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 2px; overflow-y: auto; background: #0a0a0a; }
         .panel.hidden { display: none; }
-        .panel-tile {
-            background: #141414;
-            border: 1px solid #222;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 180px;
-            transition: border-color 0.15s;
-        }
+        .panel-tile { background: #141414; border: 1px solid #222; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 140px; transition: border-color 0.15s; }
         .panel-tile:hover { border-color: #444; }
-        .panel-tile-name {
-            font-size: 18px;
-            letter-spacing: 4px;
-            color: #fff;
-        }
-        .panel-tile-sub {
-            font-size: 11px;
-            letter-spacing: 2px;
-            color: #555;
-            margin-top: 6px;
-        }
+        .panel-tile-name { font-size: 18px; letter-spacing: 4px; }
+        .panel-tile-sub { font-size: 11px; letter-spacing: 2px; color: #555; margin-top: 6px; }
 
         /* BACK BAR */
-        .back-bar {
-            display: none;
-            background: #141414;
-            border-bottom: 1px solid #2a2a2a;
-            padding: 8px 16px;
-            align-items: center;
-            gap: 12px;
-            flex-shrink: 0;
-        }
+        .back-bar { display: none; background: #141414; border-bottom: 1px solid #2a2a2a; padding: 6px 16px; align-items: center; gap: 12px; flex-shrink: 0; }
         .back-bar.visible { display: flex; }
-        .inst-title {
-            font-size: 16px;
-            letter-spacing: 3px;
-            color: #228B22;
-        }
+        .inst-title { font-size: 16px; letter-spacing: 3px; color: #228B22; }
 
-        /* INSTRUMENT AREA */
-        .inst-area {
-            flex: 1;
-            display: none;
-            overflow: hidden;
-        }
+        /* INSTRUMENT FRAME */
+        .inst-area { flex: 1; display: none; overflow: hidden; }
         .inst-area.visible { display: flex; }
-        .inst-area iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-        }
+        .inst-area iframe { width: 100%; height: 100%; border: none; display: block; }
+
+        /* BOTTOM SECTION: persistent utilities */
+        .bottom-section { height: 45%; min-height: 200px; display: flex; flex-direction: column; border-top: 2px solid #228B22; flex-shrink: 0; }
+        .bottom-tabs { display: flex; background: #141414; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; }
+        .bottom-tab { padding: 6px 14px; font-size: 13px; color: #555; letter-spacing: 1px; font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase; border-right: 1px solid #2a2a2a; }
+        .bottom-tab.active { color: #228B22; background: #0a1a0a; }
+        .bottom-frames { flex: 1; position: relative; overflow: hidden; }
+        .bottom-frames iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; }
+        .bottom-frames iframe.active { display: block; }
     </style>
 </head>
 <body>
-
 <div class="studio">
     <!-- TOP BAR -->
     <div class="top-bar">
@@ -238,70 +122,78 @@
         <div class="kb-route">
             <span class="kb-label">KB</span>
             <div class="kb-btn active" data-target="juno">JUNO</div>
+            <div class="kb-btn" data-target="fm">FM</div>
             <div class="kb-btn" data-target="mpc">MPC</div>
             <div class="kb-btn" data-target="cr78">808</div>
-
             <div class="kb-btn" data-target="rhodes">RHODES</div>
             <div class="kb-btn" data-target="deck">DECK</div>
         </div>
     </div>
 
-    <!-- BACK BAR -->
-    <div class="back-bar" id="backBar">
-        <div class="bar-btn" id="backToPanel">BACK</div>
-        <span class="inst-title" id="instTitle"></span>
-        <div style="flex:1;"></div>
-        <div class="bar-btn" id="popoutCurrent">POPOUT</div>
-    </div>
+    <div class="main-area">
+        <!-- TOP SECTION -->
+        <div class="top-section">
+            <!-- BACK BAR -->
+            <div class="back-bar" id="backBar">
+                <div class="bar-btn" id="backToPanel">BACK</div>
+                <span class="inst-title" id="instTitle"></span>
+                <div style="flex:1;"></div>
+                <div class="bar-btn" id="popoutCurrent">POPOUT</div>
+            </div>
 
-    <!-- CONTROL PANEL -->
-    <div class="panel" id="panel">
-        <div class="panel-tile" data-open="juno">
-            <span class="panel-tile-name">JUNO</span>
-            <span class="panel-tile-sub">POLYSYNTH</span>
+            <!-- CONTROL PANEL -->
+            <div class="panel" id="panel">
+                <div class="panel-tile" data-open="juno">
+                    <span class="panel-tile-name">JUNO</span>
+                    <span class="panel-tile-sub">POLYSYNTH</span>
+                </div>
+                <div class="panel-tile" data-open="fm">
+                    <span class="panel-tile-name">FM</span>
+                    <span class="panel-tile-sub">6-OP SYNTH</span>
+                </div>
+                <div class="panel-tile" data-open="rhodes">
+                    <span class="panel-tile-name">RHODES</span>
+                    <span class="panel-tile-sub">ELECTRIC PIANO</span>
+                </div>
+                <div class="panel-tile" data-open="mpc">
+                    <span class="panel-tile-name">MPC</span>
+                    <span class="panel-tile-sub">SAMPLER</span>
+                </div>
+                <div class="panel-tile" data-open="cr78">
+                    <span class="panel-tile-name">808</span>
+                    <span class="panel-tile-sub">DRUM MACHINE</span>
+                </div>
+                <div class="panel-tile" data-open="deck">
+                    <span class="panel-tile-name">DRIFT</span>
+                    <span class="panel-tile-sub">DECK</span>
+                </div>
+                <div class="panel-tile" data-open="rack" id="rackTile" style="display:none;">
+                    <span class="panel-tile-name">RACK</span>
+                    <span class="panel-tile-sub">AU EFFECTS</span>
+                </div>
+            </div>
+
+            <!-- INSTRUMENT FRAME -->
+            <div class="inst-area" id="instArea">
+                <iframe id="instFrame"></iframe>
+            </div>
         </div>
 
-        <div class="panel-tile" data-open="rhodes">
-            <span class="panel-tile-name">RHODES</span>
-            <span class="panel-tile-sub">ELECTRIC PIANO</span>
+        <!-- BOTTOM SECTION: always-on utilities -->
+        <div class="bottom-section">
+            <div class="bottom-tabs">
+                <div class="bottom-tab active" data-btab="pianoroll">PIANO ROLL</div>
+                <div class="bottom-tab" data-btab="mixer">MIXER</div>
+                <div class="bottom-tab" data-btab="pedals">PEDALS</div>
+                <div class="bottom-tab" data-btab="tape">TAPE</div>
+            </div>
+            <div class="bottom-frames" id="bottomFrames">
+                <iframe id="framePianoroll" src="pianoroll.html" class="active" data-bframe="pianoroll"></iframe>
+                <iframe id="frameMixer" data-bframe="mixer" data-src="mixer.html"></iframe>
+                <iframe id="framePedals" data-bframe="pedals" data-src="pedals.html"></iframe>
+                <iframe id="frameTape" data-bframe="tape" data-src="tape.html"></iframe>
+            </div>
         </div>
-        <div class="panel-tile" data-open="mpc">
-            <span class="panel-tile-name">MPC</span>
-            <span class="panel-tile-sub">SAMPLER</span>
-        </div>
-        <div class="panel-tile" data-open="cr78">
-            <span class="panel-tile-name">808</span>
-            <span class="panel-tile-sub">DRUM MACHINE</span>
-        </div>
-        <div class="panel-tile" data-open="deck">
-            <span class="panel-tile-name">DRIFT</span>
-            <span class="panel-tile-sub">DECK</span>
-        </div>
-        <div class="panel-tile" data-open="pedals">
-            <span class="panel-tile-name">PEDALS</span>
-            <span class="panel-tile-sub">EFFECTS</span>
-        </div>
-        <div class="panel-tile" data-open="mixer">
-            <span class="panel-tile-name">MIXER</span>
-            <span class="panel-tile-sub">CONSOLE</span>
-        </div>
-        <div class="panel-tile" data-open="tape">
-            <span class="panel-tile-name">TAPE</span>
-            <span class="panel-tile-sub">RECORDER</span>
-        </div>
-        <div class="panel-tile" data-open="pianoroll">
-            <span class="panel-tile-name">PIANO ROLL</span>
-            <span class="panel-tile-sub">SEQUENCER</span>
-        </div>
-        <div class="panel-tile" data-open="rack" id="rackTile" style="display:none;">
-            <span class="panel-tile-name">RACK</span>
-            <span class="panel-tile-sub">AU EFFECTS</span>
-        </div>
-    </div>
-
-    <!-- INSTRUMENT AREA (single iframe, loaded on demand) -->
-    <div class="inst-area" id="instArea">
-        <iframe id="instFrame"></iframe>
     </div>
 </div>
 
@@ -311,18 +203,23 @@
 // ============================================
 const INSTRUMENTS = {
     juno:  { label: 'JUNO',       file: 'kr106.html',      windowName: 'junowin' },
+    fm:    { label: 'FM',         file: 'fm.html',         windowName: 'fmwin' },
     mpc:   { label: 'MPC',        file: 'mpc.html',        windowName: 'mpc4000' },
     cr78:  { label: '808',        file: '808.html',        windowName: 'cr78win' },
-
     rhodes:{ label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
-    pianoroll: { label: 'PIANO ROLL', file: 'pianoroll.html', windowName: 'pianorollwin' },
-    pedals:{ label: 'PEDALS',     file: 'pedals.html',     windowName: 'pedalswin' },
     deck:  { label: 'DECK',       file: 'deck.html',       windowName: 'deckwin' },
     rack:  { label: 'RACK',       file: 'rack.html',       windowName: 'rackwin' },
-    mixer: { label: 'MIXER',      file: 'mixer.html',      windowName: 'mixerwin' },
-    tape:  { label: 'TAPE',       file: 'tape.html',       windowName: 'tapewin' },
 };
-const allInstIds = Object.keys(INSTRUMENTS);
+
+// Bottom-bar utilities (always loaded, not in panel)
+const UTILITIES = {
+    pianoroll: { label: 'PIANO ROLL', file: 'pianoroll.html', frame: 'framePianoroll', windowName: 'pianorollwin' },
+    mixer:     { label: 'MIXER',      file: 'mixer.html',     frame: 'frameMixer',     windowName: 'mixerwin' },
+    pedals:    { label: 'PEDALS',     file: 'pedals.html',    frame: 'framePedals',    windowName: 'pedalswin' },
+    tape:      { label: 'TAPE',       file: 'tape.html',      frame: 'frameTape',      windowName: 'tapewin' },
+};
+
+const allInstIds = [...Object.keys(INSTRUMENTS), ...Object.keys(UTILITIES)];
 
 // ============================================
 // STATE
@@ -330,13 +227,12 @@ const allInstIds = Object.keys(INSTRUMENTS);
 let midiAccess = null;
 const midiRouting = {};
 let keyboardTarget = 'juno';
-let currentView = 'panel'; // 'panel' or an instrument id
+let currentView = 'panel';
 const popoutWindows = {};
-const loadedFrames = {}; // track which iframes are loaded in background
+const loadedFrames = {};
 
-// The single visible iframe
 const instFrame = document.getElementById('instFrame');
-let instFrameId = null; // which instrument is currently in the main frame
+let instFrameId = null;
 
 // Background iframes for instruments that need to stay alive
 const bgContainer = document.createElement('div');
@@ -345,10 +241,12 @@ document.body.appendChild(bgContainer);
 
 function getOrCreateBgFrame(instId) {
     if (loadedFrames[instId]) return loadedFrames[instId];
+    const inst = INSTRUMENTS[instId];
+    if (!inst) return null;
     const iframe = document.createElement('iframe');
     iframe.id = 'bg-' + instId;
     iframe.style.cssText = 'width:1px;height:1px;border:none;';
-    iframe.src = INSTRUMENTS[instId].file;
+    iframe.src = inst.file;
     bgContainer.appendChild(iframe);
     loadedFrames[instId] = iframe;
     iframe.addEventListener('load', () => {
@@ -386,7 +284,16 @@ function sendToInst(instId, msg) {
         studioBroadcast.postMessage(msg);
         return;
     }
-    // Check if it's the currently shown instrument
+    // Check bottom utility frames
+    const util = UTILITIES[instId];
+    if (util) {
+        const frame = document.getElementById(util.frame);
+        if (frame && frame.src && frame.contentWindow) {
+            sendToFrame(frame, msg);
+        }
+        return;
+    }
+    // Check main instrument frame
     if (instFrameId === instId) {
         sendToFrame(instFrame, msg);
         return;
@@ -396,16 +303,42 @@ function sendToInst(instId, msg) {
         sendToFrame(loadedFrames[instId], msg);
         return;
     }
-    // Not loaded yet — load it in background if message is important
+    // Not loaded — create bg frame for important messages
     if (msg.type === 'midi' || msg.type === 'pedals' || msg.type === 'load-session') {
         const bgFrame = getOrCreateBgFrame(instId);
-        // Queue the message for after load
-        bgFrame.addEventListener('load', function once() {
-            bgFrame.removeEventListener('load', once);
-            sendToFrame(bgFrame, msg);
-        });
+        if (bgFrame) {
+            bgFrame.addEventListener('load', function once() {
+                bgFrame.removeEventListener('load', once);
+                sendToFrame(bgFrame, msg);
+            });
+        }
     }
 }
+
+// ============================================
+// BOTTOM TABS (always-on utilities)
+// ============================================
+let activeBottomTab = 'pianoroll';
+
+document.querySelectorAll('.bottom-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const id = tab.dataset.btab;
+        activeBottomTab = id;
+        // Update tab highlight
+        document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        // Show correct frame
+        document.querySelectorAll('#bottomFrames iframe').forEach(f => f.classList.remove('active'));
+        const frame = document.querySelector(`iframe[data-bframe="${id}"]`);
+        if (frame) {
+            // Lazy load on first access
+            if (!frame.src && frame.dataset.src) {
+                frame.src = frame.dataset.src;
+            }
+            frame.classList.add('active');
+        }
+    });
+});
 
 // ============================================
 // PANEL / INSTRUMENT NAVIGATION
@@ -415,16 +348,11 @@ function showPanel() {
     document.getElementById('panel').classList.remove('hidden');
     document.getElementById('instArea').classList.remove('visible');
     document.getElementById('backBar').classList.remove('visible');
-    // Move current frame content to background if needed
-    if (instFrameId) {
-        moveToBg(instFrameId);
-    }
+    if (instFrameId) moveToBg(instFrameId);
 }
 
 function moveToBg(instId) {
-    // The main frame has this instrument — move it to a background frame
-    if (!loadedFrames[instId] && instFrame.contentWindow) {
-        // Create a bg iframe and copy the src
+    if (!loadedFrames[instId] && instFrame.contentWindow && instFrame.src) {
         const bgIframe = document.createElement('iframe');
         bgIframe.id = 'bg-' + instId;
         bgIframe.style.cssText = 'width:1px;height:1px;border:none;';
@@ -432,7 +360,7 @@ function moveToBg(instId) {
         bgContainer.appendChild(bgIframe);
         loadedFrames[instId] = bgIframe;
     }
-    instFrame.src = '';
+    instFrame.removeAttribute('src');
     instFrameId = null;
 }
 
@@ -440,39 +368,25 @@ function openInstrument(instId) {
     currentView = instId;
     const inst = INSTRUMENTS[instId];
     if (!inst) return;
-
-    // Show instrument area
     document.getElementById('panel').classList.add('hidden');
     document.getElementById('instArea').classList.add('visible');
     document.getElementById('backBar').classList.add('visible');
     document.getElementById('instTitle').textContent = inst.label;
-
-    // If switching from another instrument, background the old one
-    if (instFrameId && instFrameId !== instId) {
-        moveToBg(instFrameId);
-    }
-
-    // Remove bg frame if it exists (we'll use the main frame)
+    if (instFrameId && instFrameId !== instId) moveToBg(instFrameId);
     if (loadedFrames[instId]) {
         loadedFrames[instId].remove();
         delete loadedFrames[instId];
     }
-
-    // Load into main frame
     instFrame.src = inst.file;
     instFrameId = instId;
     setKeyboardTarget(instId);
 }
 
-// Panel tile clicks
 document.querySelectorAll('.panel-tile[data-open]').forEach(tile => {
     tile.addEventListener('click', () => openInstrument(tile.dataset.open));
 });
-
-// Back button
 document.getElementById('backToPanel').addEventListener('click', showPanel);
 
-// Popout from instrument view
 document.getElementById('popoutCurrent').addEventListener('click', () => {
     if (currentView === 'panel') return;
     const instId = currentView;
@@ -492,11 +406,8 @@ document.getElementById('popoutCurrent').addEventListener('click', () => {
     showPanel();
 });
 
-// Escape to go back
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && currentView !== 'panel') {
-        showPanel();
-    }
+    if (e.key === 'Escape' && currentView !== 'panel') showPanel();
 });
 
 // ============================================
@@ -513,9 +424,9 @@ async function initMIDI() {
 
 const ROUTE_OPTIONS = [
     {value: 'juno', label: 'JUNO'},
+    {value: 'fm', label: 'FM'},
     {value: 'mpc', label: 'MPC'},
     {value: 'cr78', label: '808'},
-
     {value: 'rhodes', label: 'RHODES'},
     {value: 'deck', label: 'DECK'},
     {value: 'all', label: 'ALL'},
@@ -526,23 +437,18 @@ function refreshMIDI() {
     const container = document.getElementById('midiDevices');
     const noMidi = document.getElementById('noMidi');
     container.querySelectorAll('.midi-device').forEach(el => el.remove());
-
     let hasDevices = false;
     for (const [id, input] of midiAccess.inputs) {
         hasDevices = true;
         if (!(id in midiRouting)) midiRouting[id] = 'juno';
-
         const dev = document.createElement('div');
         dev.className = 'midi-device';
-
         const led = document.createElement('div');
         led.className = 'midi-device-led';
         led.id = 'led-' + id;
-
         const name = document.createElement('span');
         name.className = 'midi-device-name';
         name.textContent = input.name;
-
         const dropdown = document.createElement('div');
         dropdown.className = 'route-dropdown';
         const selected = document.createElement('div');
@@ -550,7 +456,6 @@ function refreshMIDI() {
         selected.textContent = routeLabel(midiRouting[id]);
         const menu = document.createElement('div');
         menu.className = 'route-menu';
-
         ROUTE_OPTIONS.forEach(opt => {
             const el = document.createElement('div');
             el.className = 'route-opt' + (midiRouting[id] === opt.value ? ' active-route' : '');
@@ -564,26 +469,20 @@ function refreshMIDI() {
             });
             menu.appendChild(el);
         });
-
         selected.addEventListener('click', () => {
             document.querySelectorAll('.route-menu.open').forEach(m => m.classList.remove('open'));
             menu.classList.toggle('open');
         });
-
         dropdown.appendChild(selected);
         dropdown.appendChild(menu);
         dev.appendChild(led);
         dev.appendChild(name);
         dev.appendChild(dropdown);
         container.appendChild(dev);
-
         input.onmidimessage = (msg) => {
             const route = midiRouting[id] || 'none';
             const ledEl = document.getElementById('led-' + id);
-            if (ledEl) {
-                ledEl.classList.add('active');
-                setTimeout(() => ledEl.classList.remove('active'), 80);
-            }
+            if (ledEl) { ledEl.classList.add('active'); setTimeout(() => ledEl.classList.remove('active'), 80); }
             const midiMsg = {type: 'midi', data: Array.from(msg.data)};
             if (route === 'all') {
                 allInstIds.forEach(iid => sendToInst(iid, midiMsg));
@@ -615,11 +514,7 @@ function setKeyboardTarget(target) {
     document.querySelectorAll('.kb-btn').forEach(b => b.classList.remove('active'));
     const btn = document.querySelector(`.kb-btn[data-target="${target}"]`);
     if (btn) btn.classList.add('active');
-
-    // Notify all loaded instruments
-    allInstIds.forEach(id => {
-        sendToInst(id, {type: 'keyboard-focus', enabled: id === target});
-    });
+    allInstIds.forEach(id => sendToInst(id, {type: 'keyboard-focus', enabled: id === target}));
 }
 
 document.querySelectorAll('.kb-btn').forEach(btn => {
@@ -635,30 +530,26 @@ window.addEventListener('message', (e) => {
 
     if (d.type === 'instrument-ready') {
         let name = d.name === 'kr106' ? 'juno' : d.name;
-        // Check main frame
-        if (instFrame.contentWindow === e.source && instFrameId) {
-            name = instFrameId;
-        }
-        // Check bg frames
+        if (instFrame.contentWindow === e.source && instFrameId) name = instFrameId;
         for (const id of Object.keys(loadedFrames)) {
             if (loadedFrames[id].contentWindow === e.source) { name = id; break; }
         }
+        for (const id of Object.keys(UTILITIES)) {
+            const frame = document.getElementById(UTILITIES[id].frame);
+            if (frame && frame.contentWindow === e.source) { name = id; break; }
+        }
         sendToInst(name, {type: 'keyboard-focus', enabled: name === keyboardTarget});
     }
-    if (d.type === 'request-kb-focus') {
-        setKeyboardTarget(d.target);
-    }
+    if (d.type === 'request-kb-focus') setKeyboardTarget(d.target);
     if (d.type === 'pedal-control') {
-        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', rhodes: 'rhodes', deck: 'deck'};
+        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', deck: 'deck'};
         var ch = d.channel;
         if (ch && ch.startsWith('808-')) ch = '808';
         const instId = idMap[ch] || ch;
-        if (INSTRUMENTS[instId]) {
-            sendToInst(instId, {type: 'pedals', pedals: d.pedals});
-        }
+        if (INSTRUMENTS[instId]) sendToInst(instId, {type: 'pedals', pedals: d.pedals});
     }
     if (d.type === 'pianoroll-note') {
-        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', rhodes: 'rhodes', deck: 'deck'};
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', deck: 'deck'};
         const instId = idMap[d.channel] || d.channel;
         if (INSTRUMENTS[instId]) {
             const midiData = d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0];
@@ -667,43 +558,25 @@ window.addEventListener('message', (e) => {
             sendToInst(instId, msg);
         }
     }
-    if (d.type === 'active-808-kits') {
-        sendToInst('mixer', d);
-        sendToInst('pedals', d);
-    }
-    if (d.type === 'session-data') {
-        sessionParts[d.source] = d.data;
-        checkSaveReady();
-    }
-    if (d.type === '808-pattern-sync' || d.type === 'mpc-recording-sync') {
-        sendToInst('pianoroll', d);
-    }
-    if (d.type === 'transport') {
-        sendToInst('tape', d);
-    }
-    if (d.type === 'deck-export-mpc') {
-        sendToInst('mpc', d);
-    }
+    if (d.type === 'active-808-kits') { sendToInst('mixer', d); sendToInst('pedals', d); }
+    if (d.type === 'session-data') { sessionParts[d.source] = d.data; checkSaveReady(); }
+    if (d.type === '808-pattern-sync' || d.type === 'mpc-recording-sync') sendToInst('pianoroll', d);
+    if (d.type === 'transport') sendToInst('tape', d);
+    if (d.type === 'deck-export-mpc') sendToInst('mpc', d);
     if (d.type === 'rack-rescan') {
         if (window.studioBridge) {
-            window.studioBridge.getAUPlugins().then(plugins => {
-                sendToInst('rack', { type: 'au-plugins', plugins });
-            });
+            window.studioBridge.getAUPlugins().then(plugins => sendToInst('rack', { type: 'au-plugins', plugins }));
         }
     }
-    if (d.type === 'rack-state') {
-        window._rackInserts = d.inserts;
-    }
+    if (d.type === 'rack-state') window._rackInserts = d.inserts;
     if (d.type === 'mixer-control') {
         const target = d.channel;
         if (target === 'master') {
-            allInstIds.forEach(id => {
-                if (id !== 'mixer') sendToInst(id, {type: 'mixer', param: d.param, value: d.value, bus: 'master'});
-            });
+            allInstIds.forEach(id => { if (id !== 'mixer') sendToInst(id, {type: 'mixer', param: d.param, value: d.value, bus: 'master'}); });
         } else {
             const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78'};
             const instId = idMap[target] || target;
-            if (INSTRUMENTS[instId]) sendToInst(instId, {type: 'mixer', param: d.param, value: d.value});
+            sendToInst(instId, {type: 'mixer', param: d.param, value: d.value});
         }
     }
 });
@@ -716,15 +589,8 @@ const sessionParts = {};
 const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'deck', 'rack', 'rhodes'];
 
 function requestSessionData() {
-    // Ensure session sources are loaded
-    SESSION_SOURCES.forEach(s => {
-        sessionParts[s] = null;
-        if (!loadedFrames[s] && instFrameId !== s) {
-            getOrCreateBgFrame(s);
-        }
-    });
+    SESSION_SOURCES.forEach(s => { sessionParts[s] = null; });
     pendingSave = true;
-    // Small delay to let bg frames load
     setTimeout(() => {
         SESSION_SOURCES.forEach(s => sendToInst(s, {type: 'get-session'}));
     }, 500);
@@ -735,17 +601,12 @@ function checkSaveReady() {
     if (SESSION_SOURCES.every(s => sessionParts[s])) {
         pendingSave = false;
         const session = {
-            version: 2,
-            timestamp: new Date().toISOString(),
-            pianoroll: sessionParts.pianoroll,
-            drumMachine: sessionParts.cr78,
-            mpc: sessionParts.mpc,
-            deck: sessionParts.deck,
-            rack: sessionParts.rack,
-            rhodes: sessionParts.rhodes
+            version: 2, timestamp: new Date().toISOString(),
+            pianoroll: sessionParts.pianoroll, drumMachine: sessionParts.cr78,
+            mpc: sessionParts.mpc, deck: sessionParts.deck,
+            rack: sessionParts.rack, rhodes: sessionParts.rhodes
         };
-        const json = JSON.stringify(session, null, 2);
-        const blob = new Blob([json], {type: 'application/json'});
+        const blob = new Blob([JSON.stringify(session, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -767,26 +628,21 @@ function loadSession(session) {
 document.getElementById('btnSave').addEventListener('click', requestSessionData);
 document.getElementById('btnLoad').addEventListener('click', () => {
     const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+    input.type = 'file'; input.accept = '.json';
     input.addEventListener('change', async () => {
         if (!input.files[0]) return;
-        try {
-            const text = await input.files[0].text();
-            const session = JSON.parse(text);
-            loadSession(session);
-        } catch(e) { console.error('Failed to load session', e); }
+        try { const t = await input.files[0].text(); loadSession(JSON.parse(t)); } catch(e) {}
     });
     input.click();
 });
 
 // ============================================
-// RACK CHANNEL SYNC
+// RACK
 // ============================================
 function syncRackChannels() {
     const rackChs = [];
     Object.keys(INSTRUMENTS).forEach(id => {
-        if (id === 'pianoroll' || id === 'pedals' || id === 'rack' || id === 'mixer' || id === 'tape') return;
+        if (id === 'rack') return;
         rackChs.push({ id, name: INSTRUMENTS[id].label });
     });
     rackChs.push({ id: 'master', name: 'MASTER', isMaster: true });
@@ -796,12 +652,8 @@ function syncRackChannels() {
 // ============================================
 // INIT
 // ============================================
-if (window.studioBridge) {
-    document.getElementById('rackTile').style.display = '';
-}
-
+if (window.studioBridge) document.getElementById('rackTile').style.display = '';
 initMIDI();
 </script>
-
 </body>
 </html>
