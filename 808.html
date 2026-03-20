@@ -1154,6 +1154,43 @@ if (window !== window.parent) {
             if (d.param === 'volume') mixerGain.gain.value = d.value;
             if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
         }
+        if (d && d.type === 'get-session') {
+            const data = {};
+            for (const kitId of Object.keys(allPatterns)) {
+                data[kitId] = allPatterns[kitId].map(pat =>
+                    pat.map(track => Array.from(track))
+                );
+            }
+            window.parent.postMessage({
+                type: 'session-data', source: 'cr78',
+                data: { patterns: data, currentKit, currentPattern, bpm }
+            }, '*');
+        }
+        if (d && d.type === 'load-session' && d.data) {
+            const sd = d.data;
+            if (sd.patterns) {
+                for (const kitId of Object.keys(sd.patterns)) {
+                    initPatternsForKit(kitId);
+                    const pats = sd.patterns[kitId];
+                    for (let p = 0; p < pats.length; p++) {
+                        for (let t = 0; t < pats[p].length; t++) {
+                            allPatterns[kitId][p][t] = new Uint8Array(pats[p][t]);
+                        }
+                    }
+                }
+            }
+            if (sd.bpm) { bpm = sd.bpm; document.getElementById('tempoInput').value = bpm; }
+            if (sd.currentKit) switchKit(sd.currentKit);
+            if (sd.currentPattern !== undefined) {
+                currentPattern = sd.currentPattern;
+                document.querySelectorAll('.pat-btn').forEach(b => b.classList.remove('active-pat'));
+                const btn = document.querySelector(`.pat-btn[data-pat="${currentPattern}"]`);
+                if (btn) btn.classList.add('active-pat');
+            }
+            refreshGrid();
+            notifyActiveKits();
+            syncPatternsToPianoRoll();
+        }
     });
     window.__kbEnabled = false;
     document.addEventListener('keydown', (e) => {

@@ -258,6 +258,9 @@
             <div class="bar-btn" data-popout="tape">TAPE</div>
         </div>
         <div class="bar-sep"></div>
+        <div class="bar-btn" id="btnSave">SAVE</div>
+        <div class="bar-btn" id="btnLoad">LOAD</div>
+        <div class="bar-sep"></div>
         <span class="routing-title">MIDI</span>
         <div class="midi-devices" id="midiDevices">
             <span class="no-midi" id="noMidi">NO MIDI DEVICES</span>
@@ -672,6 +675,11 @@ window.addEventListener('message', (e) => {
         sendToInst('mixer', d);
         sendToInst('pedals', d);
     }
+    // Session save responses
+    if (d && d.type === 'session-data') {
+        sessionParts[d.source] = d.data;
+        checkSaveReady();
+    }
     // Forward 808 pattern data and MPC recording to piano roll
     if (d && (d.type === '808-pattern-sync' || d.type === 'mpc-recording-sync')) {
         sendToInst('pianoroll', d);
@@ -693,6 +701,66 @@ window.addEventListener('message', (e) => {
             if (INSTRUMENTS[instId]) sendToInst(instId, {type: 'mixer', param: d.param, value: d.value});
         }
     }
+});
+
+// ============================================
+// SESSION SAVE / LOAD
+// ============================================
+let pendingSave = null;
+const sessionParts = {};
+
+function requestSessionData() {
+    sessionParts.pianoroll = null;
+    sessionParts.cr78 = null;
+    pendingSave = true;
+    sendToInst('pianoroll', {type: 'get-session'});
+    sendToInst('cr78', {type: 'get-session'});
+}
+
+function checkSaveReady() {
+    if (!pendingSave) return;
+    if (sessionParts.pianoroll && sessionParts.cr78) {
+        pendingSave = false;
+        const session = {
+            version: 1,
+            timestamp: new Date().toISOString(),
+            pianoroll: sessionParts.pianoroll,
+            drumMachine: sessionParts.cr78
+        };
+        const json = JSON.stringify(session, null, 2);
+        const blob = new Blob([json], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'studio-session-' + new Date().toISOString().slice(0,16).replace(/[T:]/g,'-') + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+}
+
+function loadSession(session) {
+    if (session.pianoroll) {
+        sendToInst('pianoroll', {type: 'load-session', data: session.pianoroll});
+    }
+    if (session.drumMachine) {
+        sendToInst('cr78', {type: 'load-session', data: session.drumMachine});
+    }
+}
+
+document.getElementById('btnSave').addEventListener('click', requestSessionData);
+document.getElementById('btnLoad').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.addEventListener('change', async () => {
+        if (!input.files[0]) return;
+        try {
+            const text = await input.files[0].text();
+            const session = JSON.parse(text);
+            loadSession(session);
+        } catch(e) { console.error('Failed to load session', e); }
+    });
+    input.click();
 });
 
 // ============================================

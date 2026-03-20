@@ -1952,6 +1952,44 @@
             if (d && d.type === 'mpc-recording-sync') {
                 handleMpcRecordingSync(d);
             }
+            // Session save: send all note data
+            if (d && d.type === 'get-session') {
+                const noteData = {};
+                for (const ch of Object.keys(notes)) {
+                    if (notes[ch].length > 0) {
+                        noteData[ch] = notes[ch].map(n => ({
+                            pitch: n.pitch, start: n.start, duration: n.duration,
+                            velocity: n.velocity
+                        }));
+                    }
+                }
+                window.parent.postMessage({
+                    type: 'session-data', source: 'pianoroll',
+                    data: { notes: noteData, bpm, activeChannel, active808Kit }
+                }, '*');
+            }
+            // Session load: restore note data
+            if (d && d.type === 'load-session' && d.data) {
+                const sd = d.data;
+                if (sd.bpm) { bpm = sd.bpm; document.getElementById('bpmInput').value = bpm; }
+                if (sd.notes) {
+                    for (const ch of Object.keys(notes)) notes[ch] = [];
+                    for (const ch of Object.keys(sd.notes)) {
+                        if (!notes[ch]) notes[ch] = [];
+                        notes[ch] = sd.notes[ch].map(n => ({
+                            pitch: n.pitch, start: n.start, duration: n.duration,
+                            velocity: n.velocity
+                        }));
+                    }
+                }
+                if (sd.active808Kit) {
+                    active808Kit = sd.active808Kit;
+                    drumTrackNames = DRUM_KITS[active808Kit].tracks;
+                    rebuild808Rows();
+                }
+                notifyActiveKits();
+                fullRender();
+            }
         });
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT') return;
