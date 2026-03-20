@@ -431,6 +431,17 @@
 // ============================================
 // STATE
 // ============================================
+// ============================================
+// PAD BANKS (A-D, deck exports go to D)
+// ============================================
+let currentBank = 'A';
+const banks = {};
+function newBankData() {
+    return { audioBuffer: null, slices: [], padBuffers: {}, padLabels: [], recording: [], loadedFileName: '', sensitivity: 0.5, detectedBpm: 0 };
+}
+['A','B','C','D'].forEach(b => banks[b] = newBankData());
+function getBank() { return banks[currentBank]; }
+
 let audioBuffer = null;
 let slices = [];
 let bpm = 90;
@@ -450,6 +461,56 @@ let fileList = [];
 let loadedFileName = '';
 let loopEnabled = false;
 
+function saveBankState() {
+    const b = banks[currentBank];
+    b.audioBuffer = audioBuffer;
+    b.slices = slices;
+    b.recording = recording;
+    b.loadedFileName = loadedFileName;
+    b.sensitivity = sensitivity;
+    b.detectedBpm = detectedBpm;
+    // Save pad labels
+    for (let i = 0; i < 16; i++) {
+        const lbl = padElements[i] ? padElements[i].querySelector('.pad-label') : null;
+        b.padLabels[i] = lbl ? lbl.textContent : '--';
+    }
+}
+
+function loadBankState() {
+    const b = banks[currentBank];
+    audioBuffer = b.audioBuffer;
+    slices = b.slices;
+    recording = b.recording;
+    loadedFileName = b.loadedFileName;
+    sensitivity = b.sensitivity;
+    detectedBpm = b.detectedBpm;
+    window._padBuffers = b.padBuffers;
+    // Restore pad labels
+    for (let i = 0; i < 16; i++) {
+        const lbl = padElements[i] ? padElements[i].querySelector('.pad-label') : null;
+        if (lbl) lbl.textContent = b.padLabels[i] || '--';
+        if (b.padLabels[i] && b.padLabels[i] !== '--') {
+            padElements[i].classList.add('has-slice');
+        } else {
+            padElements[i].classList.remove('has-slice');
+        }
+    }
+    // Update LCD
+    document.getElementById('lcd-file').textContent = loadedFileName || '--';
+    document.getElementById('sliceCount').textContent = slices.length;
+    if (audioBuffer) {
+        document.getElementById('lcd-info').textContent = audioBuffer.duration.toFixed(2) + 'S | ' + slices.length + ' SLICES';
+        document.getElementById('lcd-status').textContent = 'BANK ' + currentBank;
+        drawWaveform();
+    } else if (Object.keys(b.padBuffers).length > 0) {
+        document.getElementById('lcd-info').textContent = Object.keys(b.padBuffers).length + ' PAD BUFFERS';
+        document.getElementById('lcd-status').textContent = 'BANK ' + currentBank;
+    } else {
+        document.getElementById('lcd-info').textContent = '--';
+        document.getElementById('lcd-status').textContent = 'BANK ' + currentBank + ' (EMPTY)';
+    }
+}
+
 const actx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = actx.createGain();
 masterGain.gain.value = 0.6;
@@ -460,6 +521,7 @@ comp.threshold.value = -10; comp.ratio.value = 4;
 comp.attack.value = 0.002; comp.release.value = 0.08;
 comp.connect(masterGain);
 masterGain.connect(mixerGain);
+window._padBuffers = banks['A'].padBuffers;
 
 // ============================================
 // PAD SETUP
@@ -1241,6 +1303,11 @@ document.getElementById('btnLoop').addEventListener('click', () => {
 
 document.querySelectorAll('.pad-bank-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+        const newBank = btn.dataset.bank;
+        if (newBank === currentBank) return;
+        saveBankState();
+        currentBank = newBank;
+        loadBankState();
         document.querySelectorAll('.pad-bank-btn').forEach(b => b.classList.remove('active-bank'));
         btn.classList.add('active-bank');
     });
@@ -1336,43 +1403,70 @@ if (window !== window.parent) {
       if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
     }
     if (d && d.type === 'get-session') {
+      saveBankState();
+      const bankData = {};
+      ['A','B','C','D'].forEach(b => {
+        const bd = banks[b];
+        bankData[b] = {
+          recording: bd.recording.map(h => ({pad: h.pad, time: h.time})),
+          loadedFileName: bd.loadedFileName, sensitivity: bd.sensitivity,
+          padLabels: bd.padLabels
+        };
+      });
       window.parent.postMessage({
         type: 'session-data', source: 'mpc',
-        data: {
-          recording: recording.map(h => ({pad: h.pad, time: h.time})),
-          bpm, totalBars, quantizeEnabled, loopEnabled, loadedFileName,
-          sensitivity
-        }
+        data: { currentBank, bankData, bpm, totalBars, quantizeEnabled, loopEnabled }
       }, '*');
     }
     if (d && d.type === 'load-session' && d.data) {
       const sd = d.data;
-      if (sd.recording) recording = sd.recording;
       if (sd.bpm) { bpm = sd.bpm; document.getElementById('bpmInput').value = bpm; }
       if (sd.totalBars) { totalBars = sd.totalBars; document.getElementById('barsInput').value = totalBars; }
       if (sd.quantizeEnabled !== undefined) { quantizeEnabled = sd.quantizeEnabled; document.getElementById('btnQuantize').classList.toggle('active', quantizeEnabled); }
-      if (sd.loopEnabled !== undefined) { loopEnabled = sd.loopEnabled; document.getElementById('btnLoop').classList.toggle('active', loopEnabled); }
-      if (sd.sensitivity !== undefined) sensitivity = sd.sensitivity;
-      if (recording.length > 0) {
-        document.getElementById('lcd-status').textContent = recording.length + ' HITS LOADED';
+      if (sd.loopEnabled !== undefined) { loopEnabled = sd.loopEnabled; document.getElementById('loopLed').classList.toggle('on-green', loopEnabled); }
+      if (sd.bankData) {
+        ['A','B','C','D'].forEach(b => {
+          if (sd.bankData[b]) {
+            if (sd.bankData[b].recording) banks[b].recording = sd.bankData[b].recording;
+            if (sd.bankData[b].loadedFileName) banks[b].loadedFileName = sd.bankData[b].loadedFileName;
+            if (sd.bankData[b].sensitivity !== undefined) banks[b].sensitivity = sd.bankData[b].sensitivity;
+            if (sd.bankData[b].padLabels) banks[b].padLabels = sd.bankData[b].padLabels;
+          }
+        });
       }
+      // Backward compat: old session format with flat recording
+      if (sd.recording && !sd.bankData) {
+        banks['A'].recording = sd.recording;
+      }
+      if (sd.currentBank) currentBank = sd.currentBank;
+      loadBankState();
+      document.querySelectorAll('.pad-bank-btn').forEach(b => b.classList.remove('active-bank'));
+      const btn = document.querySelector(`.pad-bank-btn[data-bank="${currentBank}"]`);
+      if (btn) btn.classList.add('active-bank');
     }
     if (d && d.type === 'deck-export-mpc' && d.loops) {
-      // Load exported deck loops as pad samples
+      // Save current bank, load loops into bank D, then switch to D
+      saveBankState();
+      const bankD = banks['D'];
+      bankD.audioBuffer = null;
+      bankD.slices = [];
+      bankD.padBuffers = {};
+      bankD.padLabels = [];
       d.loops.forEach((loop, i) => {
         if (i >= 16 || !loop.data || !loop.length) return;
         const buf = actx.createBuffer(1, loop.length, loop.sampleRate);
         buf.getChannelData(0).set(new Float32Array(loop.data));
-        // Store as a slice for this pad
-        if (!slices[i]) slices[i] = {};
-        slices[i] = { start: 0, end: loop.length };
-        // Replace the audioBuffer approach — store individual pad buffers
-        if (!window._padBuffers) window._padBuffers = {};
-        window._padBuffers[i] = buf;
-        const label = padElements[i] ? padElements[i].querySelector('.pad-label') : null;
-        if (label) label.textContent = loop.name;
+        bankD.padBuffers[i] = buf;
+        bankD.padLabels[i] = loop.name;
       });
-      document.getElementById('lcd-status').textContent = d.loops.length + ' LOOPS IMPORTED FROM DECK';
+      bankD.loadedFileName = 'DECK EXPORT';
+      // Switch to bank D
+      currentBank = 'D';
+      loadBankState();
+      document.querySelectorAll('.pad-bank-btn').forEach(b => b.classList.remove('active-bank'));
+      const dBtn = document.querySelector('.pad-bank-btn[data-bank="D"]');
+      if (dBtn) dBtn.classList.add('active-bank');
+      document.getElementById('lcd-status').textContent = d.loops.length + ' LOOPS IN BANK D';
     }
   });
   window.__kbEnabled = false;
