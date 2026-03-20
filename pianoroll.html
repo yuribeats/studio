@@ -866,6 +866,11 @@
         btnRec.classList.add('rec-armed');
         scheduledClickBeat = -1;
 
+        // Request keyboard focus from parent for QWERTY input
+        if (window !== window.parent) {
+            window.parent.postMessage({type: 'request-kb-focus', target: 'pianoroll'}, '*');
+        }
+
         // Start playback for count-in (1 bar)
         if (!isPlaying) {
             recStartBeat = playheadBeat;
@@ -1960,7 +1965,8 @@
             }
         }, true);
         document.addEventListener('keyup', (e) => {
-            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+            const isRecKey = (isRecording || qwertyHeld.size > 0) && QWERTY_MAP[e.key.toLowerCase()] !== undefined;
+            if (!window.__kbEnabled && !isRecKey) { e.stopImmediatePropagation(); e.preventDefault(); }
         }, true);
         window.parent.postMessage({ type: 'instrument-ready', name: 'pianoroll' }, '*');
     }

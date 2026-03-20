@@ -644,6 +644,10 @@ window.addEventListener('message', (e) => {
         const name = d.name === 'kr106' ? 'juno' : d.name;
         sendToInst(name, {type: 'keyboard-focus', enabled: name === keyboardTarget});
     }
+    // Handle keyboard focus requests (e.g. piano roll recording)
+    if (d && d.type === 'request-kb-focus') {
+        setKeyboardTarget(d.target);
+    }
     // Route pedal-control messages to target instruments
     if (d && d.type === 'pedal-control') {
         const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno'};
