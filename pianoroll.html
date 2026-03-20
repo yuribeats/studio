@@ -435,6 +435,12 @@
             <div class="grid-select" id="gridSelect"></div>
         </div>
         <div class="header-section">
+            <span class="header-label">SWING</span>
+            <button class="zoom-btn" id="swingDown">&minus;</button>
+            <span class="header-label" id="swingVal" style="min-width:24px;text-align:center">0%</span>
+            <button class="zoom-btn" id="swingUp">+</button>
+        </div>
+        <div class="header-section">
             <span class="header-label">VEL</span>
             <button class="zoom-btn" id="velDown">&minus;</button>
             <button class="zoom-btn" id="velUp">+</button>
@@ -585,6 +591,7 @@
     let scheduledNotes = new Map(); // track which notes are currently on
     let selectedNotes = new Set();
     let animFrameId = null;
+    let grooveSwing = 0; // 0-100 percent swing
 
     // Zoom levels
     const ZOOM_H_LEVELS = [10, 14, 20, 28, 40, 56];
@@ -738,6 +745,30 @@
     document.getElementById('zoomVOut').addEventListener('mousedown', () => {
         if (zoomVIndex > 0) { zoomVIndex--; cellH = ZOOM_V_LEVELS[zoomVIndex]; fullRender(); }
     });
+
+    // Swing +/- controls
+    function updateSwingDisplay() {
+        document.getElementById('swingVal').textContent = grooveSwing + '%';
+    }
+    document.getElementById('swingUp').addEventListener('mousedown', () => {
+        grooveSwing = Math.min(100, grooveSwing + 10);
+        updateSwingDisplay();
+    });
+    document.getElementById('swingDown').addEventListener('mousedown', () => {
+        grooveSwing = Math.max(0, grooveSwing - 10);
+        updateSwingDisplay();
+    });
+
+    // Groove adjust: shift off-beat 16th notes forward by swing amount
+    function grooveAdjust(start) {
+        if (grooveSwing === 0) return start;
+        const sixteenth = Math.round(start / 0.25);
+        const isOnGrid = Math.abs(start - sixteenth * 0.25) < 0.01;
+        if (isOnGrid && sixteenth % 2 === 1) {
+            return start + (grooveSwing / 100) * 0.125;
+        }
+        return start;
+    }
 
     // Velocity +/- for selected notes
     document.getElementById('velUp').addEventListener('mousedown', () => {
@@ -1015,8 +1046,10 @@
         getAllPlaybackChannels().forEach(ch => {
             (notes[ch] || []).forEach(n => {
                 const noteKey = ch + '_' + n.pitch + '_' + n.start;
-                const noteEnd = n.start + n.duration;
-                if (playheadBeat >= n.start && playheadBeat < noteEnd) {
+                // Apply groove swing to all channels during playback
+                const adjStart = grooveAdjust(n.start);
+                const adjEnd = adjStart + n.duration;
+                if (playheadBeat >= adjStart && playheadBeat < adjEnd) {
                     if (!scheduledNotes.has(noteKey)) {
                         scheduledNotes.set(noteKey, { channel: ch, pitch: n.pitch });
                         sendNoteOn(ch, n.pitch, n.velocity);
@@ -1392,23 +1425,7 @@
     function renderNotes() {
         noteLayer.innerHTML = '';
 
-        // Render background (non-active) visible channels first
-        visibleChannels.forEach(ch => {
-            if (ch === activeChannel) return;
-            // Skip fixed-row channels if active is chromatic and vice versa
-            const activeFixed = isFixedRowChannel(activeChannel);
-            const chFixed = isFixedRowChannel(ch);
-            if (activeFixed !== chFixed) return;
-            const key = ch === '808' ? '808-' + active808Kit : ch;
-            const chNotes = notes[key] || [];
-            const color = chColor(ch);
-            chNotes.forEach(n => {
-                const el = createNoteElement(n, color, false);
-                noteLayer.appendChild(el);
-            });
-        });
-
-        // Render active channel on top
+        // Only render the active channel's notes
         const channelNotes = notes[getStorageChannel()] || [];
         const activeColor = chColor(activeChannel);
         channelNotes.forEach(n => {
@@ -1917,11 +1934,18 @@
         const allPats = d.allPatterns;
         const activePat = d.currentPattern || 0;
         if (!allPats) return;
-        // For each kit, convert the active pattern into notes
+
+        // Sync kit if provided
+        if (d.currentKit && DRUM_KITS[d.currentKit]) {
+            active808Kit = d.currentKit;
+            drumTrackNames = DRUM_KITS[d.currentKit].tracks;
+            rebuild808Rows();
+        }
+
+        // For each kit, convert the active pattern into notes (swing applied at playback via grooveAdjust)
         for (const kitId of Object.keys(allPats)) {
             const storageKey = '808-' + kitId;
             if (!notes[storageKey]) notes[storageKey] = [];
-            // Clear existing 808-synced notes for this kit
             notes[storageKey] = notes[storageKey].filter(n => !n._from808);
             const kitPats = allPats[kitId];
             if (!kitPats || !kitPats[activePat]) continue;
@@ -1929,20 +1953,22 @@
             for (let t = 0; t < pat.length; t++) {
                 for (let s = 0; s < pat[t].length; s++) {
                     if (pat[t][s] > 0) {
-                        const note = {
+                        notes[storageKey].push({
                             pitch: 36 + t,
-                            start: s * 0.25, // each step = 1 sixteenth = 0.25 beats
+                            start: s * 0.25,
                             duration: 0.25,
                             velocity: pat[t][s] === 2 ? 127 : 100,
                             _from808: true
-                        };
-                        notes[storageKey].push(note);
+                        });
                     }
                 }
             }
         }
         notifyActiveKits();
-        if (activeChannel === '808') renderNotes();
+        if (activeChannel === '808') {
+            buildChannelTabs();
+            renderNotes();
+        }
     }
 
     // Convert MPC recorded hits into piano roll note data

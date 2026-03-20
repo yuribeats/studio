@@ -445,12 +445,8 @@
             <input class="ctrl-input" id="tempoInput" type="number" min="40" max="300" value="120" />
         </div>
         <div class="ctrl-sep"></div>
-        <div class="ctrl-group">
-            <span class="ctrl-label">SWING</span>
-            <input class="ctrl-slider" id="swingSlider" type="range" min="0" max="75" value="0" />
-            <span class="ctrl-label" id="swingVal" style="min-width:20px">0%</span>
-        </div>
-        <div class="ctrl-sep"></div>
+        <input type="hidden" id="swingSlider" value="0" />
+        <span id="swingVal" style="display:none">0%</span>
         <div class="ctrl-group">
             <span class="ctrl-label">VOLUME</span>
             <input class="ctrl-slider" id="masterVol" type="range" min="0" max="100" value="80" />
@@ -465,24 +461,10 @@
         <div class="ctrl-btn" id="btnCopy">COPY</div>
         <div class="ctrl-btn" id="btnPaste">PASTE</div>
         <div class="ctrl-sep"></div>
-        <div class="ctrl-group" style="position:relative;">
-            <div class="ctrl-btn" id="btnGroove">GROOVE</div>
-            <div id="grooveMenu" style="display:none;position:absolute;top:100%;left:0;background:#111;border:1px solid #444;z-index:100;min-width:140px;padding:4px 0;">
-                <div class="groove-opt" data-groove="humanize">HUMANIZE</div>
-                <div class="groove-opt" data-groove="lazy">LAZY</div>
-                <div class="groove-opt" data-groove="push">PUSH</div>
-                <div class="groove-opt" data-groove="shuffle">SHUFFLE</div>
-                <div class="groove-opt" data-groove="drunken">DRUNKEN</div>
-                <div class="groove-opt" data-groove="accent24">ACCENT 2+4</div>
-                <div class="groove-opt" data-groove="ghost">GHOST NOTES</div>
-                <div class="groove-opt" data-groove="strip">STRIP BACK</div>
-            </div>
-        </div>
-        <div class="ctrl-group">
-            <span class="ctrl-label">GROOVE</span>
-            <input class="ctrl-slider" id="grooveAmount" type="range" min="0" max="100" value="50" />
-            <span class="ctrl-label" id="grooveVal" style="min-width:25px">50%</span>
-        </div>
+        <div id="btnGroove" style="display:none"></div>
+        <div id="grooveMenu" style="display:none"></div>
+        <input type="hidden" id="grooveAmount" value="50" />
+        <span id="grooveVal" style="display:none">50%</span>
         <div style="flex:1"></div>
         <div class="ctrl-group">
             <span class="ctrl-label" id="stepDisplay">STEP --</span>
@@ -653,11 +635,16 @@ function syncPatternsToPianoRoll() {
         }
         data[kitId] = kitData;
     }
+    const swing = parseInt(document.getElementById('swingSlider').value) || 0;
     window.parent.postMessage({
         type: '808-pattern-sync',
         allPatterns: data,
         currentPattern: currentPattern,
-        bpm: bpm
+        currentKit: currentKit,
+        bpm: bpm,
+        swing: swing,
+        trackOffsets: Array.from(trackOffsets),
+        trackOffsetModes: Array.from(trackOffsetModes)
     }, '*');
 }
 
