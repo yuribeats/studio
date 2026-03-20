@@ -5,9 +5,33 @@
 	<link rel="stylesheet" type="text/css" href="synth.css">
 	<style>
 		.dx7-operators.ops-hidden, .dx7-bottom-panel.ops-hidden { display: none !important; }
+		.dx7-vol-wrap {
+			position: fixed; top: 6px; right: 10px; z-index: 100;
+			display: flex; align-items: center; gap: 6px;
+			font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase;
+			font-size: 10px; letter-spacing: 1px; color: #fff;
+		}
+		.dx7-vol-knob {
+			width: 28px; height: 28px; border-radius: 50%;
+			background: radial-gradient(circle at 40% 35%, #555 0%, #2a2a2a 70%, #222 100%);
+			border: 1.5px solid #111; position: relative;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+		}
+		.dx7-vol-line {
+			position: absolute; width: 2px; height: 10px;
+			background: #ddd; top: 2px; left: 50%;
+			transform-origin: bottom center;
+		}
 	</style>
+<script src="../studio-bus.js"></script>
 </head>
 <body ng-controller="MidiCtrl as midiCtrl">
+	<div class="dx7-vol-wrap" id="dx7VolWrap">
+		<span>VOL</span>
+		<div class="dx7-vol-knob" id="dx7VolKnob">
+			<div class="dx7-vol-line" id="dx7VolLine"></div>
+		</div>
+	</div>
 		<div class="dx7-container" ng-controller="PresetCtrl as presetCtrl">
 			<div class="dx7-top-panel">
 				<div class="dx7-logo"></div>
@@ -291,6 +315,31 @@
 		document.addEventListener('keyup', function(e) {
 			if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
 		}, true);
+
+		// Volume knob
+		var volVal = 0.75;
+		var volKnob = document.getElementById('dx7VolKnob');
+		var volLine = document.getElementById('dx7VolLine');
+		function updateVolKnob() {
+			var angle = -135 + volVal * 270;
+			volLine.style.transform = 'translateX(-50%) rotate(' + angle + 'deg)';
+			if (window._dx7AudioCtx && window._dx7AudioCtx._mixerGain) {
+				window._dx7AudioCtx._mixerGain.gain.value = volVal;
+			}
+		}
+		updateVolKnob();
+		var volDragging = false, volStartY = 0, volStartVal = 0;
+		volKnob.addEventListener('mousedown', function(e) {
+			volDragging = true; volStartY = e.clientY; volStartVal = volVal;
+			e.preventDefault();
+		});
+		document.addEventListener('mousemove', function(e) {
+			if (!volDragging) return;
+			var dy = volStartY - e.clientY;
+			volVal = Math.max(0, Math.min(1, volStartVal + dy / 100));
+			updateVolKnob();
+		});
+		document.addEventListener('mouseup', function() { volDragging = false; });
 
 		window.parent.postMessage({type: 'instrument-ready', name: 'dx7'}, '*');
 	})();

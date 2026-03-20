@@ -250,7 +250,6 @@
             <div class="bar-btn" data-popout="juno">JUNO</div>
             <div class="bar-btn" data-popout="mpc">MPC</div>
             <div class="bar-btn" data-popout="cr78">808</div>
-            <div class="bar-btn" id="toggleDx7">SHOW DX7</div>
             <div class="bar-btn" data-popout="dx7">DX7</div>
             <div class="bar-btn" data-popout="pianoroll">PIANO ROLL</div>
             <div class="bar-btn" id="togglePedals">SHOW PEDALS</div>
@@ -299,9 +298,9 @@
             </div>
         </div>
 
-        <!-- ROW 2: DX7 (hidden by default, click SHOW DX7 to reveal + activate) -->
-        <div class="inst-row hidden-row" data-row="1" style="min-height:180px;" id="dx7Row">
-            <div class="inst-wrapper hidden-inst" data-inst="dx7">
+        <!-- ROW 2: DX7 -->
+        <div class="inst-row" data-row="1" style="min-height:180px;" id="dx7Row">
+            <div class="inst-wrapper" data-inst="dx7">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">YAMAHA DX7</div>
                 <iframe id="frameDx7" src="dx7/index.html"></iframe>
@@ -414,10 +413,24 @@ function getRow(instId) {
     return wrap ? wrap.closest('.inst-row') : null;
 }
 
+// BroadcastChannel for popout window communication
+const studioBroadcast = new BroadcastChannel('studio-bus');
+studioBroadcast.onmessage = (e) => {
+    const d = e.data;
+    if (!d) return;
+    // Messages from popped-out instruments back to parent
+    if (d._from) {
+        // Re-dispatch as if it came from the iframe
+        window.dispatchEvent(new MessageEvent('message', {data: d}));
+    }
+};
+
 function sendToInst(instId, msg) {
     const pop = popoutWindows[instId];
     if (pop && !pop.closed) {
-        try { pop.postMessage(msg, '*'); } catch(e) {}
+        // Send via BroadcastChannel with target ID
+        msg._target = instId;
+        studioBroadcast.postMessage(msg);
     } else {
         const frame = getFrame(instId);
         if (frame && frame.contentWindow) {
@@ -466,10 +479,6 @@ function goSplit() {
         const rackRow = document.getElementById('rackRow');
         if (rackRow) rackRow.classList.add('hidden-row');
     }
-    if (!dx7Visible) {
-        const dx7Row = document.getElementById('dx7Row');
-        if (dx7Row) dx7Row.classList.add('hidden-row');
-    }
     document.querySelectorAll('.inst-wrapper').forEach(w => {
         w.classList.remove('hidden-inst');
         w.style.flex = '';
@@ -483,9 +492,6 @@ function goSplit() {
             w.classList.add('hidden-inst');
         }
         if (id === 'rack' && !rackVisible) {
-            w.classList.add('hidden-inst');
-        }
-        if (id === 'dx7' && !dx7Visible) {
             w.classList.add('hidden-inst');
         }
     });
@@ -527,25 +533,6 @@ document.querySelectorAll('[data-popout]').forEach(btn => {
             }
         }, 500);
     });
-});
-
-// ============================================
-// DX7 TOGGLE
-// ============================================
-let dx7Visible = false;
-document.getElementById('toggleDx7').addEventListener('click', () => {
-    dx7Visible = !dx7Visible;
-    const wrap = getWrap('dx7');
-    const row = document.getElementById('dx7Row');
-    if (dx7Visible) {
-        row.classList.remove('hidden-row');
-        wrap.classList.remove('hidden-inst');
-        document.getElementById('toggleDx7').textContent = 'HIDE DX7';
-    } else {
-        row.classList.add('hidden-row');
-        wrap.classList.add('hidden-inst');
-        document.getElementById('toggleDx7').textContent = 'SHOW DX7';
-    }
 });
 
 // ============================================

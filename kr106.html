@@ -581,6 +581,7 @@ body {
 
 .midi-status.connected { color: #33cc33; }
 </style>
+<script src="studio-bus.js"></script>
 </head>
 <body>
 
@@ -891,6 +892,7 @@ body {
 
 <div class="preset-menu" id="presetMenu"></div>
 
+<script src="pedal-fx.js"></script>
 <script>
 // ==================== PRESETS ====================
 const PRESETS = [
@@ -920,16 +922,19 @@ let activeKeys = new Set();
 
 // ==================== AUDIO ====================
 let mixerGain = null;
+let pedalFX = null;
 async function initAudio() {
   audioCtx = new AudioContext({ sampleRate: 44100 });
   mixerGain = audioCtx.createGain();
   mixerGain.connect(audioCtx.destination);
+  pedalFX = new PedalFXChain(audioCtx);
+  pedalFX.getOutput().connect(mixerGain);
   await audioCtx.audioWorklet.addModule('synth-processor.js');
   synthNode = new AudioWorkletNode(audioCtx, 'kr106-processor', {
     numberOfOutputs: 1,
     outputChannelCount: [2]
   });
-  synthNode.connect(mixerGain);
+  synthNode.connect(pedalFX.getInput());
   synthNode.port.onmessage = (e) => {
     if (e.data.type === 'scope') drawScope(e.data.data);
   };
@@ -1385,6 +1390,9 @@ if (window !== window.parent) {
     if (d && d.type === 'mixer' && mixerGain) {
       if (d.param === 'volume') mixerGain.gain.value = d.value;
       if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+    }
+    if (d && d.type === 'pedals' && pedalFX) {
+      pedalFX.update(d.pedals);
     }
   });
   // Override keyboard to respect focus
