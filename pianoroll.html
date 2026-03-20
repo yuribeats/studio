@@ -1865,6 +1865,62 @@
         fullRender();
     });
 
+    // ==================== INSTRUMENT SYNC ====================
+    // Convert 808 step patterns into piano roll note data
+    function handle808PatternSync(d) {
+        const allPats = d.allPatterns;
+        const activePat = d.currentPattern || 0;
+        if (!allPats) return;
+        // For each kit, convert the active pattern into notes
+        for (const kitId of Object.keys(allPats)) {
+            const storageKey = '808-' + kitId;
+            if (!notes[storageKey]) notes[storageKey] = [];
+            // Clear existing 808-synced notes for this kit
+            notes[storageKey] = notes[storageKey].filter(n => !n._from808);
+            const kitPats = allPats[kitId];
+            if (!kitPats || !kitPats[activePat]) continue;
+            const pat = kitPats[activePat];
+            for (let t = 0; t < pat.length; t++) {
+                for (let s = 0; s < pat[t].length; s++) {
+                    if (pat[t][s] > 0) {
+                        const note = {
+                            pitch: 36 + t,
+                            start: s * 0.25, // each step = 1 sixteenth = 0.25 beats
+                            duration: 0.25,
+                            velocity: pat[t][s] === 2 ? 127 : 100,
+                            _from808: true
+                        };
+                        notes[storageKey].push(note);
+                    }
+                }
+            }
+        }
+        notifyActiveKits();
+        if (activeChannel === '808') renderNotes();
+    }
+
+    // Convert MPC recorded hits into piano roll note data
+    function handleMpcRecordingSync(d) {
+        if (!d.recording || d.recording.length === 0) return;
+        const recBpm = d.bpm || 90;
+        // Clear existing MPC-synced notes
+        notes['mpc'] = notes['mpc'].filter(n => !n._fromMpc);
+        for (const hit of d.recording) {
+            // Convert time (seconds) to beats
+            const beatPos = hit.time * recBpm / 60;
+            // Pad index → MIDI note (bank A: 36-51, B: 52-67, etc.)
+            const midi = 36 + hit.pad;
+            notes['mpc'].push({
+                pitch: midi,
+                start: parseFloat(beatPos.toFixed(4)),
+                duration: 0.25,
+                velocity: 100,
+                _fromMpc: true
+            });
+        }
+        if (activeChannel === 'mpc') renderNotes();
+    }
+
     // ==================== IFRAME BRIDGE ====================
     if (window !== window.parent) {
         window.__kbEnabled = false;
@@ -1882,6 +1938,14 @@
                 } else if (status === 0x80 || (status === 0x90 && vel === 0)) {
                     if (isRecording) recordNoteOff(midi);
                 }
+            }
+            // 808 step sequencer pattern sync → convert to piano roll notes
+            if (d && d.type === '808-pattern-sync') {
+                handle808PatternSync(d);
+            }
+            // MPC recording sync → convert to piano roll notes
+            if (d && d.type === 'mpc-recording-sync') {
+                handleMpcRecordingSync(d);
             }
         });
         document.addEventListener('keydown', (e) => {

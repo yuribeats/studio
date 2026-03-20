@@ -409,6 +409,9 @@
                     <div class="transport-btn" id="btnPlay"><span class="transport-led" id="playLed"></span>PLAY</div>
                     <div class="transport-btn" id="btnPlayStart"><span class="transport-led" id="playStartLed"></span>PL START</div>
                 </div>
+                <div class="transport-row">
+                    <div class="transport-btn" id="btnLoop"><span class="transport-led" id="loopLed"></span>LOOP</div>
+                </div>
             </div>
         </div>
     </div>
@@ -445,6 +448,7 @@ let currentBeat = -1;
 let totalBars = 4;
 let fileList = [];
 let loadedFileName = '';
+let loopEnabled = false;
 
 const actx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = actx.createGain();
@@ -793,7 +797,24 @@ function startPlayback() {
         if (!isPlaying) return;
         const elapsed = actx.currentTime - startTime;
 
-        if (elapsed >= totalDur) { stopPlayback(); return; }
+        if (elapsed >= totalDur) {
+            if (loopEnabled && recording.length > 0 && !isRecording) {
+                startTime = actx.currentTime;
+                currentBeat = -1;
+                // Re-schedule playback hits
+                playbackTimeouts.forEach(t => clearTimeout(t));
+                playbackTimeouts = [];
+                for (const hit of recording) {
+                    const t = setTimeout(() => {
+                        triggerPadVisual(hit.pad);
+                        playSlice(hit.pad);
+                    }, hit.time * 1000);
+                    playbackTimeouts.push(t);
+                }
+            } else {
+                stopPlayback(); return;
+            }
+        }
 
         const beatNum = Math.floor(elapsed / beatInterval);
         if (beatNum !== currentBeat) {
@@ -845,7 +866,18 @@ function stopPlayback() {
 
     if (recording.length > 0 && wasRecording) {
         document.getElementById('lcd-status').textContent = recording.length + ' HITS RECORDED';
+        syncRecordingToPianoRoll();
     }
+}
+
+function syncRecordingToPianoRoll() {
+    if (window === window.parent || recording.length === 0) return;
+    window.parent.postMessage({
+        type: 'mpc-recording-sync',
+        recording: recording.map(h => ({pad: h.pad, time: h.time})),
+        bpm: bpm,
+        totalBars: totalBars
+    }, '*');
 }
 
 function drawPlayhead(elapsed, totalDur) {
@@ -1189,6 +1221,10 @@ document.getElementById('btnPlayStart').addEventListener('click', () => {
     startPlayback();
 });
 document.getElementById('btnStop').addEventListener('click', stopPlayback);
+document.getElementById('btnLoop').addEventListener('click', () => {
+    loopEnabled = !loopEnabled;
+    document.getElementById('loopLed').classList.toggle('on-green', loopEnabled);
+});
 
 document.querySelectorAll('.pad-bank-btn').forEach(btn => {
     btn.addEventListener('click', () => {

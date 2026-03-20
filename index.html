@@ -668,6 +668,10 @@ window.addEventListener('message', (e) => {
         sendToInst('mixer', d);
         sendToInst('pedals', d);
     }
+    // Forward 808 pattern data and MPC recording to piano roll
+    if (d && (d.type === '808-pattern-sync' || d.type === 'mpc-recording-sync')) {
+        sendToInst('pianoroll', d);
+    }
     // Route transport messages to tape machine
     if (d && d.type === 'transport') {
         sendToInst('tape', d);

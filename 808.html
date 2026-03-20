@@ -613,6 +613,31 @@ function notifyActiveKits() {
     window.parent.postMessage({type: 'active-808-kits', kits: active}, '*');
 }
 
+function syncPatternsToPianoRoll() {
+    if (window === window.parent) return;
+    // Send all pattern data for all kits to parent -> piano roll
+    const data = {};
+    for (const kitId of Object.keys(KITS)) {
+        if (!allPatterns[kitId]) continue;
+        const kitData = [];
+        const pats = allPatterns[kitId];
+        for (let p = 0; p < pats.length; p++) {
+            const patData = [];
+            for (let t = 0; t < pats[p].length; t++) {
+                patData.push(Array.from(pats[p][t]));
+            }
+            kitData.push(patData);
+        }
+        data[kitId] = kitData;
+    }
+    window.parent.postMessage({
+        type: '808-pattern-sync',
+        allPatterns: data,
+        currentPattern: currentPattern,
+        bpm: bpm
+    }, '*');
+}
+
 let trackVolumes = TRACKS.map(() => 0.8);
 let trackMutes = TRACKS.map(() => false);
 let trackOffsets = TRACKS.map(() => 0); // ms, range -50 to +50
@@ -668,6 +693,7 @@ async function switchKit(kitId) {
     await loadSamples();
     scaleToFit();
     notifyActiveKits();
+    syncPatternsToPianoRoll();
 }
 
 function playSample(trackIdx, time, accent) {
@@ -782,6 +808,7 @@ function buildGrid() {
                     step.classList.remove('on', 'accent');
                 }
                 notifyActiveKits();
+                syncPatternsToPianoRoll();
             });
 
             steps.appendChild(step);
@@ -933,6 +960,7 @@ document.getElementById('btnClear').addEventListener('click', () => {
     patterns()[currentPattern].forEach(t => t.fill(0));
     refreshGrid();
     notifyActiveKits();
+    syncPatternsToPianoRoll();
 });
 document.getElementById('btnRandom').addEventListener('click', () => {
     const pat = patterns()[currentPattern];
@@ -966,6 +994,7 @@ document.getElementById('btnRandom').addEventListener('click', () => {
     }
     refreshGrid();
     notifyActiveKits();
+    syncPatternsToPianoRoll();
 });
 document.getElementById('btnCopy').addEventListener('click', () => {
     const pat = patterns()[currentPattern];
@@ -989,6 +1018,7 @@ document.getElementById('btnPaste').addEventListener('click', () => {
     }
     refreshGrid();
     notifyActiveKits();
+    syncPatternsToPianoRoll();
     document.getElementById('btnPaste').style.borderColor = '#228B22';
     document.getElementById('btnPaste').style.color = '#228B22';
     setTimeout(() => {
@@ -1015,6 +1045,7 @@ document.querySelectorAll('.pat-btn').forEach(btn => {
         document.querySelectorAll('.pat-btn').forEach(b => b.classList.remove('active-pat'));
         btn.classList.add('active-pat');
         refreshGrid();
+        syncPatternsToPianoRoll();
     });
 });
 
@@ -1067,7 +1098,7 @@ buildGrid();
 loadSamples().then(() => {
     document.getElementById('stepDisplay').textContent = 'READY';
     setTimeout(scaleToFit, 50);
-    setTimeout(() => { lastKitReport = ''; notifyActiveKits(); }, 500);
+    setTimeout(() => { lastKitReport = ''; notifyActiveKits(); syncPatternsToPianoRoll(); }, 500);
 });
 
 // ==================== IFRAME MIDI/KB BRIDGE ====================
