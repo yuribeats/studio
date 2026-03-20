@@ -220,6 +220,55 @@
             flex: 1;
         }
         .step-group-gap { width: 8px; flex-shrink: 0; }
+
+        /* TRACK OFFSET CONTROLS */
+        .track-offset {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding-left: 6px;
+            flex-shrink: 0;
+        }
+        .offset-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 36px;
+            height: 2px;
+            background: #222;
+            outline: none;
+        }
+        .offset-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 6px;
+            height: 10px;
+            background: #555;
+            border: 1px solid #333;
+        }
+        .offset-val {
+            font-size: 6px;
+            color: #555;
+            width: 24px;
+            text-align: center;
+            letter-spacing: 0;
+        }
+        .offset-mode {
+            width: 18px;
+            height: 12px;
+            font-size: 5px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: #555;
+            letter-spacing: 0;
+        }
+        .offset-mode.mode-odd { color: #cc8800; border-color: #664400; }
+        .offset-mode.mode-even { color: #3366cc; border-color: #224488; }
+        .offset-mode.mode-all { color: #228B22; border-color: #1a5a1a; }
         .step {
             width: 46px;
             height: 28px;
@@ -538,6 +587,8 @@ function patterns() { return allPatterns[currentKit]; }
 
 let trackVolumes = TRACKS.map(() => 0.8);
 let trackMutes = TRACKS.map(() => false);
+let trackOffsets = TRACKS.map(() => 0); // ms, range -50 to +50
+let trackOffsetModes = TRACKS.map(() => 'all'); // 'all', 'odd', 'even'
 
 const actx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = actx.createGain();
@@ -571,6 +622,8 @@ async function switchKit(kitId) {
     initPatternsForKit(kitId);
     trackVolumes = TRACKS.map(() => 0.8);
     trackMutes = TRACKS.map(() => false);
+    trackOffsets = TRACKS.map(() => 0);
+    trackOffsetModes = TRACKS.map(() => 'all');
     // Rebuild gain nodes
     trackGains.forEach(g => g.disconnect());
     trackGains = [];
@@ -704,6 +757,48 @@ function buildGrid() {
             steps.appendChild(step);
         }
         row.appendChild(steps);
+
+        // Offset controls
+        const offsetDiv = document.createElement('div');
+        offsetDiv.className = 'track-offset';
+
+        const offsetSlider = document.createElement('input');
+        offsetSlider.type = 'range';
+        offsetSlider.className = 'offset-slider';
+        offsetSlider.min = -50; offsetSlider.max = 50; offsetSlider.value = trackOffsets[t];
+
+        const offsetVal = document.createElement('span');
+        offsetVal.className = 'offset-val';
+        offsetVal.textContent = trackOffsets[t] + 'MS';
+
+        offsetSlider.addEventListener('input', () => {
+            trackOffsets[t] = parseInt(offsetSlider.value);
+            offsetVal.textContent = trackOffsets[t] + 'MS';
+        });
+        offsetSlider.addEventListener('dblclick', () => {
+            trackOffsets[t] = 0;
+            offsetSlider.value = 0;
+            offsetVal.textContent = '0MS';
+        });
+
+        const modeBtn = document.createElement('div');
+        modeBtn.className = 'offset-mode mode-all';
+        modeBtn.textContent = 'ALL';
+        const modes = ['all', 'odd', 'even'];
+        const modeLabels = ['ALL', 'ODD', 'EVN'];
+        modeBtn.addEventListener('click', () => {
+            const idx = modes.indexOf(trackOffsetModes[t]);
+            const next = (idx + 1) % 3;
+            trackOffsetModes[t] = modes[next];
+            modeBtn.textContent = modeLabels[next];
+            modeBtn.className = 'offset-mode mode-' + modes[next];
+        });
+
+        offsetDiv.appendChild(offsetSlider);
+        offsetDiv.appendChild(offsetVal);
+        offsetDiv.appendChild(modeBtn);
+        row.appendChild(offsetDiv);
+
         grid.appendChild(row);
     }
 }
@@ -740,9 +835,21 @@ function nextStep() {
 
         // Play all active tracks for this step
         const pat = patterns()[currentPattern];
+        // Beat number (1-indexed, each beat = 4 steps)
+        const beatNum = Math.floor(currentStep / 4) + 1;
         for (let t = 0; t < TRACKS.length; t++) {
             if (pat[t][currentStep] > 0) {
-                playSample(t, time, pat[t][currentStep] === 2);
+                let trackTime = time;
+                // Apply per-track offset
+                const mode = trackOffsetModes[t];
+                const offset = trackOffsets[t];
+                if (offset !== 0) {
+                    const apply = mode === 'all' ||
+                        (mode === 'odd' && beatNum % 2 === 1) ||
+                        (mode === 'even' && beatNum % 2 === 0);
+                    if (apply) trackTime += offset / 1000;
+                }
+                playSample(t, trackTime, pat[t][currentStep] === 2);
             }
         }
 

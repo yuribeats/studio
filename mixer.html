@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIXING CONSOLE</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            background: #111;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            user-select: none;
+        }
+        body { display: flex; justify-content: center; align-items: center; }
+        .scale-wrap { transform-origin: center center; }
+
+        /* CONSOLE BODY */
+        .console {
+            display: flex;
+            height: 640px;
+        }
+
+        /* WALNUT WOOD PANELS */
+        .wood {
+            width: 30px;
+            background:
+                repeating-linear-gradient(175deg, transparent 0px, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px),
+                linear-gradient(90deg, #5c3317 0%, #7a4422 20%, #5c3317 40%, #6b3a1f 55%, #7a4422 70%, #5c3317 85%, #6b3a1f 100%);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+            position: relative;
+        }
+        .wood::before, .wood::after {
+            content: '';
+            position: absolute;
+            width: 8px; height: 8px;
+            background: radial-gradient(circle, #888 0%, #555 40%, #333 100%);
+            border-radius: 50%;
+            left: 50%; transform: translateX(-50%);
+        }
+        .wood::before { top: 12px; }
+        .wood::after { bottom: 12px; }
+
+        /* MAIN BODY */
+        .body {
+            background: linear-gradient(180deg, #222 0%, #1a1a1a 100%);
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        .hdr {
+            background: #1e1e1e;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .hdr-brand {
+            font-size: 9px;
+            color: #555;
+            letter-spacing: 3px;
+        }
+        .hdr-model {
+            font-size: 13px;
+            color: #888;
+            letter-spacing: 2px;
+        }
+        .hdr-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+        .hdr-label {
+            font-size: 7px;
+            color: #555;
+            letter-spacing: 1px;
+        }
+        .hdr-input {
+            width: 45px;
+            height: 20px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #ff6600;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+            padding: 0;
+        }
+        .hdr-input:focus { border-color: #ff6600; }
+
+        /* CHANNEL AREA */
+        .channels {
+            display: flex;
+            flex: 1;
+            padding: 0;
+        }
+        .ch-sep {
+            width: 1px;
+            background: linear-gradient(180deg, #333 0%, #222 50%, #333 100%);
+            margin: 8px 3px;
+        }
+        .ch-group-sep {
+            width: 3px;
+            background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+            border-left: 1px solid #333;
+            border-right: 1px solid #333;
+        }
+
+        /* CHANNEL STRIP */
+        .ch {
+            width: 120px;
+            display: flex;
+            flex-direction: column;
+            background: #1c1c1c;
+            border-left: 1px solid #252525;
+            border-right: 1px solid #252525;
+        }
+        .ch.master-ch {
+            width: 130px;
+            background: #1e1c1a;
+        }
+
+        /* CHANNEL LABEL */
+        .ch-name {
+            text-align: center;
+            font-size: 8px;
+            color: #999;
+            letter-spacing: 1.5px;
+            padding: 6px 4px 2px;
+            border-bottom: 1px solid #252525;
+        }
+        .master-ch .ch-name { color: #cc3300; }
+
+        /* SECTION HEADER */
+        .sec-hdr {
+            font-size: 6px;
+            color: #444;
+            letter-spacing: 1.5px;
+            text-align: center;
+            padding: 4px 0 1px;
+        }
+
+        /* KNOB STYLES */
+        .knob-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 2px 0;
+        }
+        .knob-grp {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+        }
+        .knob {
+            width: 26px;
+            height: 26px;
+            position: relative;
+        }
+        .knob-body {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 40% 35%, #555 0%, #2a2a2a 70%, #222 100%);
+            border-radius: 50%;
+            border: 1.5px solid #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .knob-line {
+            position: absolute;
+            width: 2px;
+            height: 9px;
+            background: #ddd;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 2px rgba(255,255,255,0.3);
+        }
+        .knob-cap {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .knob-lbl {
+            font-size: 6px;
+            color: #444;
+            letter-spacing: 0.5px;
+        }
+
+        /* Knob color caps */
+        .knob.eq .knob-cap { background: #cc3300; }
+        .knob.comp .knob-cap { background: #3366cc; }
+        .knob.send-rev .knob-cap { background: #228B22; }
+        .knob.send-dly .knob-cap { background: #cc8800; }
+        .knob.pan .knob-cap { background: #888; }
+        .knob.fx .knob-cap { background: #9933cc; }
+        .knob.master-eq .knob-cap { background: #cc3300; }
+
+        /* BUTTONS ROW */
+        .btn-row {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            padding: 3px 0;
+        }
+        .ch-btn {
+            width: 28px;
+            height: 14px;
+            font-size: 6px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #252525;
+            border: 1px solid #333;
+            color: #555;
+            letter-spacing: 0.5px;
+        }
+        .ch-btn.in-btn.active { background: #1a3a1a; border-color: #228B22; color: #33ff33; }
+        .ch-btn.mute-btn.active { background: #3a1a1a; border-color: #cc3333; color: #ff3333; }
+        .ch-btn.solo-btn.active { background: #3a3a1a; border-color: #cccc33; color: #ffff33; }
+
+        /* PAN LABEL */
+        .pan-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2px 0;
+        }
+
+        /* FADER SECTION */
+        .fader-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            padding: 4px 8px 2px;
+            min-height: 0;
+        }
+        .fader-wrap {
+            display: flex;
+            gap: 4px;
+            align-items: stretch;
+            position: relative;
+        }
+
+        /* METER */
+        .meter {
+            width: 8px;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 1px;
+            padding: 2px 0;
+        }
+        .meter-seg {
+            flex: 1;
+            min-height: 2px;
+            background: #1a1a1a;
+            border: 1px solid #151515;
+        }
+        .meter-seg.lit-green { background: #228B22; border-color: #1a6a1a; box-shadow: 0 0 2px rgba(34,139,34,0.3); }
+        .meter-seg.lit-yellow { background: #ccaa00; border-color: #aa8800; box-shadow: 0 0 2px rgba(204,170,0,0.3); }
+        .meter-seg.lit-red { background: #cc3333; border-color: #aa2222; box-shadow: 0 0 2px rgba(204,51,51,0.3); }
+
+        /* FADER TRACK */
+        .fader-track {
+            width: 6px;
+            background: #0a0a0a;
+            border: 1px solid #222;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .fader-knob {
+            width: 32px;
+            height: 12px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(180deg, #999 0%, #777 30%, #666 50%, #777 70%, #999 100%);
+            border: 1px solid #555;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+        .fader-knob::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 4px;
+            right: 4px;
+            height: 1px;
+            background: #444;
+            transform: translateY(-50%);
+        }
+        .master-ch .fader-knob {
+            background: linear-gradient(180deg, #cc4444 0%, #aa2222 30%, #882222 50%, #aa2222 70%, #cc4444 100%);
+            border-color: #993333;
+        }
+        .master-ch .fader-knob::after { background: #661111; }
+
+        /* DB SCALE */
+        .db-scale {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2px 0;
+            width: 16px;
+        }
+        .db-mark {
+            font-size: 5px;
+            color: #333;
+            text-align: right;
+            line-height: 1;
+        }
+        .db-mark.unity { color: #666; }
+
+        /* CHANNEL NUMBER */
+        .ch-num {
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            padding: 2px 0 4px;
+            border-top: 1px solid #252525;
+        }
+        .master-ch .ch-num { color: #cc3300; }
+
+        /* FOOTER */
+        .ftr {
+            background: #1e1e1e;
+            border-top: 1px solid #2a2a2a;
+            padding: 4px 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .ftr-text {
+            font-size: 6px;
+            color: #333;
+            letter-spacing: 1.5px;
+        }
+
+        /* SECTION DIVIDERS */
+        .sec-div {
+            height: 1px;
+            background: #222;
+            margin: 1px 8px;
+        }
+
+        /* SYNC TOGGLE */
+        .sync-btn {
+            width: 32px;
+            height: 14px;
+            font-size: 6px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #252525;
+            border: 1px solid #333;
+            color: #555;
+            letter-spacing: 0.5px;
+        }
+        .sync-btn.active { background: #1a2a1a; border-color: #228B22; color: #33ff33; }
+
+        /* SUBDIVISION SELECTOR */
+        .subdiv-row {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            padding: 2px 0;
+        }
+        .subdiv-btn {
+            width: 20px;
+            height: 12px;
+            font-size: 5px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: #444;
+        }
+        .subdiv-btn.active { background: #cc8800; border-color: #aa6600; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="scale-wrap" id="scaleWrap">
+<div class="console">
+    <div class="wood"></div>
+    <div class="body">
+        <div class="hdr">
+            <span class="hdr-brand">STUDIO</span>
+            <span class="hdr-model">MIXING CONSOLE</span>
+            <div class="hdr-group">
+                <span class="hdr-label">BPM</span>
+                <input class="hdr-input" id="bpmInput" type="number" min="40" max="300" value="120" />
+            </div>
+        </div>
+
+        <div class="channels" id="channels"></div>
+
+        <div class="ftr">
+            <span class="ftr-text">INPUT CHANNELS 1 - 3</span>
+            <span class="ftr-text">RETURNS</span>
+            <span class="ftr-text">MASTER</span>
+        </div>
+    </div>
+    <div class="wood"></div>
+</div>
+</div>
+
+<script>
+// ============================================
+// CHANNEL DEFINITIONS
+// ============================================
+const CHANNELS = [
+    { id: 'kr106', name: 'KR-106', num: '1', type: 'input' },
+    { id: 'mpc',   name: 'MPC',    num: '2', type: 'input' },
+    { id: 'cr78',  name: '808',    num: '3', type: 'input' },
+    { id: '_sep1', type: 'sep' },
+    { id: 'reverb', name: 'REVERB', num: 'R', type: 'return' },
+    { id: 'delay',  name: 'DELAY',  num: 'D', type: 'return' },
+    { id: '_sep2', type: 'sep' },
+    { id: 'master', name: 'MASTER', num: 'M', type: 'master' },
+];
+
+const SUBDIVISIONS = [
+    { label: '1/4', mult: 1.0 },
+    { label: '1/8', mult: 0.5 },
+    { label: '.1/8', mult: 0.75 },
+    { label: '1/16', mult: 0.25 },
+    { label: 'T', mult: 1/3 },
+];
+
+// ============================================
+// STATE
+// ============================================
+let bpm = 120;
+const state = {};
+const knobs = [];
+const faders = [];
+let meterRAF = null;
+
+function initState(chId, type) {
+    state[chId] = {
+        volume: type === 'master' ? 0.85 : 0.75,
+        pan: 0,
+        eqHi: 0, eqMid: 0, eqLo: 0,
+        compThresh: -24, compRatio: 4,
+        sendRev: 0, sendDly: 0,
+        mute: false, solo: false, in: true,
+        // Return-specific
+        decay: 2.0, predly: 20, damp: 0.5,
+        dlyTime: 0.5, dlyFback: 0.3, dlyFilter: 0.5,
+        dlySync: true, dlySubdiv: 1,
+        // Master-specific
+        limThresh: -1,
+        // Meter
+        meterL: 0, meterR: 0,
+    };
+}
+
+// ============================================
+// BUILD UI
+// ============================================
+function buildChannels() {
+    const container = document.getElementById('channels');
+    container.innerHTML = '';
+
+    CHANNELS.forEach((ch, idx) => {
+        if (ch.type === 'sep') {
+            const sep = document.createElement('div');
+            sep.className = 'ch-group-sep';
+            container.appendChild(sep);
+            return;
+        }
+
+        initState(ch.id, ch.type);
+        const el = document.createElement('div');
+        el.className = 'ch' + (ch.type === 'master' ? ' master-ch' : '');
+        el.dataset.ch = ch.id;
+
+        let html = `<div class="ch-name">${ch.name}</div>`;
+
+        if (ch.type === 'input') {
+            html += buildInputChannel(ch);
+        } else if (ch.type === 'return') {
+            html += buildReturnChannel(ch);
+        } else {
+            html += buildMasterChannel(ch);
+        }
+
+        html += buildFaderSection(ch);
+        html += `<div class="ch-num">${ch.num}</div>`;
+
+        el.innerHTML = html;
+        container.appendChild(el);
+
+        if (idx < CHANNELS.length - 1 && CHANNELS[idx + 1].type !== 'sep' && ch.type !== 'sep') {
+            // No separator needed; the channel borders handle it
+        }
+    });
+}
+
+function buildInputChannel(ch) {
+    return `
+        <div class="sec-hdr">EQ</div>
+        <div class="knob-row">
+            ${knobHTML(ch.id, 'eqHi', 'HI', 'eq', -12, 12, 0)}
+            ${knobHTML(ch.id, 'eqMid', 'MID', 'eq', -12, 12, 0)}
+        </div>
+        <div class="knob-row">
+            ${knobHTML(ch.id, 'eqLo', 'LO', 'eq', -12, 12, 0)}
+        </div>
+        <div class="sec-div"></div>
+        <div class="sec-hdr">COMP</div>
+        <div class="knob-row">
+            ${knobHTML(ch.id, 'compThresh', 'THR', 'comp', -60, 0, -24)}
+            ${knobHTML(ch.id, 'compRatio', 'RAT', 'comp', 1, 20, 4)}
+        </div>
+        <div class="sec-div"></div>
+        <div class="sec-hdr">SEND</div>
+        <div class="knob-row">
+            ${knobHTML(ch.id, 'sendRev', 'REV', 'send-rev', 0, 100, 0)}
+            ${knobHTML(ch.id, 'sendDly', 'DLY', 'send-dly', 0, 100, 0)}
+        </div>
+        <div class="sec-div"></div>
+        <div class="pan-section">
+            <div class="knob-row">${knobHTML(ch.id, 'pan', 'PAN', 'pan', -100, 100, 0)}</div>
+        </div>
+        <div class="btn-row">
+            <div class="ch-btn in-btn active" data-ch="${ch.id}" data-action="in">IN</div>
+            <div class="ch-btn mute-btn" data-ch="${ch.id}" data-action="mute">M</div>
+            <div class="ch-btn solo-btn" data-ch="${ch.id}" data-action="solo">S</div>
+        </div>
+    `;
+}
+
+function buildReturnChannel(ch) {
+    if (ch.id === 'reverb') {
+        return `
+            <div class="sec-hdr">REVERB</div>
+            <div class="knob-row">
+                ${knobHTML(ch.id, 'decay', 'DEC', 'fx', 0.1, 10, 2)}
+                ${knobHTML(ch.id, 'predly', 'PRE', 'fx', 0, 100, 20)}
+            </div>
+            <div class="knob-row">
+                ${knobHTML(ch.id, 'damp', 'DMP', 'fx', 0, 100, 50)}
+            </div>
+            <div class="sec-div"></div>
+            <div class="sec-hdr">EQ</div>
+            <div class="knob-row">
+                ${knobHTML(ch.id, 'eqHi', 'HI', 'eq', -12, 12, 0)}
+                ${knobHTML(ch.id, 'eqLo', 'LO', 'eq', -12, 12, 0)}
+            </div>
+            <div class="sec-div"></div>
+            <div class="btn-row">
+                <div class="ch-btn in-btn active" data-ch="${ch.id}" data-action="in">IN</div>
+                <div class="ch-btn mute-btn" data-ch="${ch.id}" data-action="mute">M</div>
+            </div>
+        `;
+    } else {
+        return `
+            <div class="sec-hdr">DELAY</div>
+            <div class="knob-row">
+                ${knobHTML(ch.id, 'dlyTime', 'TIME', 'fx', 1, 2000, 500)}
+                ${knobHTML(ch.id, 'dlyFback', 'FDBK', 'fx', 0, 95, 30)}
+            </div>
+            <div class="knob-row">
+                ${knobHTML(ch.id, 'dlyFilter', 'FILT', 'fx', 0, 100, 50)}
+            </div>
+            <div class="sec-div"></div>
+            <div class="sec-hdr">SYNC</div>
+            <div class="btn-row">
+                <div class="sync-btn active" id="syncBtn" data-ch="${ch.id}">SYNC</div>
+            </div>
+            <div class="subdiv-row" id="subdivRow">
+                ${SUBDIVISIONS.map((s, i) => `<div class="subdiv-btn${i === 1 ? ' active' : ''}" data-idx="${i}">${s.label}</div>`).join('')}
+            </div>
+            <div class="sec-div"></div>
+            <div class="btn-row">
+                <div class="ch-btn in-btn active" data-ch="${ch.id}" data-action="in">IN</div>
+                <div class="ch-btn mute-btn" data-ch="${ch.id}" data-action="mute">M</div>
+            </div>
+        `;
+    }
+}
+
+function buildMasterChannel(ch) {
+    return `
+        <div class="sec-hdr">EQ</div>
+        <div class="knob-row">
+            ${knobHTML(ch.id, 'eqHi', 'HI', 'master-eq', -12, 12, 0)}
+            ${knobHTML(ch.id, 'eqMid', 'MID', 'master-eq', -12, 12, 0)}
+        </div>
+        <div class="knob-row">
+            ${knobHTML(ch.id, 'eqLo', 'LO', 'master-eq', -12, 12, 0)}
+        </div>
+        <div class="sec-div"></div>
+        <div class="sec-hdr">COMP</div>
+        <div class="knob-row">
+            ${knobHTML(ch.id, 'compThresh', 'THR', 'comp', -60, 0, -24)}
+            ${knobHTML(ch.id, 'compRatio', 'RAT', 'comp', 1, 20, 4)}
+        </div>
+        <div class="sec-div"></div>
+        <div class="sec-hdr">LIMITER</div>
+        <div class="knob-row">
+            ${knobHTML(ch.id, 'limThresh', 'THR', 'comp', -20, 0, -1)}
+        </div>
+        <div class="sec-div"></div>
+        <div class="btn-row">
+            <div class="ch-btn in-btn active" data-ch="${ch.id}" data-action="in">IN</div>
+        </div>
+    `;
+}
+
+function buildFaderSection(ch) {
+    const meterSegs = 16;
+    let meterHTML = '';
+    for (let i = 0; i < meterSegs; i++) {
+        meterHTML += `<div class="meter-seg" data-seg="${i}"></div>`;
+    }
+
+    return `
+        <div class="fader-section">
+            <div class="fader-wrap">
+                <div class="meter" data-meter="${ch.id}">${meterHTML}</div>
+                <div class="fader-track" data-ch="${ch.id}" data-param="volume">
+                    <div class="fader-knob"></div>
+                </div>
+                <div class="db-scale">
+                    <span class="db-mark">+10</span>
+                    <span class="db-mark">+5</span>
+                    <span class="db-mark unity">0</span>
+                    <span class="db-mark">-5</span>
+                    <span class="db-mark">-10</span>
+                    <span class="db-mark">-20</span>
+                    <span class="db-mark">-40</span>
+                    <span class="db-mark">-INF</span>
+                </div>
+                <div class="meter" data-meter="${ch.id}-r">${meterHTML}</div>
+            </div>
+        </div>
+    `;
+}
+
+function knobHTML(chId, param, label, cls, min, max, def) {
+    const pct = (def - min) / (max - min);
+    const angle = -135 + pct * 270;
+    return `
+        <div class="knob-grp">
+            <div class="knob ${cls}" data-ch="${chId}" data-param="${param}" data-min="${min}" data-max="${max}" data-default="${def}">
+                <div class="knob-body" style="transform:rotate(${angle}deg)">
+                    <div class="knob-line"></div>
+                    <div class="knob-cap"></div>
+                </div>
+            </div>
+            <span class="knob-lbl">${label}</span>
+        </div>
+    `;
+}
+
+// ============================================
+// KNOB INTERACTION
+// ============================================
+let activeKnob = null;
+let knobStartY = 0;
+let knobStartVal = 0;
+
+document.addEventListener('mousedown', (e) => {
+    const knobEl = e.target.closest('.knob');
+    if (!knobEl) return;
+    e.preventDefault();
+    activeKnob = knobEl;
+    const min = parseFloat(knobEl.dataset.min);
+    const max = parseFloat(knobEl.dataset.max);
+    const chId = knobEl.dataset.ch;
+    const param = knobEl.dataset.param;
+    knobStartY = e.clientY;
+    knobStartVal = state[chId][param];
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!activeKnob) return;
+    const min = parseFloat(activeKnob.dataset.min);
+    const max = parseFloat(activeKnob.dataset.max);
+    const chId = activeKnob.dataset.ch;
+    const param = activeKnob.dataset.param;
+    const dy = knobStartY - e.clientY;
+    const range = max - min;
+    const sensitivity = e.shiftKey ? 400 : 150;
+    const newVal = Math.max(min, Math.min(max, knobStartVal + dy * range / sensitivity));
+    state[chId][param] = newVal;
+    updateKnobVisual(activeKnob, newVal);
+    sendMixerParam(chId, param, newVal);
+});
+
+document.addEventListener('mouseup', () => { activeKnob = null; });
+
+document.addEventListener('dblclick', (e) => {
+    const knobEl = e.target.closest('.knob');
+    if (!knobEl) return;
+    const def = parseFloat(knobEl.dataset.default);
+    const chId = knobEl.dataset.ch;
+    const param = knobEl.dataset.param;
+    state[chId][param] = def;
+    updateKnobVisual(knobEl, def);
+    sendMixerParam(chId, param, def);
+});
+
+function updateKnobVisual(knobEl, value) {
+    const min = parseFloat(knobEl.dataset.min);
+    const max = parseFloat(knobEl.dataset.max);
+    const pct = (value - min) / (max - min);
+    const angle = -135 + pct * 270;
+    knobEl.querySelector('.knob-body').style.transform = `rotate(${angle}deg)`;
+}
+
+// ============================================
+// FADER INTERACTION
+// ============================================
+let activeFader = null;
+let faderStartY = 0;
+let faderStartPct = 0;
+
+document.addEventListener('mousedown', (e) => {
+    const knob = e.target.closest('.fader-knob');
+    if (!knob) return;
+    e.preventDefault();
+    const track = knob.parentElement;
+    activeFader = track;
+    faderStartY = e.clientY;
+    const trackH = track.clientHeight - 12;
+    const knobTop = parseInt(knob.style.top || '0');
+    faderStartPct = knobTop / trackH;
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!activeFader) return;
+    const track = activeFader;
+    const trackH = track.clientHeight - 12;
+    const dy = e.clientY - faderStartY;
+    let pct = faderStartPct + dy / trackH;
+    pct = Math.max(0, Math.min(1, pct));
+    const knob = track.querySelector('.fader-knob');
+    knob.style.top = (pct * trackH) + 'px';
+    const volume = 1 - pct; // inverted: top = max
+    const chId = track.dataset.ch;
+    if (chId && state[chId]) {
+        state[chId].volume = volume;
+        sendMixerParam(chId, 'volume', volume);
+    }
+});
+
+document.addEventListener('mouseup', () => { activeFader = null; });
+
+function setFaderPosition(track, value) {
+    const trackH = track.clientHeight - 12;
+    const pct = 1 - value; // inverted
+    const knob = track.querySelector('.fader-knob');
+    if (knob) knob.style.top = (pct * trackH) + 'px';
+}
+
+// ============================================
+// BUTTONS
+// ============================================
+function initButtons() {
+    document.querySelectorAll('.ch-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const chId = btn.dataset.ch;
+            const action = btn.dataset.action;
+            if (action === 'in') {
+                state[chId].in = !state[chId].in;
+                btn.classList.toggle('active', state[chId].in);
+            } else if (action === 'mute') {
+                state[chId].mute = !state[chId].mute;
+                btn.classList.toggle('active', state[chId].mute);
+                sendMixerParam(chId, 'mute', state[chId].mute);
+            } else if (action === 'solo') {
+                state[chId].solo = !state[chId].solo;
+                btn.classList.toggle('active', state[chId].solo);
+                sendMixerParam(chId, 'solo', state[chId].solo);
+            }
+        });
+    });
+
+    // Sync button
+    const syncBtn = document.getElementById('syncBtn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', () => {
+            state.delay.dlySync = !state.delay.dlySync;
+            syncBtn.classList.toggle('active', state.delay.dlySync);
+            if (state.delay.dlySync) updateSyncedDelay();
+        });
+    }
+
+    // Subdivision buttons
+    document.querySelectorAll('.subdiv-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.subdiv-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.delay.dlySubdiv = parseInt(btn.dataset.idx);
+            if (state.delay.dlySync) updateSyncedDelay();
+        });
+    });
+}
+
+function updateSyncedDelay() {
+    const sub = SUBDIVISIONS[state.delay.dlySubdiv];
+    const delayMs = (60 / bpm) * sub.mult * 1000;
+    state.delay.dlyTime = delayMs;
+    // Update the delay time knob visual
+    const knobEl = document.querySelector(`.knob[data-ch="delay"][data-param="dlyTime"]`);
+    if (knobEl) updateKnobVisual(knobEl, delayMs);
+    sendMixerParam('delay', 'dlyTime', delayMs);
+}
+
+// ============================================
+// METERS (animated demo)
+// ============================================
+function animateMeters() {
+    CHANNELS.forEach(ch => {
+        if (ch.type === 'sep') return;
+        const s = state[ch.id];
+        // Simulate meter activity based on volume
+        const base = s.volume * (s.mute ? 0 : 1);
+        const levelL = base * (0.3 + Math.random() * 0.7);
+        const levelR = base * (0.3 + Math.random() * 0.7);
+        drawMeter(ch.id, levelL);
+        drawMeter(ch.id + '-r', levelR);
+    });
+    meterRAF = requestAnimationFrame(animateMeters);
+}
+
+function drawMeter(meterId, level) {
+    const meter = document.querySelector(`[data-meter="${meterId}"]`);
+    if (!meter) return;
+    const segs = meter.querySelectorAll('.meter-seg');
+    const totalSegs = segs.length;
+    const litCount = Math.floor(level * totalSegs);
+
+    segs.forEach((seg, i) => {
+        seg.className = 'meter-seg';
+        if (i < litCount) {
+            if (i >= totalSegs - 2) seg.classList.add('lit-red');
+            else if (i >= totalSegs - 5) seg.classList.add('lit-yellow');
+            else seg.classList.add('lit-green');
+        }
+    });
+}
+
+// ============================================
+// COMMUNICATION
+// ============================================
+function sendMixerParam(chId, param, value) {
+    const msg = { type: 'mixer-control', channel: chId, param, value };
+    // Send to parent if in iframe
+    if (window !== window.parent) {
+        window.parent.postMessage(msg, '*');
+    }
+}
+
+// Receive meter data from instruments
+window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (d && d.type === 'meter-data') {
+        // d.channel, d.levelL, d.levelR
+        if (state[d.channel]) {
+            state[d.channel].meterL = d.levelL;
+            state[d.channel].meterR = d.levelR;
+        }
+    }
+    if (d && d.type === 'keyboard-focus') {
+        window.__kbEnabled = d.enabled;
+    }
+});
+
+// BPM input
+document.getElementById('bpmInput').addEventListener('change', (e) => {
+    bpm = Math.max(40, Math.min(300, parseInt(e.target.value) || 120));
+    if (state.delay && state.delay.dlySync) updateSyncedDelay();
+});
+
+// ============================================
+// SCALE TO FIT
+// ============================================
+function scaleToFit() {
+    const wrap = document.getElementById('scaleWrap');
+    wrap.style.transform = 'none';
+    const w = wrap.scrollWidth;
+    const h = wrap.scrollHeight;
+    const scale = Math.min(window.innerWidth / w, window.innerHeight / h, 1) * 0.96;
+    wrap.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', scaleToFit);
+
+// ============================================
+// INIT
+// ============================================
+buildChannels();
+initButtons();
+
+// Set initial fader positions after layout
+requestAnimationFrame(() => {
+    document.querySelectorAll('.fader-track').forEach(track => {
+        const chId = track.dataset.ch;
+        if (chId && state[chId]) {
+            setFaderPosition(track, state[chId].volume);
+        }
+    });
+    scaleToFit();
+    animateMeters();
+});
+
+// ==================== IFRAME BRIDGE ====================
+if (window !== window.parent) {
+    window.__kbEnabled = false;
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+    }, true);
+    document.addEventListener('keyup', (e) => {
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+    }, true);
+    window.parent.postMessage({type: 'instrument-ready', name: 'mixer'}, '*');
+}
+</script>
+
+</body>
+</html>
