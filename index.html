@@ -128,7 +128,6 @@
             <div class="kb-btn" data-target="mpc">MPC</div>
             <div class="kb-btn" data-target="cr78">DRUMS</div>
             <div class="kb-btn" data-target="rhodes">RHODES</div>
-            <div class="kb-btn" data-target="deck">DECK</div>
         </div>
     </div>
 
@@ -165,10 +164,6 @@
                     <span class="panel-tile-name">DRUMS</span>
                     <span class="panel-tile-sub">DRUM MACHINE</span>
                 </div>
-                <div class="panel-tile" data-open="deck">
-                    <span class="panel-tile-name">DRIFT</span>
-                    <span class="panel-tile-sub">DECK</span>
-                </div>
             </div>
 
             <!-- INSTRUMENT FRAME -->
@@ -204,7 +199,6 @@ const INSTRUMENTS = {
     mpc:   { label: 'MPC',        file: 'mpc.html',        windowName: 'mpc4000' },
     cr78:  { label: 'DRUMS',      file: '808.html',        windowName: 'cr78win' },
     rhodes:{ label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
-    deck:  { label: 'DECK',       file: 'deck.html',       windowName: 'deckwin' },
 };
 
 // Bottom-bar utilities (always loaded, not in panel)
@@ -392,7 +386,7 @@ function openInstrument(instId) {
     instFrameId = instId;
     setKeyboardTarget(instId);
     // Sync piano roll to show this instrument's channel
-    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', deck:'deck'};
+    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes'};
     const prCh = prChannelMap[instId];
     if (prCh) sendToInst('pianoroll', {type: 'set-channel', channel: prCh});
 }
@@ -459,7 +453,6 @@ const ROUTE_OPTIONS = [
     {value: 'mpc', label: 'MPC'},
     {value: 'cr78', label: 'DRUMS'},
     {value: 'rhodes', label: 'RHODES'},
-    {value: 'deck', label: 'DECK'},
     {value: 'all', label: 'ALL'},
     {value: 'none', label: 'NONE'},
 ];
@@ -638,14 +631,14 @@ window.addEventListener('message', (e) => {
     }
     if (d.type === 'request-kb-focus') setKeyboardTarget(d.target);
     if (d.type === 'pedal-control') {
-        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', deck: 'deck'};
+        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', fm: 'fm', rhodes: 'rhodes'};
         var ch = d.channel;
         if (ch && ch.startsWith('808-')) ch = '808';
         const instId = idMap[ch] || ch;
         if (INSTRUMENTS[instId]) sendToInst(instId, {type: 'pedals', pedals: d.pedals});
     }
     if (d.type === 'pianoroll-note') {
-        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', deck: 'deck'};
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', fm: 'fm', rhodes: 'rhodes'};
         const instId = idMap[d.channel] || d.channel;
         if (INSTRUMENTS[instId]) {
             const midiData = d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0];
@@ -658,7 +651,6 @@ window.addEventListener('message', (e) => {
     if (d.type === 'session-data') { sessionParts[d.source] = d.data; checkSaveReady(); }
     if (d.type === '808-pattern-sync' || d.type === 'mpc-recording-sync') sendToInst('pianoroll', d);
     if (d.type === 'transport') sendToInst('tape', d);
-    if (d.type === 'deck-export-mpc') sendToInst('mpc', d);
 
     if (d.type === 'mixer-control') {
         const target = d.channel;
@@ -677,7 +669,7 @@ window.addEventListener('message', (e) => {
 // ============================================
 let pendingSave = null;
 const sessionParts = {};
-const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'deck', 'rhodes'];
+const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'rhodes'];
 
 function requestSessionData() {
     SESSION_SOURCES.forEach(s => { sessionParts[s] = null; });
@@ -694,7 +686,7 @@ function checkSaveReady() {
         const session = {
             version: 2, timestamp: new Date().toISOString(),
             pianoroll: sessionParts.pianoroll, drumMachine: sessionParts.cr78,
-            mpc: sessionParts.mpc, deck: sessionParts.deck,
+            mpc: sessionParts.mpc,
             rhodes: sessionParts.rhodes
         };
         const blob = new Blob([JSON.stringify(session, null, 2)], {type: 'application/json'});
@@ -711,7 +703,6 @@ function loadSession(session) {
     if (session.pianoroll) sendToInst('pianoroll', {type: 'load-session', data: session.pianoroll});
     if (session.drumMachine) sendToInst('cr78', {type: 'load-session', data: session.drumMachine});
     if (session.mpc) sendToInst('mpc', {type: 'load-session', data: session.mpc});
-    if (session.deck) sendToInst('deck', {type: 'load-session', data: session.deck});
     if (session.rhodes) sendToInst('rhodes', {type: 'load-session', data: session.rhodes});
 }
 
