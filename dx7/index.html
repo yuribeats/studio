@@ -195,13 +195,26 @@
 	})();
 	</script>
 	<script src="bundle.js"></script>
+	<style>
+	.dx7-activate-overlay {
+		position: fixed; inset: 0; z-index: 9999;
+		background: rgba(0,0,0,0.85);
+		display: flex; align-items: center; justify-content: center;
+		font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase;
+		letter-spacing: 3px; font-size: 14px; color: #fff;
+	}
+	.dx7-activate-overlay.hidden { display: none; }
+	</style>
+	<div class="dx7-activate-overlay" id="dx7Overlay">CLICK TO ACTIVATE DX7</div>
 	<script>
 	// ==================== IFRAME MIDI/MIXER BRIDGE ====================
 	(function() {
 		if (window === window.parent) return;
 
 		var synthCtrl = null;
-		var resumed = false;
+		var audioReady = false;
+		var pendingMidi = [];
+		var overlay = document.getElementById('dx7Overlay');
 
 		// Poll for the angular controller to be ready
 		var findCtrl = setInterval(function() {
@@ -212,30 +225,65 @@
 					if (scope && scope.midiCtrl) {
 						synthCtrl = scope.midiCtrl;
 						clearInterval(findCtrl);
+						flushPending();
 					}
 				}
 			} catch(ex) {}
 		}, 200);
 
-		function ensureResumed() {
-			if (resumed) return;
-			resumed = true;
-			// Dispatch synthetic mousedown to trigger DX7's built-in AudioContext resume
-			document.body.dispatchEvent(new MouseEvent('mousedown'));
-			if (window._dx7AudioCtx && window._dx7AudioCtx.state === 'suspended') {
-				window._dx7AudioCtx.resume();
+		function flushPending() {
+			if (!synthCtrl || !synthCtrl.queueMidiEvent || !audioReady) return;
+			while (pendingMidi.length > 0) {
+				synthCtrl.queueMidiEvent(pendingMidi.shift());
 			}
 		}
+
+		function activateAudio() {
+			if (audioReady) return;
+			// Dispatch events to trigger any internal resume handlers in the bundle
+			document.body.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+			document.body.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+			if (window._dx7AudioCtx) {
+				if (window._dx7AudioCtx.state === 'running') {
+					audioReady = true;
+					overlay.classList.add('hidden');
+					flushPending();
+					return;
+				}
+				window._dx7AudioCtx.resume().then(function() {
+					audioReady = true;
+					overlay.classList.add('hidden');
+					flushPending();
+				});
+			}
+		}
+
+		// Real user click activates audio (this is the reliable path)
+		document.addEventListener('click', activateAudio);
+		document.addEventListener('mousedown', activateAudio);
+		document.addEventListener('touchstart', activateAudio);
+
+		// Also check periodically in case AudioContext auto-resumes
+		var checkInterval = setInterval(function() {
+			if (window._dx7AudioCtx && window._dx7AudioCtx.state === 'running') {
+				audioReady = true;
+				overlay.classList.add('hidden');
+				flushPending();
+				clearInterval(checkInterval);
+			}
+		}, 500);
 
 		window.addEventListener('message', function(e) {
 			var d = e.data;
 			if (!d) return;
 
 			if (d.type === 'midi' && d.data) {
-				ensureResumed();
 				var fakeEvent = { data: new Uint8Array(d.data) };
-				if (synthCtrl && synthCtrl.queueMidiEvent) {
+				if (synthCtrl && synthCtrl.queueMidiEvent && audioReady) {
 					synthCtrl.queueMidiEvent(fakeEvent);
+				} else {
+					// Queue if not ready yet - will flush when activated
+					if (pendingMidi.length < 100) pendingMidi.push(fakeEvent);
 				}
 			}
 
