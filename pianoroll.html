@@ -796,6 +796,7 @@
         const ctx = getAudioCtx();
         playStartTime = ctx.currentTime - (playheadBeat * 60 / bpm);
         scheduledNotes.clear();
+        lastKitReport = ''; notifyActiveKits();
         tick();
     }
 
@@ -1904,6 +1905,10 @@
     buildChannelTabs();
     buildGridSelect();
     fullRender();
+
+    // Send active kits on a short delay to ensure mixer/pedals are ready
+    setTimeout(() => { lastKitReport = ''; notifyActiveKits(); }, 1000);
+    setTimeout(() => { lastKitReport = ''; notifyActiveKits(); }, 3000);
 
     // Scroll to middle C area (C4 = MIDI 60)
     const c4Row = midiToRow(60);

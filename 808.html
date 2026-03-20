@@ -589,6 +589,29 @@ initPatternsForKit(currentKit);
 function patterns() { return allPatterns[currentKit]; }
 
 let patternClipboard = null;
+let lastKitReport = '';
+
+function notifyActiveKits() {
+    if (window === window.parent) return;
+    const active = [];
+    for (const kitId of Object.keys(KITS)) {
+        if (!allPatterns[kitId]) continue;
+        const pats = allPatterns[kitId];
+        let hasData = false;
+        for (let p = 0; p < pats.length && !hasData; p++) {
+            for (let t = 0; t < pats[p].length && !hasData; t++) {
+                for (let s = 0; s < STEPS; s++) {
+                    if (pats[p][t][s] > 0) { hasData = true; break; }
+                }
+            }
+        }
+        if (hasData) active.push(kitId);
+    }
+    const report = JSON.stringify(active);
+    if (report === lastKitReport) return;
+    lastKitReport = report;
+    window.parent.postMessage({type: 'active-808-kits', kits: active}, '*');
+}
 
 let trackVolumes = TRACKS.map(() => 0.8);
 let trackMutes = TRACKS.map(() => false);
@@ -644,6 +667,7 @@ async function switchKit(kitId) {
     buildGrid();
     await loadSamples();
     scaleToFit();
+    notifyActiveKits();
 }
 
 function playSample(trackIdx, time, accent) {
@@ -757,6 +781,7 @@ function buildGrid() {
                     pat[s] = 0;
                     step.classList.remove('on', 'accent');
                 }
+                notifyActiveKits();
             });
 
             steps.appendChild(step);
@@ -907,6 +932,7 @@ document.getElementById('btnStop').addEventListener('click', stopSequencer);
 document.getElementById('btnClear').addEventListener('click', () => {
     patterns()[currentPattern].forEach(t => t.fill(0));
     refreshGrid();
+    notifyActiveKits();
 });
 document.getElementById('btnRandom').addEventListener('click', () => {
     const pat = patterns()[currentPattern];
@@ -939,6 +965,7 @@ document.getElementById('btnRandom').addEventListener('click', () => {
         for (let s = 0; s < STEPS; s++) { if (Math.random() < 0.08) pat[t][s] = 1; }
     }
     refreshGrid();
+    notifyActiveKits();
 });
 document.getElementById('btnCopy').addEventListener('click', () => {
     const pat = patterns()[currentPattern];
@@ -961,6 +988,7 @@ document.getElementById('btnPaste').addEventListener('click', () => {
         pat[t].fill(0);
     }
     refreshGrid();
+    notifyActiveKits();
     document.getElementById('btnPaste').style.borderColor = '#228B22';
     document.getElementById('btnPaste').style.color = '#228B22';
     setTimeout(() => {
@@ -1039,6 +1067,7 @@ buildGrid();
 loadSamples().then(() => {
     document.getElementById('stepDisplay').textContent = 'READY';
     setTimeout(scaleToFit, 50);
+    setTimeout(() => { lastKitReport = ''; notifyActiveKits(); }, 500);
 });
 
 // ==================== IFRAME MIDI/KB BRIDGE ====================

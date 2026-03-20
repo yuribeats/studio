@@ -265,7 +265,40 @@ body {
   text-shadow: 0 0 8px rgba(51,204,51,0.5);
   text-align: right;
   white-space: nowrap;
+  position: relative;
+  min-width: 140px;
 }
+.preset-dropdown {
+  position: relative;
+}
+.preset-menu {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: #0a0f0a;
+  border: 1px solid #333;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 200;
+}
+.preset-menu.open { display: block; }
+.preset-menu::-webkit-scrollbar { width: 4px; }
+.preset-menu::-webkit-scrollbar-track { background: #0a0f0a; }
+.preset-menu::-webkit-scrollbar-thumb { background: #333; }
+.preset-opt {
+  padding: 4px 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 1px;
+  color: #1a6b1a;
+  white-space: nowrap;
+}
+.preset-opt:hover { background: #112211; color: #33cc33; }
+.preset-opt.active-preset { color: #33cc33; text-shadow: 0 0 6px rgba(51,204,51,0.5); }
 
 /* ====== 3-WAY / TOGGLE SWITCH ====== */
 .sw-group {
@@ -808,7 +841,10 @@ body {
             <div class="pnav-btn" id="prevPreset">&lsaquo;</div>
             <div class="pnav-btn" id="nextPreset">&rsaquo;</div>
           </div>
-          <div class="preset-lcd" id="presetDisplay">A11 Brass</div>
+          <div class="preset-dropdown">
+            <div class="preset-lcd" id="presetDisplay">A11 Brass</div>
+            <div class="preset-menu" id="presetMenu"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -908,6 +944,35 @@ function loadPreset(idx) {
   document.getElementById('presetDisplay').textContent = preset.name;
   synthNode.port.postMessage({ type: 'preset', params: preset.p });
   updateUI(preset.p);
+  // Update dropdown active state
+  document.querySelectorAll('.preset-opt').forEach((el, i) => {
+    el.classList.toggle('active-preset', i === idx);
+  });
+}
+
+function buildPresetMenu() {
+  const menu = document.getElementById('presetMenu');
+  menu.innerHTML = '';
+  PRESETS.forEach((preset, i) => {
+    const opt = document.createElement('div');
+    opt.className = 'preset-opt' + (i === 0 ? ' active-preset' : '');
+    opt.textContent = preset.name;
+    opt.addEventListener('click', () => {
+      loadPreset(i);
+      menu.classList.remove('open');
+    });
+    menu.appendChild(opt);
+  });
+  document.getElementById('presetDisplay').addEventListener('click', () => {
+    menu.classList.toggle('open');
+    if (menu.classList.contains('open')) {
+      const active = menu.querySelector('.active-preset');
+      if (active) active.scrollIntoView({block: 'nearest'});
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.preset-dropdown')) menu.classList.remove('open');
+  });
 }
 
 function updateUI(p) {
@@ -1256,6 +1321,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   initButtons();
   buildKeyboard();
   initComputerKeyboard();
+  buildPresetMenu();
 });
 
 drawScope(new Array(256).fill(0));
@@ -1284,6 +1350,7 @@ if (window !== window.parent) {
     initButtons();
     buildKeyboard();
     initComputerKeyboard();
+    buildPresetMenu();
   })();
 }
 
