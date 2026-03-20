@@ -811,16 +811,18 @@
         updateGrooveAmtDisplay();
     });
 
+    let grooveMenuOpen = false;
     document.getElementById('btnGroove').addEventListener('mousedown', (e) => {
         e.stopPropagation();
-        const menu = document.getElementById('grooveMenu');
-        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        grooveMenuOpen = !grooveMenuOpen;
+        document.getElementById('grooveMenu').style.display = grooveMenuOpen ? 'block' : 'none';
     });
     document.addEventListener('mousedown', (e) => {
-        if (!e.target.closest('#btnGroove') && !e.target.closest('#grooveMenu')) {
+        if (grooveMenuOpen && !e.target.closest('#btnGroove') && !e.target.closest('#grooveMenu')) {
+            grooveMenuOpen = false;
             document.getElementById('grooveMenu').style.display = 'none';
         }
-    });
+    }, true); // capture phase to catch before stopPropagation
 
     // Helper: check if a note falls on a beat boundary
     function isOnBeat(start, div) {
