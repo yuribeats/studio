@@ -1,0 +1,37 @@
+{
+  "name": "studio",
+  "version": "1.0.0",
+  "description": "STUDIO — web audio production suite",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "build-universal": "electron-builder --mac --universal"
+  },
+  "build": {
+    "appId": "com.studio.app",
+    "productName": "STUDIO",
+    "mac": {
+      "category": "public.app-category.music",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["universal"]
+        }
+      ],
+      "icon": "build/icon.icns"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!build/**/*",
+      "!dist/**/*",
+      "!.git/**/*"
+    ],
+    "extraResources": []
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8"
+  }
+}
