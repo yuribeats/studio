@@ -23,8 +23,8 @@
             height: 100vh;
         }
 
-        /* ROUTING BAR */
-        .routing-bar {
+        /* TOP BAR */
+        .top-bar {
             background: #141414;
             border-bottom: 1px solid #2a2a2a;
             padding: 6px 16px;
@@ -35,11 +35,27 @@
             z-index: 10;
             flex-wrap: wrap;
         }
-        .routing-title {
+        .top-title {
             font-size: 14px;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             color: #fff;
         }
+        .bar-btn {
+            padding: 6px 10px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            font-size: 13px;
+            color: #fff;
+            letter-spacing: 1px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .bar-btn:hover { border-color: #555; }
+        .bar-sep { width: 1px; height: 20px; background: #333; flex-shrink: 0; }
+
+        /* MIDI */
         .midi-devices {
             display: flex;
             gap: 8px;
@@ -67,8 +83,7 @@
             white-space: nowrap;
         }
         .midi-device-led {
-            width: 5px;
-            height: 5px;
+            width: 5px; height: 5px;
             background: #333;
             flex-shrink: 0;
         }
@@ -76,8 +91,8 @@
             background: #33ff33;
             box-shadow: 0 0 4px #33ff33;
         }
+        .no-midi { font-size: 13px; color: #555; letter-spacing: 1px; }
 
-        /* MIDI ROUTE DROPDOWN */
         .route-dropdown { position: relative; }
         .route-selected {
             background: #111;
@@ -95,9 +110,7 @@
         .route-menu {
             display: none;
             position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+            top: 100%; left: 0; right: 0;
             background: #111;
             border: 1px solid #444;
             border-top: none;
@@ -113,10 +126,10 @@
             color: #fff;
             letter-spacing: 0.5px;
         }
-        .route-opt:hover { background: #1a1a1a; color: #fff; }
+        .route-opt:hover { background: #1a1a1a; }
         .route-opt.active-route { color: #228B22; }
 
-        /* KEYBOARD ROUTING */
+        /* KB ROUTING */
         .kb-route {
             display: flex;
             align-items: center;
@@ -124,11 +137,7 @@
             margin-left: auto;
             flex-shrink: 0;
         }
-        .kb-label {
-            font-size: 13px;
-            color: #fff;
-            letter-spacing: 1px;
-        }
+        .kb-label { font-size: 13px; color: #fff; letter-spacing: 1px; }
         .kb-btn {
             padding: 6px 10px;
             background: #1a1a1a;
@@ -145,135 +154,84 @@
             color: #228B22;
             background: #0a1a0a;
         }
-        .no-midi {
-            font-size: 13px;
-            color: #fff;
-            letter-spacing: 1px;
-        }
 
-        /* TOOLBAR BUTTONS */
-        .bar-btn {
-            padding: 6px 10px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            font-size: 13px;
-            color: #fff;
-            letter-spacing: 1px;
-            font-family: Arial, sans-serif;
-            font-weight: 700;
-            text-transform: uppercase;
-            flex-shrink: 0;
-        }
-        .bar-btn:hover { color: #fff; border-color: #555; }
-        .bar-btn.hidden-btn { display: none; }
-        .bar-sep { width: 1px; height: 20px; background: #333; flex-shrink: 0; }
-        .popout-row { display: flex; gap: 6px; flex-wrap: wrap; }
-
-        /* INSTRUMENT AREA */
-        .instruments {
+        /* CONTROL PANEL */
+        .panel {
             flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            padding: 2px;
+            overflow-y: auto;
+            background: #0a0a0a;
+        }
+        .panel.hidden { display: none; }
+        .panel-tile {
+            background: #141414;
+            border: 1px solid #222;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
-            overflow-x: hidden;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+            transition: border-color 0.15s;
         }
-        .instruments::-webkit-scrollbar { width: 6px; }
-        .instruments::-webkit-scrollbar-track { background: #0a0a0a; }
-        .instruments::-webkit-scrollbar-thumb { background: #333; }
-        .instruments::-webkit-scrollbar-thumb:hover { background: #444; }
-
-        /* INSTRUMENT ROWS */
-        .inst-row {
-            display: flex;
-            min-height: 90vh;
-            border-bottom: 1px solid #222;
+        .panel-tile:hover { border-color: #444; }
+        .panel-tile-name {
+            font-size: 18px;
+            letter-spacing: 4px;
+            color: #fff;
         }
-        .inst-row:last-child { border-bottom: none; }
-        .inst-row.tall { min-height: 90vh; }
+        .panel-tile-sub {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #555;
+            margin-top: 6px;
+        }
 
-        .inst-wrapper {
+        /* BACK BAR */
+        .back-bar {
+            display: none;
+            background: #141414;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 8px 16px;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .back-bar.visible { display: flex; }
+        .inst-title {
+            font-size: 16px;
+            letter-spacing: 3px;
+            color: #228B22;
+        }
+
+        /* INSTRUMENT AREA */
+        .inst-area {
             flex: 1;
-            position: relative;
-            min-height: 0;
+            display: none;
+            overflow: hidden;
         }
-        .inst-wrapper + .inst-wrapper {
-            border-left: 1px solid #222;
-        }
-        .inst-wrapper iframe {
+        .inst-area.visible { display: flex; }
+        .inst-area iframe {
             width: 100%;
             height: 100%;
             border: none;
             display: block;
         }
-        .inst-focus-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: transparent;
-            z-index: 5;
-            pointer-events: none;
-            transition: background 0.15s;
-        }
-        .inst-wrapper.focused .inst-focus-indicator {
-            background: #228B22;
-            box-shadow: 0 0 8px rgba(34,139,34,0.4);
-        }
-        .inst-label {
-            position: absolute;
-            top: 6px;
-            left: 8px;
-            font-size: 13px;
-            letter-spacing: 2px;
-            color: #fff;
-            z-index: 5;
-            pointer-events: none;
-        }
-        .inst-wrapper.focused .inst-label {
-            color: #228B22;
-        }
-
-        /* FULLSCREEN MODE */
-        .inst-row.hidden-row { display: none; }
-        .inst-wrapper.hidden-inst { display: none; }
     </style>
 </head>
 <body>
 
 <div class="studio">
-    <!-- ROUTING BAR -->
-    <div class="routing-bar">
-        <div class="bar-btn hidden-btn" id="backBtn">SPLIT VIEW</div>
-        <div class="bar-sep"></div>
-        <div class="popout-row">
-            <div class="bar-btn" data-popout="juno">JUNO</div>
-            <div class="bar-btn" data-popout="mpc">MPC</div>
-            <div class="bar-btn" data-popout="cr78">808</div>
-            <div class="bar-btn" data-popout="dx7">DX7</div>
-            <div class="bar-btn" data-popout="pianoroll">PIANO ROLL</div>
-            <div class="bar-btn" id="togglePedals">SHOW PEDALS</div>
-            <div class="bar-btn" data-popout="pedals">PEDALS</div>
-            <div class="bar-btn" data-popout="deck">DECK</div>
-            <div class="bar-btn hidden-btn" id="toggleRack">SHOW RACK</div>
-            <div class="bar-btn" data-popout="mixer">MIXER</div>
-            <div class="bar-btn" data-popout="tape">TAPE</div>
-        </div>
-        <div class="bar-sep"></div>
-        <div class="route-dropdown" id="addInstDropdown" style="position:relative;">
-            <div class="bar-btn" id="btnAddInst">+ ADD</div>
-            <div class="route-menu" id="addInstMenu" style="min-width:80px;">
-                <div class="route-opt" data-add="juno">JUNO</div>
-                <div class="route-opt" data-add="mpc">MPC</div>
-                <div class="route-opt" data-add="dx7">DX7</div>
-                <div class="route-opt" data-add="deck">DECK</div>
-            </div>
-        </div>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <span class="top-title">STUDIO</span>
         <div class="bar-sep"></div>
         <div class="bar-btn" id="btnSave">SAVE</div>
         <div class="bar-btn" id="btnLoad">LOAD</div>
         <div class="bar-sep"></div>
-        <span class="routing-title">MIDI</span>
+        <span style="font-size:13px;letter-spacing:1px;">MIDI</span>
         <div class="midi-devices" id="midiDevices">
             <span class="no-midi" id="noMidi">NO MIDI DEVICES</span>
         </div>
@@ -283,93 +241,70 @@
             <div class="kb-btn" data-target="mpc">MPC</div>
             <div class="kb-btn" data-target="cr78">808</div>
             <div class="kb-btn" data-target="dx7">DX7</div>
+            <div class="kb-btn" data-target="rhodes">RHODES</div>
             <div class="kb-btn" data-target="deck">DECK</div>
         </div>
     </div>
 
-    <!-- INSTRUMENTS -->
-    <div class="instruments" id="instruments">
-        <!-- ROW 1: JUNO SYNTH (full width) -->
-        <div class="inst-row" data-row="0" style="min-height:420px;border-bottom:none;">
-            <div class="inst-wrapper focused" data-inst="juno">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">JUNO SYNTH</div>
-                <iframe id="frameJuno" src="kr106.html"></iframe>
-            </div>
-        </div>
+    <!-- BACK BAR -->
+    <div class="back-bar" id="backBar">
+        <div class="bar-btn" id="backToPanel">BACK</div>
+        <span class="inst-title" id="instTitle"></span>
+        <div style="flex:1;"></div>
+        <div class="bar-btn" id="popoutCurrent">POPOUT</div>
+    </div>
 
-        <!-- ROW 2: DX7 -->
-        <div class="inst-row" data-row="1" style="min-height:180px;" id="dx7Row">
-            <div class="inst-wrapper" data-inst="dx7">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">YAMAHA DX7</div>
-                <iframe id="frameDx7" src="dx7/index.html"></iframe>
-            </div>
+    <!-- CONTROL PANEL -->
+    <div class="panel" id="panel">
+        <div class="panel-tile" data-open="juno">
+            <span class="panel-tile-name">JUNO</span>
+            <span class="panel-tile-sub">POLYSYNTH</span>
         </div>
+        <div class="panel-tile" data-open="dx7">
+            <span class="panel-tile-name">DX7</span>
+            <span class="panel-tile-sub">FM SYNTH</span>
+        </div>
+        <div class="panel-tile" data-open="rhodes">
+            <span class="panel-tile-name">RHODES</span>
+            <span class="panel-tile-sub">ELECTRIC PIANO</span>
+        </div>
+        <div class="panel-tile" data-open="mpc">
+            <span class="panel-tile-name">MPC</span>
+            <span class="panel-tile-sub">SAMPLER</span>
+        </div>
+        <div class="panel-tile" data-open="cr78">
+            <span class="panel-tile-name">808</span>
+            <span class="panel-tile-sub">DRUM MACHINE</span>
+        </div>
+        <div class="panel-tile" data-open="deck">
+            <span class="panel-tile-name">DRIFT</span>
+            <span class="panel-tile-sub">DECK</span>
+        </div>
+        <div class="panel-tile" data-open="pedals">
+            <span class="panel-tile-name">PEDALS</span>
+            <span class="panel-tile-sub">EFFECTS</span>
+        </div>
+        <div class="panel-tile" data-open="mixer">
+            <span class="panel-tile-name">MIXER</span>
+            <span class="panel-tile-sub">CONSOLE</span>
+        </div>
+        <div class="panel-tile" data-open="tape">
+            <span class="panel-tile-name">TAPE</span>
+            <span class="panel-tile-sub">RECORDER</span>
+        </div>
+        <div class="panel-tile" data-open="pianoroll">
+            <span class="panel-tile-name">PIANO ROLL</span>
+            <span class="panel-tile-sub">SEQUENCER</span>
+        </div>
+        <div class="panel-tile" data-open="rack" id="rackTile" style="display:none;">
+            <span class="panel-tile-name">RACK</span>
+            <span class="panel-tile-sub">AU EFFECTS</span>
+        </div>
+    </div>
 
-        <!-- ROW 3: MPC (full width) -->
-        <div class="inst-row tall" data-row="2">
-            <div class="inst-wrapper" data-inst="mpc">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">AKAI MPC 4000</div>
-                <iframe id="frameMpc" src="mpc.html"></iframe>
-            </div>
-        </div>
-
-        <!-- ROW 4: 808 SEQUENCER (full width) -->
-        <div class="inst-row tall" data-row="3">
-            <div class="inst-wrapper" data-inst="cr78">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">STEP SEQUENCER</div>
-                <iframe id="frameCr78" src="808.html"></iframe>
-            </div>
-        </div>
-
-        <!-- ROW 5: DRIFT DECK -->
-        <div class="inst-row" data-row="4" style="min-height:300px;">
-            <div class="inst-wrapper" data-inst="deck">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">DRIFT DECK</div>
-                <iframe id="frameDeck" src="deck.html"></iframe>
-            </div>
-        </div>
-
-        <!-- ROW 6: EFFECTS RACK (Electron only) -->
-        <div class="inst-row tall hidden-row" data-row="5" id="rackRow">
-            <div class="inst-wrapper hidden-inst" data-inst="rack">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">EFFECTS RACK</div>
-                <iframe id="frameRack" src="rack.html"></iframe>
-            </div>
-        </div>
-
-        <!-- ROW 7: PEDALS (hidden by default) + MIXER + TAPE MACHINE -->
-        <div class="inst-row tall" data-row="6">
-            <div class="inst-wrapper hidden-inst" data-inst="pedals">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">PEDALBOARD</div>
-                <iframe id="framePedals" src="pedals.html"></iframe>
-            </div>
-            <div class="inst-wrapper" data-inst="mixer">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">MIXING CONSOLE</div>
-                <iframe id="frameMixer" src="mixer.html"></iframe>
-            </div>
-            <div class="inst-wrapper" data-inst="tape">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">TAPE MACHINE</div>
-                <iframe id="frameTape" src="tape.html"></iframe>
-            </div>
-        </div>
-
-        <!-- ROW 7: PIANO ROLL (always last) -->
-        <div class="inst-row tall" data-row="7">
-            <div class="inst-wrapper" data-inst="pianoroll">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">PIANO ROLL</div>
-                <iframe id="framePianoroll" src="pianoroll.html"></iframe>
-            </div>
-        </div>
+    <!-- INSTRUMENT AREA (single iframe, loaded on demand) -->
+    <div class="inst-area" id="instArea">
+        <iframe id="instFrame"></iframe>
     </div>
 </div>
 
@@ -378,19 +313,19 @@
 // INSTRUMENT REGISTRY
 // ============================================
 const INSTRUMENTS = {
-    juno:  { frame: 'frameJuno',  label: 'JUNO',    file: 'kr106.html',      windowName: 'junowin' },
-    mpc:   { frame: 'frameMpc',   label: 'MPC',     file: 'mpc.html',        windowName: 'mpc4000' },
-    cr78:  { frame: 'frameCr78',  label: '808',     file: '808.html',        windowName: 'cr78win' },
-    dx7:   { frame: 'frameDx7',   label: 'DX7',     file: 'dx7/index.html',  windowName: 'dx7win' },
-    pianoroll: { frame: 'framePianoroll', label: 'PIANO ROLL', file: 'pianoroll.html', windowName: 'pianorollwin' },
-    pedals:{ frame: 'framePedals',label: 'PEDALS',  file: 'pedals.html',     windowName: 'pedalswin' },
-    deck:  { frame: 'frameDeck',  label: 'DECK',    file: 'deck.html',       windowName: 'deckwin' },
-    rack:  { frame: 'frameRack',  label: 'RACK',    file: 'rack.html',       windowName: 'rackwin' },
-    mixer: { frame: 'frameMixer', label: 'MIXER',   file: 'mixer.html',      windowName: 'mixerwin' },
-    tape:  { frame: 'frameTape',  label: 'TAPE',    file: 'tape.html',       windowName: 'tapewin' },
+    juno:  { label: 'JUNO',       file: 'kr106.html',      windowName: 'junowin' },
+    mpc:   { label: 'MPC',        file: 'mpc.html',        windowName: 'mpc4000' },
+    cr78:  { label: '808',        file: '808.html',        windowName: 'cr78win' },
+    dx7:   { label: 'DX7',        file: 'dx7/index.html',  windowName: 'dx7win' },
+    rhodes:{ label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
+    pianoroll: { label: 'PIANO ROLL', file: 'pianoroll.html', windowName: 'pianorollwin' },
+    pedals:{ label: 'PEDALS',     file: 'pedals.html',     windowName: 'pedalswin' },
+    deck:  { label: 'DECK',       file: 'deck.html',       windowName: 'deckwin' },
+    rack:  { label: 'RACK',       file: 'rack.html',       windowName: 'rackwin' },
+    mixer: { label: 'MIXER',      file: 'mixer.html',      windowName: 'mixerwin' },
+    tape:  { label: 'TAPE',       file: 'tape.html',       windowName: 'tapewin' },
 };
-const instIds = Object.keys(INSTRUMENTS);
-const localInsts = ['juno', 'mpc', 'cr78', 'dx7', 'pianoroll', 'pedals', 'deck', 'rack', 'mixer', 'tape'];
+const allInstIds = Object.keys(INSTRUMENTS);
 
 // ============================================
 // STATE
@@ -398,19 +333,37 @@ const localInsts = ['juno', 'mpc', 'cr78', 'dx7', 'pianoroll', 'pedals', 'deck',
 let midiAccess = null;
 const midiRouting = {};
 let keyboardTarget = 'juno';
-let fullscreenInst = null;
+let currentView = 'panel'; // 'panel' or an instrument id
 const popoutWindows = {};
+const loadedFrames = {}; // track which iframes are loaded in background
 
-function getFrame(instId) {
-    const inst = INSTRUMENTS[instId];
-    return inst ? document.getElementById(inst.frame) : null;
-}
-function getWrap(instId) {
-    return document.querySelector(`.inst-wrapper[data-inst="${instId}"]`);
-}
-function getRow(instId) {
-    const wrap = getWrap(instId);
-    return wrap ? wrap.closest('.inst-row') : null;
+// The single visible iframe
+const instFrame = document.getElementById('instFrame');
+let instFrameId = null; // which instrument is currently in the main frame
+
+// Background iframes for instruments that need to stay alive
+const bgContainer = document.createElement('div');
+bgContainer.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;';
+document.body.appendChild(bgContainer);
+
+function getOrCreateBgFrame(instId) {
+    if (loadedFrames[instId]) return loadedFrames[instId];
+    const iframe = document.createElement('iframe');
+    iframe.id = 'bg-' + instId;
+    iframe.style.cssText = 'width:1px;height:1px;border:none;';
+    iframe.src = INSTRUMENTS[instId].file;
+    bgContainer.appendChild(iframe);
+    loadedFrames[instId] = iframe;
+    iframe.addEventListener('load', () => {
+        sendToFrame(iframe, {type: 'keyboard-focus', enabled: instId === keyboardTarget});
+        if (instId === 'rack' && window.studioBridge) {
+            window.studioBridge.getAUPlugins().then(plugins => {
+                sendToFrame(iframe, { type: 'au-plugins', plugins });
+                syncRackChannels();
+            });
+        }
+    });
+    return iframe;
 }
 
 // BroadcastChannel for popout window communication
@@ -418,132 +371,135 @@ const studioBroadcast = new BroadcastChannel('studio-bus');
 studioBroadcast.onmessage = (e) => {
     const d = e.data;
     if (!d) return;
-    // Messages from popped-out instruments back to parent
     if (d._from) {
-        // Re-dispatch as if it came from the iframe
         window.dispatchEvent(new MessageEvent('message', {data: d}));
     }
 };
 
+function sendToFrame(frame, msg) {
+    if (frame && frame.contentWindow) {
+        try { frame.contentWindow.postMessage(msg, '*'); } catch(e) {}
+    }
+}
+
 function sendToInst(instId, msg) {
     const pop = popoutWindows[instId];
     if (pop && !pop.closed) {
-        // Send via BroadcastChannel with target ID
         msg._target = instId;
         studioBroadcast.postMessage(msg);
-    } else {
-        const frame = getFrame(instId);
-        if (frame && frame.contentWindow) {
-            try { frame.contentWindow.postMessage(msg, '*'); } catch(e) {}
-        }
+        return;
     }
-}
-
-// ============================================
-// FULLSCREEN / SPLIT VIEW
-// ============================================
-function goFullscreen(inst) {
-    fullscreenInst = inst;
-    const targetRow = getRow(inst);
-    document.querySelectorAll('.inst-row').forEach(row => {
-        if (row === targetRow) {
-            row.classList.remove('hidden-row');
-            row.style.flex = '1';
-        } else {
-            row.classList.add('hidden-row');
-        }
-    });
-    // Hide siblings in same row
-    if (targetRow) {
-        targetRow.querySelectorAll('.inst-wrapper').forEach(w => {
-            if (w.dataset.inst === inst) {
-                w.classList.remove('hidden-inst');
-                w.style.flex = '1';
-            } else {
-                w.classList.add('hidden-inst');
-            }
+    // Check if it's the currently shown instrument
+    if (instFrameId === instId) {
+        sendToFrame(instFrame, msg);
+        return;
+    }
+    // Check background frames
+    if (loadedFrames[instId]) {
+        sendToFrame(loadedFrames[instId], msg);
+        return;
+    }
+    // Not loaded yet — load it in background if message is important
+    if (msg.type === 'midi' || msg.type === 'pedals' || msg.type === 'load-session') {
+        const bgFrame = getOrCreateBgFrame(instId);
+        // Queue the message for after load
+        bgFrame.addEventListener('load', function once() {
+            bgFrame.removeEventListener('load', once);
+            sendToFrame(bgFrame, msg);
         });
     }
-    document.getElementById('backBtn').classList.remove('hidden-btn');
-    setKeyboardTarget(inst);
 }
 
-function goSplit() {
-    fullscreenInst = null;
-    document.querySelectorAll('.inst-row').forEach(row => {
-        row.classList.remove('hidden-row');
-        row.style.flex = '';
-    });
-    // Re-hide rack/dx7 rows if not toggled on
-    if (!rackVisible) {
-        const rackRow = document.getElementById('rackRow');
-        if (rackRow) rackRow.classList.add('hidden-row');
+// ============================================
+// PANEL / INSTRUMENT NAVIGATION
+// ============================================
+function showPanel() {
+    currentView = 'panel';
+    document.getElementById('panel').classList.remove('hidden');
+    document.getElementById('instArea').classList.remove('visible');
+    document.getElementById('backBar').classList.remove('visible');
+    // Move current frame content to background if needed
+    if (instFrameId) {
+        moveToBg(instFrameId);
     }
-    document.querySelectorAll('.inst-wrapper').forEach(w => {
-        w.classList.remove('hidden-inst');
-        w.style.flex = '';
-        const id = w.dataset.inst;
-        // Re-hide if popped out
-        if (popoutWindows[id] && !popoutWindows[id].closed) {
-            w.classList.add('hidden-inst');
-        }
-        // Keep pedals/rack/dx7 hidden unless toggled on
-        if (id === 'pedals' && !pedalsVisible) {
-            w.classList.add('hidden-inst');
-        }
-        if (id === 'rack' && !rackVisible) {
-            w.classList.add('hidden-inst');
-        }
-    });
-    document.getElementById('backBtn').classList.add('hidden-btn');
 }
 
-document.getElementById('backBtn').addEventListener('click', goSplit);
+function moveToBg(instId) {
+    // The main frame has this instrument — move it to a background frame
+    if (!loadedFrames[instId] && instFrame.contentWindow) {
+        // Create a bg iframe and copy the src
+        const bgIframe = document.createElement('iframe');
+        bgIframe.id = 'bg-' + instId;
+        bgIframe.style.cssText = 'width:1px;height:1px;border:none;';
+        bgIframe.src = INSTRUMENTS[instId].file;
+        bgContainer.appendChild(bgIframe);
+        loadedFrames[instId] = bgIframe;
+    }
+    instFrame.src = '';
+    instFrameId = null;
+}
 
-document.querySelectorAll('.inst-wrapper').forEach(wrapper => {
-    wrapper.addEventListener('dblclick', () => {
-        if (fullscreenInst) goSplit();
-        else goFullscreen(wrapper.dataset.inst);
-    });
+function openInstrument(instId) {
+    currentView = instId;
+    const inst = INSTRUMENTS[instId];
+    if (!inst) return;
+
+    // Show instrument area
+    document.getElementById('panel').classList.add('hidden');
+    document.getElementById('instArea').classList.add('visible');
+    document.getElementById('backBar').classList.add('visible');
+    document.getElementById('instTitle').textContent = inst.label;
+
+    // If switching from another instrument, background the old one
+    if (instFrameId && instFrameId !== instId) {
+        moveToBg(instFrameId);
+    }
+
+    // Remove bg frame if it exists (we'll use the main frame)
+    if (loadedFrames[instId]) {
+        loadedFrames[instId].remove();
+        delete loadedFrames[instId];
+    }
+
+    // Load into main frame
+    instFrame.src = inst.file;
+    instFrameId = instId;
+    setKeyboardTarget(instId);
+}
+
+// Panel tile clicks
+document.querySelectorAll('.panel-tile[data-open]').forEach(tile => {
+    tile.addEventListener('click', () => openInstrument(tile.dataset.open));
 });
 
-// ============================================
-// POP-OUT WINDOWS
-// ============================================
-document.querySelectorAll('[data-popout]').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const instId = btn.dataset.popout;
-        const inst = INSTRUMENTS[instId];
+// Back button
+document.getElementById('backToPanel').addEventListener('click', showPanel);
 
-        if (popoutWindows[instId] && !popoutWindows[instId].closed) {
-            popoutWindows[instId].focus();
-            return;
+// Popout from instrument view
+document.getElementById('popoutCurrent').addEventListener('click', () => {
+    if (currentView === 'panel') return;
+    const instId = currentView;
+    const inst = INSTRUMENTS[instId];
+    if (!inst) return;
+    if (popoutWindows[instId] && !popoutWindows[instId].closed) {
+        popoutWindows[instId].focus();
+        return;
+    }
+    popoutWindows[instId] = window.open(inst.file, inst.windowName, 'width=960,height=700');
+    const check = setInterval(() => {
+        if (popoutWindows[instId] && popoutWindows[instId].closed) {
+            clearInterval(check);
+            popoutWindows[instId] = null;
         }
-
-        popoutWindows[instId] = window.open(inst.file, inst.windowName, 'width=960,height=700');
-        getWrap(instId).classList.add('hidden-inst');
-        btn.textContent = 'X ' + inst.label;
-
-        const check = setInterval(() => {
-            if (popoutWindows[instId] && popoutWindows[instId].closed) {
-                clearInterval(check);
-                popoutWindows[instId] = null;
-                getWrap(instId).classList.remove('hidden-inst');
-                btn.textContent = inst.label;
-            }
-        }, 500);
-    });
+    }, 500);
+    showPanel();
 });
 
-// ============================================
-// PEDALS TOGGLE
-// ============================================
-let pedalsVisible = false;
-document.getElementById('togglePedals').addEventListener('click', () => {
-    pedalsVisible = !pedalsVisible;
-    const wrap = getWrap('pedals');
-    wrap.classList.toggle('hidden-inst', !pedalsVisible);
-    document.getElementById('togglePedals').textContent = pedalsVisible ? 'HIDE PEDALS' : 'SHOW PEDALS';
+// Escape to go back
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && currentView !== 'panel') {
+        showPanel();
+    }
 });
 
 // ============================================
@@ -563,6 +519,7 @@ const ROUTE_OPTIONS = [
     {value: 'mpc', label: 'MPC'},
     {value: 'cr78', label: '808'},
     {value: 'dx7', label: 'DX7'},
+    {value: 'rhodes', label: 'RHODES'},
     {value: 'deck', label: 'DECK'},
     {value: 'all', label: 'ALL'},
     {value: 'none', label: 'NONE'},
@@ -632,11 +589,10 @@ function refreshMIDI() {
             }
             const midiMsg = {type: 'midi', data: Array.from(msg.data)};
             if (route === 'all') {
-                instIds.forEach(instId => sendToInst(instId, midiMsg));
+                allInstIds.forEach(iid => sendToInst(iid, midiMsg));
             } else if (route !== 'none') {
                 sendToInst(route, midiMsg);
             }
-            // Always forward MIDI to piano roll for recording
             sendToInst('pianoroll', midiMsg);
         };
     }
@@ -663,11 +619,8 @@ function setKeyboardTarget(target) {
     const btn = document.querySelector(`.kb-btn[data-target="${target}"]`);
     if (btn) btn.classList.add('active');
 
-    document.querySelectorAll('.inst-wrapper').forEach(w => w.classList.remove('focused'));
-    const wrap = getWrap(target);
-    if (wrap) wrap.classList.add('focused');
-
-    localInsts.forEach(id => {
+    // Notify all loaded instruments
+    allInstIds.forEach(id => {
         sendToInst(id, {type: 'keyboard-focus', enabled: id === target});
     });
 }
@@ -676,104 +629,81 @@ document.querySelectorAll('.kb-btn').forEach(btn => {
     btn.addEventListener('click', () => setKeyboardTarget(btn.dataset.target));
 });
 
-document.querySelectorAll('.inst-wrapper').forEach(wrapper => {
-    wrapper.addEventListener('mousedown', () => {
-        setKeyboardTarget(wrapper.dataset.inst);
-    });
-});
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Tab') {
-        e.preventDefault();
-        const idx = instIds.indexOf(keyboardTarget);
-        setKeyboardTarget(instIds[(idx + 1) % instIds.length]);
-    }
-    if (e.key === 'Escape' && fullscreenInst) {
-        goSplit();
-    }
-});
-
 // ============================================
 // IFRAME COMMUNICATION
 // ============================================
 window.addEventListener('message', (e) => {
     const d = e.data;
-    if (d && d.type === 'instrument-ready') {
-        // Find which instrument ID this iframe belongs to
+    if (!d) return;
+
+    if (d.type === 'instrument-ready') {
         let name = d.name === 'kr106' ? 'juno' : d.name;
-        // Check if message came from a dynamic instance iframe
-        for (const id of Object.keys(INSTRUMENTS)) {
-            const frame = getFrame(id);
-            if (frame && frame.contentWindow === e.source) { name = id; break; }
+        // Check main frame
+        if (instFrame.contentWindow === e.source && instFrameId) {
+            name = instFrameId;
+        }
+        // Check bg frames
+        for (const id of Object.keys(loadedFrames)) {
+            if (loadedFrames[id].contentWindow === e.source) { name = id; break; }
         }
         sendToInst(name, {type: 'keyboard-focus', enabled: name === keyboardTarget});
     }
-    // Handle keyboard focus requests (e.g. piano roll recording)
-    if (d && d.type === 'request-kb-focus') {
+    if (d.type === 'request-kb-focus') {
         setKeyboardTarget(d.target);
     }
-    // Route pedal-control messages to target instruments
-    if (d && d.type === 'pedal-control') {
-        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno'};
-        const instId = idMap[d.channel] || d.channel;
+    if (d.type === 'pedal-control') {
+        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', dx7: 'dx7', rhodes: 'rhodes', deck: 'deck'};
+        var ch = d.channel;
+        if (ch && ch.startsWith('808-')) ch = '808';
+        const instId = idMap[ch] || ch;
         if (INSTRUMENTS[instId]) {
             sendToInst(instId, {type: 'pedals', pedals: d.pedals});
         }
     }
-    // Route piano roll notes to target instruments
-    if (d && d.type === 'pianoroll-note') {
-        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', dx7: 'dx7', deck: 'deck'};
+    if (d.type === 'pianoroll-note') {
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', dx7: 'dx7', rhodes: 'rhodes', deck: 'deck'};
         const instId = idMap[d.channel] || d.channel;
         if (INSTRUMENTS[instId]) {
             const midiData = d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0];
             const msg = {type: 'midi', data: midiData};
-            if (d.kit) msg.kit = d.kit; // pass kit info for 808 multi-kit
+            if (d.kit) msg.kit = d.kit;
             sendToInst(instId, msg);
         }
     }
-    // Handle active 808 kits notification — forward to mixer and pedals
-    if (d && d.type === 'active-808-kits') {
+    if (d.type === 'active-808-kits') {
         sendToInst('mixer', d);
         sendToInst('pedals', d);
     }
-    // Session save responses
-    if (d && d.type === 'session-data') {
+    if (d.type === 'session-data') {
         sessionParts[d.source] = d.data;
         checkSaveReady();
     }
-    // Forward 808 pattern data and MPC recording to piano roll
-    if (d && (d.type === '808-pattern-sync' || d.type === 'mpc-recording-sync')) {
+    if (d.type === '808-pattern-sync' || d.type === 'mpc-recording-sync') {
         sendToInst('pianoroll', d);
     }
-    // Route transport messages to tape machine
-    if (d && d.type === 'transport') {
+    if (d.type === 'transport') {
         sendToInst('tape', d);
     }
-    // Deck export to MPC — forward loop data to MPC
-    if (d && d.type === 'deck-export-mpc') {
+    if (d.type === 'deck-export-mpc') {
         sendToInst('mpc', d);
     }
-    // Rack rescan request
-    if (d && d.type === 'rack-rescan') {
+    if (d.type === 'rack-rescan') {
         if (window.studioBridge) {
             window.studioBridge.getAUPlugins().then(plugins => {
                 sendToInst('rack', { type: 'au-plugins', plugins });
             });
         }
     }
-    // Rack state updates
-    if (d && d.type === 'rack-state') {
-        // Store rack inserts for potential audio processing
+    if (d.type === 'rack-state') {
         window._rackInserts = d.inserts;
     }
-    if (d && d.type === 'mixer-control') {
+    if (d.type === 'mixer-control') {
         const target = d.channel;
         if (target === 'master') {
-            localInsts.forEach(id => {
+            allInstIds.forEach(id => {
                 if (id !== 'mixer') sendToInst(id, {type: 'mixer', param: d.param, value: d.value, bus: 'master'});
             });
         } else {
-            // Map mixer channel names to instrument IDs
             const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78'};
             const instId = idMap[target] || target;
             if (INSTRUMENTS[instId]) sendToInst(instId, {type: 'mixer', param: d.param, value: d.value});
@@ -786,13 +716,21 @@ window.addEventListener('message', (e) => {
 // ============================================
 let pendingSave = null;
 const sessionParts = {};
-
-const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'deck', 'rack'];
+const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'deck', 'rack', 'rhodes'];
 
 function requestSessionData() {
-    SESSION_SOURCES.forEach(s => sessionParts[s] = null);
+    // Ensure session sources are loaded
+    SESSION_SOURCES.forEach(s => {
+        sessionParts[s] = null;
+        if (!loadedFrames[s] && instFrameId !== s) {
+            getOrCreateBgFrame(s);
+        }
+    });
     pendingSave = true;
-    SESSION_SOURCES.forEach(s => sendToInst(s, {type: 'get-session'}));
+    // Small delay to let bg frames load
+    setTimeout(() => {
+        SESSION_SOURCES.forEach(s => sendToInst(s, {type: 'get-session'}));
+    }, 500);
 }
 
 function checkSaveReady() {
@@ -806,7 +744,8 @@ function checkSaveReady() {
             drumMachine: sessionParts.cr78,
             mpc: sessionParts.mpc,
             deck: sessionParts.deck,
-            rack: sessionParts.rack
+            rack: sessionParts.rack,
+            rhodes: sessionParts.rhodes
         };
         const json = JSON.stringify(session, null, 2);
         const blob = new Blob([json], {type: 'application/json'});
@@ -825,6 +764,7 @@ function loadSession(session) {
     if (session.mpc) sendToInst('mpc', {type: 'load-session', data: session.mpc});
     if (session.deck) sendToInst('deck', {type: 'load-session', data: session.deck});
     if (session.rack) sendToInst('rack', {type: 'load-session', data: session.rack});
+    if (session.rhodes) sendToInst('rhodes', {type: 'load-session', data: session.rhodes});
 }
 
 document.getElementById('btnSave').addEventListener('click', requestSessionData);
@@ -844,182 +784,6 @@ document.getElementById('btnLoad').addEventListener('click', () => {
 });
 
 // ============================================
-// DYNAMIC INSTRUMENT INSTANCES
-// ============================================
-const INST_TEMPLATES = {
-    juno: { file: 'kr106.html', label: 'JUNO', minHeight: '420px' },
-    mpc:  { file: 'mpc.html',   label: 'MPC',  minHeight: '90vh' },
-    dx7:  { file: 'dx7/index.html', label: 'DX7', minHeight: '180px' },
-    deck: { file: 'deck.html',  label: 'DECK', minHeight: '300px' },
-};
-const instanceCounts = { juno: 1, mpc: 1, dx7: 1, deck: 1 };
-
-document.getElementById('btnAddInst').addEventListener('click', () => {
-    document.getElementById('addInstMenu').classList.toggle('open');
-});
-document.querySelectorAll('[data-add]').forEach(opt => {
-    opt.addEventListener('click', () => {
-        document.getElementById('addInstMenu').classList.remove('open');
-        addInstance(opt.dataset.add);
-    });
-});
-
-function addInstance(baseType) {
-    const tmpl = INST_TEMPLATES[baseType];
-    if (!tmpl) return;
-    instanceCounts[baseType]++;
-    const num = instanceCounts[baseType];
-    const instId = baseType + '-' + num;
-    const frameId = 'frame-' + instId;
-    const label = tmpl.label + ' ' + num;
-
-    // Register in INSTRUMENTS
-    INSTRUMENTS[instId] = {
-        frame: frameId,
-        label: label,
-        file: tmpl.file,
-        windowName: instId + 'win',
-        baseType: baseType
-    };
-    localInsts.push(instId);
-
-    // Create DOM row
-    const row = document.createElement('div');
-    row.className = 'inst-row';
-    row.dataset.row = document.querySelectorAll('.inst-row').length;
-    row.style.minHeight = tmpl.minHeight;
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'inst-wrapper';
-    wrapper.dataset.inst = instId;
-
-    const indicator = document.createElement('div');
-    indicator.className = 'inst-focus-indicator';
-
-    const labelEl = document.createElement('div');
-    labelEl.className = 'inst-label';
-    labelEl.textContent = label;
-
-    const removeBtn = document.createElement('div');
-    removeBtn.style.cssText = 'position:absolute;top:6px;right:8px;font-size:10px;letter-spacing:1px;color:#fff;z-index:5;padding:2px 6px;';
-    removeBtn.textContent = 'X';
-    removeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        removeInstance(instId);
-    });
-
-    const iframe = document.createElement('iframe');
-    iframe.id = frameId;
-    iframe.src = tmpl.file;
-    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
-
-    wrapper.appendChild(indicator);
-    wrapper.appendChild(labelEl);
-    wrapper.appendChild(removeBtn);
-    wrapper.appendChild(iframe);
-    row.appendChild(wrapper);
-
-    // Insert before piano roll row (last row)
-    const pianoRollRow = document.querySelector('[data-inst="pianoroll"]').closest('.inst-row');
-    pianoRollRow.parentNode.insertBefore(row, pianoRollRow);
-
-    // Add KB routing button
-    const kbRoute = document.querySelector('.kb-route');
-    const kbBtn = document.createElement('div');
-    kbBtn.className = 'kb-btn';
-    kbBtn.dataset.target = instId;
-    kbBtn.textContent = label;
-    kbBtn.addEventListener('click', () => setKeyboardTarget(instId));
-    kbRoute.appendChild(kbBtn);
-
-    // Add popout button
-    const popoutRow = document.querySelector('.popout-row');
-    const popBtn = document.createElement('div');
-    popBtn.className = 'bar-btn';
-    popBtn.dataset.popout = instId;
-    popBtn.textContent = label;
-    popBtn.addEventListener('click', () => {
-        if (popoutWindows[instId] && !popoutWindows[instId].closed) {
-            popoutWindows[instId].focus();
-            return;
-        }
-        popoutWindows[instId] = window.open(tmpl.file, instId + 'win', 'width=960,height=700');
-        getWrap(instId).classList.add('hidden-inst');
-        popBtn.textContent = 'X ' + label;
-        const check = setInterval(() => {
-            if (popoutWindows[instId] && popoutWindows[instId].closed) {
-                clearInterval(check);
-                popoutWindows[instId] = null;
-                getWrap(instId).classList.remove('hidden-inst');
-                popBtn.textContent = label;
-            }
-        }, 500);
-    });
-    popoutRow.appendChild(popBtn);
-
-    // Double click for fullscreen
-    wrapper.addEventListener('dblclick', () => {
-        if (fullscreenInst) goSplit();
-        else goFullscreen(instId);
-    });
-    wrapper.addEventListener('mousedown', () => setKeyboardTarget(instId));
-
-    // Send keyboard focus on iframe load
-    iframe.addEventListener('load', () => {
-        sendToInst(instId, {type: 'keyboard-focus', enabled: instId === keyboardTarget});
-    });
-
-    // Notify mixer to add channel
-    sendToInst('mixer', {type: 'add-channel', id: instId, name: label});
-    syncRackChannels();
-
-    // Add to MIDI route options
-    ROUTE_OPTIONS.splice(ROUTE_OPTIONS.length - 2, 0, {value: instId, label: label});
-}
-
-function removeInstance(instId) {
-    const inst = INSTRUMENTS[instId];
-    if (!inst || !inst.baseType) return; // don't remove base instruments
-
-    // Remove DOM
-    const wrap = getWrap(instId);
-    if (wrap) {
-        const row = wrap.closest('.inst-row');
-        if (row) row.remove();
-    }
-
-    // Close popout
-    if (popoutWindows[instId] && !popoutWindows[instId].closed) {
-        popoutWindows[instId].close();
-    }
-    delete popoutWindows[instId];
-
-    // Remove KB button
-    const kbBtn = document.querySelector(`.kb-btn[data-target="${instId}"]`);
-    if (kbBtn) kbBtn.remove();
-
-    // Remove popout button
-    const popBtn = document.querySelector(`[data-popout="${instId}"]`);
-    if (popBtn) popBtn.remove();
-
-    // Remove from arrays
-    const li = localInsts.indexOf(instId);
-    if (li >= 0) localInsts.splice(li, 1);
-    delete INSTRUMENTS[instId];
-
-    // Remove from route options
-    const ri = ROUTE_OPTIONS.findIndex(o => o.value === instId);
-    if (ri >= 0) ROUTE_OPTIONS.splice(ri, 1);
-
-    // Notify mixer
-    sendToInst('mixer', {type: 'remove-channel', id: instId});
-    syncRackChannels();
-
-    // Reset keyboard target if needed
-    if (keyboardTarget === instId) setKeyboardTarget('juno');
-}
-
-// ============================================
 // RACK CHANNEL SYNC
 // ============================================
 function syncRackChannels() {
@@ -1035,45 +799,11 @@ function syncRackChannels() {
 // ============================================
 // INIT
 // ============================================
-// Show rack toggle only in Electron (AU plugins require native access)
-let rackVisible = false;
 if (window.studioBridge) {
-    document.getElementById('toggleRack').classList.remove('hidden-btn');
-    document.getElementById('toggleRack').addEventListener('click', () => {
-        rackVisible = !rackVisible;
-        const wrap = getWrap('rack');
-        const row = document.getElementById('rackRow');
-        if (rackVisible) {
-            row.classList.remove('hidden-row');
-            wrap.classList.remove('hidden-inst');
-            document.getElementById('toggleRack').textContent = 'HIDE RACK';
-        } else {
-            row.classList.add('hidden-row');
-            wrap.classList.add('hidden-inst');
-            document.getElementById('toggleRack').textContent = 'SHOW RACK';
-        }
-    });
+    document.getElementById('rackTile').style.display = '';
 }
 
 initMIDI();
-
-instIds.forEach(id => {
-    const frame = getFrame(id);
-    if (frame) {
-        frame.addEventListener('load', () => {
-            if (localInsts.includes(id)) {
-                sendToInst(id, {type: 'keyboard-focus', enabled: id === keyboardTarget});
-            }
-            // Send AU plugins to rack on load
-            if (id === 'rack' && window.studioBridge) {
-                window.studioBridge.getAUPlugins().then(plugins => {
-                    sendToInst('rack', { type: 'au-plugins', plugins });
-                    syncRackChannels();
-                });
-            }
-        });
-    }
-});
 </script>
 
 </body>
