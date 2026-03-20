@@ -556,6 +556,41 @@ document.querySelectorAll('.kb-btn').forEach(btn => {
 });
 
 // ============================================
+// QWERTY KEYBOARD → MIDI
+// ============================================
+const QWERTY_MAP = {
+    'a': 0, 'w': 1, 's': 2, 'e': 3, 'd': 4, 'f': 5,
+    't': 6, 'g': 7, 'y': 8, 'h': 9, 'u': 10, 'j': 11,
+    'k': 12, 'o': 13, 'l': 14, 'p': 15
+};
+let qwertyOctave = 4;
+const qwertyHeld = new Set();
+
+document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.repeat) return;
+    const k = e.key.toLowerCase();
+    if (k === 'z') { qwertyOctave = Math.max(0, qwertyOctave - 1); return; }
+    if (k === 'x') { qwertyOctave = Math.min(8, qwertyOctave + 1); return; }
+    const semi = QWERTY_MAP[k];
+    if (semi === undefined) return;
+    const note = qwertyOctave * 12 + semi;
+    if (note > 127 || qwertyHeld.has(note)) return;
+    qwertyHeld.add(note);
+    sendToInst(keyboardTarget, {type: 'midi', data: [0x90, note, 100]});
+});
+
+document.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    const semi = QWERTY_MAP[k];
+    if (semi === undefined) return;
+    const note = qwertyOctave * 12 + semi;
+    if (!qwertyHeld.has(note)) return;
+    qwertyHeld.delete(note);
+    sendToInst(keyboardTarget, {type: 'midi', data: [0x80, note, 0]});
+});
+
+// ============================================
 // IFRAME COMMUNICATION
 // ============================================
 window.addEventListener('message', (e) => {
