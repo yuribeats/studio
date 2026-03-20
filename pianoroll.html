@@ -436,6 +436,9 @@
     let cellH = 14;   // pixels per semitone row
     let isPlaying = false;
     let isLooping = false;
+    let loopStart = 0;        // beat position
+    let loopEnd = 16;         // beat position (4 bars default)
+    let loopRegionSet = false; // user has explicitly set a loop region
     let playheadBeat = 0;
     let playStartTime = 0;
     let audioCtx = null;
@@ -617,24 +620,25 @@
         const elapsed = ctx.currentTime - playStartTime;
         playheadBeat = elapsed * bpm / 60;
 
-        // Find the last beat across all channels
-        let maxBeat = BEATS_PER_BAR * 4; // default loop at bar 4
-        if (isLooping) {
-            // Loop region: find the furthest note end, rounded up to nearest bar
+        // Determine loop/end boundaries
+        let endBeat = TOTAL_BEATS;
+        if (isLooping && loopRegionSet) {
+            endBeat = loopEnd;
+        } else if (isLooping) {
+            endBeat = BEATS_PER_BAR * 4;
             CHANNELS.forEach(ch => {
                 notes[ch].forEach(n => {
                     const end = n.start + n.duration;
-                    if (end > maxBeat) maxBeat = Math.ceil(end / BEATS_PER_BAR) * BEATS_PER_BAR;
+                    if (end > endBeat) endBeat = Math.ceil(end / BEATS_PER_BAR) * BEATS_PER_BAR;
                 });
             });
-        } else {
-            maxBeat = TOTAL_BEATS;
         }
+        const startBeat = (isLooping && loopRegionSet) ? loopStart : 0;
 
-        if (playheadBeat >= maxBeat) {
+        if (playheadBeat >= endBeat) {
             if (isLooping) {
-                playheadBeat = 0;
-                playStartTime = ctx.currentTime;
+                playheadBeat = startBeat;
+                playStartTime = ctx.currentTime - (startBeat * 60 / bpm);
                 // send all note-offs
                 scheduledNotes.forEach((val, key) => sendNoteOff(val.channel, val.pitch));
                 scheduledNotes.clear();
@@ -871,7 +875,68 @@
                 timelineCtx.stroke();
             }
         }
+
+        // Draw loop region
+        if (loopRegionSet && isLooping) {
+            const lx1 = (loopStart / gridResolution) * cellW;
+            const lx2 = (loopEnd / gridResolution) * cellW;
+            timelineCtx.fillStyle = 'rgba(34,139,34,0.2)';
+            timelineCtx.fillRect(lx1, 0, lx2 - lx1, h);
+            timelineCtx.strokeStyle = '#228B22';
+            timelineCtx.lineWidth = 2;
+            timelineCtx.beginPath();
+            timelineCtx.moveTo(lx1, 0); timelineCtx.lineTo(lx1, h);
+            timelineCtx.moveTo(lx2, 0); timelineCtx.lineTo(lx2, h);
+            timelineCtx.stroke();
+        }
     }
+
+    // ==================== TIMELINE LOOP REGION DRAG ====================
+    let tlDragging = false;
+    let tlDragStartBeat = 0;
+
+    timelineCanvas.addEventListener('mousedown', (e) => {
+        const rect = timelineCanvas.getBoundingClientRect();
+        const scrollLeft = document.querySelector('.grid-col').scrollLeft;
+        const x = e.clientX - rect.left + scrollLeft;
+        const beat = Math.round((x / cellW) * gridResolution / gridResolution) * gridResolution;
+        tlDragStartBeat = Math.max(0, beat);
+        tlDragging = true;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!tlDragging) return;
+        const rect = timelineCanvas.getBoundingClientRect();
+        const scrollLeft = document.querySelector('.grid-col').scrollLeft;
+        const x = e.clientX - rect.left + scrollLeft;
+        const beat = Math.round((x / cellW) * gridResolution / gridResolution) * gridResolution;
+        const b = Math.max(0, beat);
+        loopStart = Math.min(tlDragStartBeat, b);
+        loopEnd = Math.max(tlDragStartBeat, b);
+        if (loopEnd - loopStart >= gridResolution) {
+            loopRegionSet = true;
+            renderTimeline();
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (tlDragging) {
+            tlDragging = false;
+            // Snap to nearest bar boundaries
+            loopStart = Math.floor(loopStart / BEATS_PER_BAR) * BEATS_PER_BAR;
+            loopEnd = Math.ceil(loopEnd / BEATS_PER_BAR) * BEATS_PER_BAR;
+            if (loopEnd <= loopStart) loopEnd = loopStart + BEATS_PER_BAR;
+            renderTimeline();
+        }
+    });
+
+    // Double-click timeline to clear loop region
+    timelineCanvas.addEventListener('dblclick', () => {
+        loopRegionSet = false;
+        loopStart = 0;
+        loopEnd = 16;
+        renderTimeline();
+    });
 
     // ==================== VELOCITY RENDERING ====================
     function renderVelocity() {
