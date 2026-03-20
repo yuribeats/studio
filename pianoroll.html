@@ -104,6 +104,17 @@
             flex-shrink: 0;
         }
 
+        .groove-opt {
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: Arial, Helvetica, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+        .groove-opt:hover { background: #1a1a1a; color: #228B22; }
+
         .btn {
             font-family: Arial, Helvetica, sans-serif;
             font-weight: 700;
@@ -440,6 +451,22 @@
             <span class="header-label" id="swingVal" style="min-width:24px;text-align:center">0%</span>
             <button class="zoom-btn" id="swingUp">+</button>
         </div>
+        <div class="header-section" style="position:relative;">
+            <button class="btn" id="btnGroove">GROOVE</button>
+            <div id="grooveMenu" style="display:none;position:absolute;top:100%;left:0;background:#111;border:1px solid #444;z-index:200;min-width:160px;padding:4px 0;">
+                <div class="groove-opt" data-groove="humanize">HUMANIZE</div>
+                <div class="groove-opt" data-groove="lazy">LAZY</div>
+                <div class="groove-opt" data-groove="push">PUSH</div>
+                <div class="groove-opt" data-groove="shuffle">SHUFFLE</div>
+                <div class="groove-opt" data-groove="drunken">DRUNKEN</div>
+                <div class="groove-opt" data-groove="accent24">ACCENT 2+4</div>
+                <div class="groove-opt" data-groove="ghost">GHOST NOTES</div>
+                <div class="groove-opt" data-groove="strip">STRIP BACK</div>
+            </div>
+            <button class="zoom-btn" id="grooveAmtDown">&minus;</button>
+            <span class="header-label" id="grooveAmtVal" style="min-width:28px;text-align:center">50%</span>
+            <button class="zoom-btn" id="grooveAmtUp">+</button>
+        </div>
         <div class="header-section">
             <span class="header-label">VEL</span>
             <button class="zoom-btn" id="velDown">&minus;</button>
@@ -769,6 +796,167 @@
         }
         return start;
     }
+
+    // ==================== GROOVE ENGINE ====================
+    let grooveAmount = 50;
+    function updateGrooveAmtDisplay() {
+        document.getElementById('grooveAmtVal').textContent = grooveAmount + '%';
+    }
+    document.getElementById('grooveAmtUp').addEventListener('mousedown', () => {
+        grooveAmount = Math.min(100, grooveAmount + 10);
+        updateGrooveAmtDisplay();
+    });
+    document.getElementById('grooveAmtDown').addEventListener('mousedown', () => {
+        grooveAmount = Math.max(0, grooveAmount - 10);
+        updateGrooveAmtDisplay();
+    });
+
+    document.getElementById('btnGroove').addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        const menu = document.getElementById('grooveMenu');
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('mousedown', (e) => {
+        if (!e.target.closest('#btnGroove') && !e.target.closest('#grooveMenu')) {
+            document.getElementById('grooveMenu').style.display = 'none';
+        }
+    });
+
+    // Helper: check if a note falls on a beat boundary
+    function isOnBeat(start, div) {
+        const pos = start / div;
+        return Math.abs(pos - Math.round(pos)) < 0.01;
+    }
+    function isDownbeat(start) { return isOnBeat(start, 1); }
+    function isBackbeat(start) { return isOnBeat(start, 1) && Math.round(start) % 2 === 1; }
+
+    // Groove templates — operate on note arrays for the active channel
+    const GROOVE_TEMPLATES = {
+        // Humanize: random micro-timing offsets to every note
+        humanize: function(noteArr, amount) {
+            const strength = amount / 100;
+            const maxShift = 0.04 * strength; // up to ~40ms in beat-space at 120bpm
+            noteArr.forEach(n => {
+                if (n._from808 || n._fromMpc) return; // don't touch synced notes
+                n.start = Math.max(0, n.start + (Math.random() * 2 - 1) * maxShift);
+                n.velocity = Math.max(1, Math.min(127, n.velocity + Math.round((Math.random() * 2 - 1) * 8 * strength)));
+            });
+        },
+        // Lazy: push everything slightly late — low notes more, high notes less
+        lazy: function(noteArr, amount) {
+            const maxShift = 0.03 * (amount / 100);
+            noteArr.forEach(n => {
+                if (n._from808 || n._fromMpc) return;
+                const pitchFactor = 1 - (n.pitch - 24) / 96; // low notes drift more
+                n.start = Math.max(0, n.start + maxShift * (0.3 + pitchFactor * 0.7));
+            });
+        },
+        // Push: everything slightly early — creates urgency
+        push: function(noteArr, amount) {
+            const maxShift = -0.025 * (amount / 100);
+            noteArr.forEach(n => {
+                if (n._from808 || n._fromMpc) return;
+                // Off-beat notes pushed harder
+                const offBeat = !isOnBeat(n.start, 1) ? 1.2 : 0.8;
+                n.start = Math.max(0, n.start + maxShift * offBeat);
+            });
+        },
+        // Shuffle: set swing + randomize off-beat velocities
+        shuffle: function(noteArr, amount) {
+            grooveSwing = Math.round(40 * (amount / 100));
+            updateSwingDisplay();
+            noteArr.forEach(n => {
+                if (n._from808 || n._fromMpc) return;
+                const sixteenth = Math.round(n.start / 0.25);
+                if (Math.abs(n.start - sixteenth * 0.25) < 0.01 && sixteenth % 2 === 1) {
+                    n.velocity = Math.max(1, Math.min(127, n.velocity - Math.round(15 * (amount / 100))));
+                }
+            });
+        },
+        // Drunken: large random offsets, loose and wobbly
+        drunken: function(noteArr, amount) {
+            const strength = amount / 100;
+            const maxShift = 0.06 * strength;
+            grooveSwing = Math.round(20 * strength + Math.random() * 15 * strength);
+            updateSwingDisplay();
+            noteArr.forEach(n => {
+                if (n._from808 || n._fromMpc) return;
+                n.start = Math.max(0, n.start + (Math.random() * 2 - 1) * maxShift);
+                n.velocity = Math.max(1, Math.min(127, n.velocity + Math.round((Math.random() * 2 - 1) * 15 * strength)));
+            });
+        },
+        // Accent 2+4: boost velocity on beats 2 and 4, soften others
+        accent24: function(noteArr, amount) {
+            const boost = Math.round(30 * (amount / 100));
+            const soften = Math.round(15 * (amount / 100));
+            noteArr.forEach(n => {
+                if (n._from808 || n._fromMpc) return;
+                const beat = Math.round(n.start);
+                if (Math.abs(n.start - beat) < 0.05 && beat % 2 === 1) {
+                    n.velocity = Math.min(127, n.velocity + boost);
+                } else if (!isDownbeat(n.start)) {
+                    n.velocity = Math.max(1, n.velocity - soften);
+                }
+            });
+        },
+        // Ghost notes: add low-velocity notes between existing ones
+        ghost: function(noteArr, amount) {
+            const prob = 0.3 * (amount / 100);
+            const ghostVel = Math.round(30 + 20 * (amount / 100));
+            const newNotes = [];
+            noteArr.forEach(n => {
+                if (n._from808 || n._fromMpc) return;
+                // Try adding a ghost note one 16th before or after
+                const offsets = [-0.25, 0.25];
+                offsets.forEach(off => {
+                    const ghostStart = n.start + off;
+                    if (ghostStart < 0) return;
+                    // Don't add if a note already exists at that position
+                    const exists = noteArr.some(x => x.pitch === n.pitch && Math.abs(x.start - ghostStart) < 0.05);
+                    if (!exists && Math.random() < prob) {
+                        newNotes.push({
+                            pitch: n.pitch,
+                            start: ghostStart,
+                            duration: Math.min(n.duration, 0.25),
+                            velocity: Math.min(ghostVel, n.velocity - 20),
+                            _ghost: true
+                        });
+                    }
+                });
+            });
+            newNotes.forEach(g => noteArr.push(g));
+        },
+        // Strip back: randomly remove notes for a sparser feel
+        strip: function(noteArr, amount) {
+            const removeProb = 0.35 * (amount / 100);
+            for (let i = noteArr.length - 1; i >= 0; i--) {
+                const n = noteArr[i];
+                if (n._from808 || n._fromMpc) continue;
+                // Never strip notes on strong beats (1 and 3)
+                const beat = Math.round(n.start);
+                if (Math.abs(n.start - beat) < 0.05 && beat % 2 === 0) continue;
+                if (Math.random() < removeProb) noteArr.splice(i, 1);
+            }
+        }
+    };
+
+    document.querySelectorAll('.groove-opt').forEach(opt => {
+        opt.addEventListener('mousedown', () => {
+            const groove = opt.dataset.groove;
+            const fn = GROOVE_TEMPLATES[groove];
+            if (!fn) return;
+            const channelNotes = notes[getStorageChannel()];
+            if (!channelNotes || channelNotes.length === 0) return;
+            fn(channelNotes, grooveAmount);
+            renderNotes();
+            renderVelocity();
+            document.getElementById('grooveMenu').style.display = 'none';
+            // Flash the groove button
+            const btn = document.getElementById('btnGroove');
+            btn.classList.add('active');
+            setTimeout(() => btn.classList.remove('active'), 400);
+        });
+    });
 
     // Velocity +/- for selected notes
     document.getElementById('velUp').addEventListener('mousedown', () => {
