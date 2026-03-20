@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultramaster KR-106</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #111;
+  color: #ddd;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ====== SYNTH BODY ====== */
+.synth {
+  width: 960px;
+  margin: 30px auto 20px;
+  background: #3b3b3b;
+  border: 2px solid #222;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle noise texture */
+.synth::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0,0,0,0.03) 1px,
+    rgba(0,0,0,0.03) 2px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Red/blue accent bar */
+.accent-bar {
+  height: 5px;
+  background: linear-gradient(90deg, #cc0000 0%, #cc0000 70%, #2233cc 70%, #2233cc 100%);
+  position: relative;
+  z-index: 1;
+}
+
+/* ====== TOP PANEL (controls) ====== */
+.top-panel {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+  min-height: 130px;
+}
+
+/* Section container */
+.sec {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #2a2a2a;
+  position: relative;
+}
+
+.sec:last-child { border-right: none; }
+
+/* Section header label bar */
+.sec-hdr {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-align: center;
+  padding: 3px 8px;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+}
+
+.sec-hdr.red { background: #aa1111; color: #fff; }
+.sec-hdr.blue { background: #1a2a7a; color: #ccd; }
+.sec-hdr.green { background: #2a6a1a; color: #dfd; }
+.sec-hdr.dark { background: #2a2a2a; color: #999; }
+
+/* Controls area below header */
+.sec-body {
+  display: flex;
+  gap: 4px;
+  padding: 8px 8px 6px;
+  align-items: flex-end;
+  flex: 1;
+}
+
+/* ====== FADER ====== */
+.fader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.fader-track {
+  width: 10px;
+  height: 60px;
+  background: linear-gradient(to bottom, #1a1a1a, #222);
+  border: 1px solid #111;
+  border-radius: 1px;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+}
+
+/* Track center line */
+.fader-track::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: #444;
+  transform: translateX(-50%);
+}
+
+.fader-handle {
+  width: 16px;
+  height: 5px;
+  background: linear-gradient(to bottom, #ddd, #aaa, #ccc);
+  border: 1px solid #888;
+  border-radius: 1px;
+  position: absolute;
+  left: -4px;
+  bottom: 0;
+  pointer-events: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.fader-lbl {
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  color: #999;
+  white-space: nowrap;
+}
+
+/* ====== WAVEFORM BUTTONS (yellow/amber when active) ====== */
+.wave-btn {
+  width: 26px;
+  height: 22px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.wave-btn svg {
+  width: 16px;
+  height: 14px;
+  fill: none;
+  stroke: #666;
+  stroke-width: 1.5;
+}
+
+.wave-btn.active {
+  background: #c8a520;
+  border-color: #a08010;
+  box-shadow: 0 0 8px rgba(200,165,32,0.4);
+}
+
+.wave-btn.active svg { stroke: #2a2000; }
+
+.wave-lbl {
+  font-size: 6px;
+  letter-spacing: 1px;
+  color: #888;
+  text-align: center;
+  margin-top: 1px;
+}
+
+/* ====== LED BUTTON ====== */
+.led-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.led-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2a1111;
+  border: 1px solid #1a0808;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+}
+
+.led-dot.on {
+  background: #ee2222;
+  border-color: #aa1111;
+  box-shadow: 0 0 6px #ee2222, 0 0 12px rgba(238,34,34,0.3);
+}
+
+.led-lbl {
+  font-size: 6px;
+  letter-spacing: 1px;
+  color: #888;
+}
+
+/* ====== SCOPE + PRESET DISPLAY ====== */
+.scope-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+}
+
+.scope-box {
+  width: 160px;
+  height: 72px;
+  background: #0a0f0a;
+  border: 2px solid #222;
+  border-radius: 3px;
+  box-shadow: inset 0 0 10px rgba(0,40,0,0.3), 0 1px 0 rgba(255,255,255,0.03);
+  overflow: hidden;
+}
+
+.scope-canvas { width: 100%; height: 100%; }
+
+.preset-lcd {
+  background: #0a0f0a;
+  border: 1px solid #222;
+  padding: 3px 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 1.5px;
+  color: #33cc33;
+  text-shadow: 0 0 8px rgba(51,204,51,0.5);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ====== 3-WAY / TOGGLE SWITCH ====== */
+.sw-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.sw-labels {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 5.5px;
+  color: #777;
+  letter-spacing: 0.5px;
+  gap: 5px;
+}
+
+.sw-track {
+  width: 10px;
+  height: 24px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 2px;
+  position: relative;
+}
+
+.sw-handle {
+  width: 14px;
+  height: 8px;
+  background: linear-gradient(to bottom, #bbb, #888);
+  border: 1px solid #666;
+  border-radius: 2px;
+  position: absolute;
+  left: -3px;
+  top: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+/* ====== BOTTOM PANEL ====== */
+.bottom-panel {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid #2a2a2a;
+  position: relative;
+  z-index: 1;
+}
+
+/* Left controls area */
+.left-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #333;
+  border-right: 1px solid #2a2a2a;
+  min-width: 200px;
+}
+
+.knob-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.knob {
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle at 40% 35%, #555, #2a2a2a);
+  border: 2px solid #222;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.knob-indicator {
+  width: 2px;
+  height: 10px;
+  background: #fff;
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform-origin: center top;
+  transform: translateX(-50%) rotate(0deg);
+}
+
+.knob-lbl {
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  color: #999;
+}
+
+/* Mini bender faders */
+.bender-group {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.bender-fader .fader-track {
+  height: 35px;
+  width: 8px;
+}
+
+.bender-fader .fader-handle {
+  width: 12px;
+  left: -3px;
+}
+
+.bender-fader .fader-lbl { font-size: 6px; }
+
+/* ====== KEYBOARD ====== */
+.keyboard-wrap {
+  flex: 1;
+  position: relative;
+  height: 120px;
+  background: #2a2a2a;
+  overflow: hidden;
+}
+
+.keyboard {
+  display: flex;
+  height: 100%;
+  padding: 0;
+}
+
+.wkey {
+  flex: 1;
+  background: linear-gradient(to bottom, #e8e8e8 0%, #f5f5f5 60%, #ddd 100%);
+  border-left: 1px solid #bbb;
+  border-bottom: 3px solid #aaa;
+  position: relative;
+  z-index: 1;
+  transition: background 0.05s;
+}
+
+.wkey:first-child { border-left: none; }
+
+.wkey.active {
+  background: linear-gradient(to bottom, #ccc 0%, #ddd 60%, #bbb 100%);
+  border-bottom-color: #888;
+}
+
+.bkeys {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 62%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.bkey {
+  position: absolute;
+  width: 2.6%;
+  height: 100%;
+  background: linear-gradient(to bottom, #222 0%, #333 40%, #1a1a1a 100%);
+  border: 1px solid #111;
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.5);
+  z-index: 2;
+  pointer-events: auto;
+  transition: background 0.05s;
+}
+
+.bkey.active {
+  background: linear-gradient(to bottom, #333 0%, #444 40%, #2a2a2a 100%);
+}
+
+/* ====== PRESET NAV ====== */
+.pnav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pnav-btn {
+  width: 22px;
+  height: 22px;
+  background: #2a2a2a;
+  border: 1px solid #555;
+  color: #aaa;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.pnav-btn:active { background: #444; }
+
+/* ====== ENV/VCF INVERT INDICATOR ====== */
+.inv-sw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.inv-label { font-size: 5px; color: #777; letter-spacing: 1px; }
+
+.inv-box {
+  width: 14px;
+  height: 14px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #666;
+}
+
+.inv-box.active { color: #ee2222; }
+
+/* ====== START OVERLAY ====== */
+.start-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0e0e0e;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.start-overlay.hidden { display: none; }
+
+.start-logo {
+  font-family: 'Archivo Black', sans-serif;
+  font-style: italic;
+  font-size: 36px;
+  letter-spacing: 3px;
+}
+
+.start-logo .r { color: #cc0000; }
+.start-logo .b { color: #2233cc; }
+
+.start-sub {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #555;
+}
+
+.start-btn {
+  background: none;
+  border: 2px solid #2233cc;
+  color: #2233cc;
+  padding: 14px 50px;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  margin-top: 24px;
+}
+
+.start-btn:hover { background: rgba(34,51,204,0.1); }
+.start-btn:active { background: rgba(34,51,204,0.2); }
+
+.start-hint {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #333;
+  margin-top: 40px;
+}
+
+/* ====== BOTTOM STATUS BAR ====== */
+.status-bar {
+  width: 960px;
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: #444;
+}
+
+.midi-status.connected { color: #33cc33; }
+</style>
+</head>
+<body>
+
+<!-- START OVERLAY -->
+<div class="start-overlay" id="startOverlay">
+  <div class="start-logo"><span class="r">ULTRAMASTER</span> <span class="b">KR-106</span></div>
+  <div class="start-sub">VIRTUAL ANALOG SYNTHESIZER</div>
+  <div class="start-sub" style="color:#333; letter-spacing:3px; font-size:9px;">6-VOICE POLYPHONIC &middot; TPT LADDER FILTER &middot; BBD CHORUS</div>
+  <button class="start-btn" id="startBtn">START SYNTH</button>
+  <div class="start-hint">KEYBOARD: A-L NOTES &middot; Z/X OCTAVE &middot; ARROW KEYS PRESETS &middot; MIDI AUTO-DETECTS</div>
+</div>
+
+<!-- SYNTH BODY -->
+<div class="synth">
+  <div class="accent-bar"></div>
+
+  <!-- TOP PANEL -->
+  <div class="top-panel">
+
+    <!-- POWER/TRANSPOSE area -->
+    <div class="sec" style="min-width:60px;">
+      <div class="sec-hdr dark">POWER</div>
+      <div class="sec-body" style="flex-direction:column; align-items:center; gap:6px; justify-content:center;">
+        <div class="led-btn" id="powerLed">
+          <div class="led-dot on"></div>
+          <div class="led-lbl">ON</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARPEGGIO -->
+    <div class="sec">
+      <div class="sec-hdr green">ARPEGGIO</div>
+      <div class="sec-body">
+        <div class="led-btn" id="arpOnBtn" data-toggle="arpEnabled">
+          <div class="led-dot" id="arpLed"></div>
+          <div class="led-lbl">ON</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="arpRate" style="height:45px;">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">RATE</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LFO -->
+    <div class="sec">
+      <div class="sec-hdr red">LFO</div>
+      <div class="sec-body">
+        <div class="fader">
+          <div class="fader-track" data-param="lfoRate">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">RATE</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="lfoDelay">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">DELAY</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DCO -->
+    <div class="sec" style="flex:1.4;">
+      <div class="sec-hdr red">DCO</div>
+      <div class="sec-body">
+        <div class="fader">
+          <div class="fader-track" data-param="dcoLfo">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">LFO</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="dcoPwm">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">PWM</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:3px; align-items:center; margin: 0 4px;">
+          <!-- Pulse wave icon button -->
+          <div class="wave-btn" id="btnPulse" data-toggle="pulseOn">
+            <svg viewBox="0 0 16 14"><polyline points="1,10 1,4 8,4 8,10 15,10"/></svg>
+          </div>
+          <!-- Saw wave icon button -->
+          <div class="wave-btn active" id="btnSaw" data-toggle="sawOn">
+            <svg viewBox="0 0 16 14"><polyline points="1,10 8,3 8,10 15,3"/></svg>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:3px; align-items:center;">
+          <!-- Sub square wave button -->
+          <div class="wave-btn active" id="btnSub" data-toggle="subOn">
+            <svg viewBox="0 0 16 14"><polyline points="1,10 1,4 4,4 4,10 8,10 8,4 11,4 11,10 15,10"/></svg>
+          </div>
+          <div class="wave-lbl">SUB</div>
+        </div>
+
+        <div class="fader">
+          <div class="fader-track" data-param="dcoSub">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">SUB</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="dcoNoise">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">NOISE</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HPF -->
+    <div class="sec">
+      <div class="sec-hdr blue">HPF</div>
+      <div class="sec-body">
+        <div class="fader">
+          <div class="fader-track" data-param="hpf">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">FREQ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VCF -->
+    <div class="sec" style="flex:1.2;">
+      <div class="sec-hdr blue">VCF</div>
+      <div class="sec-body">
+        <div class="fader">
+          <div class="fader-track" data-param="vcfFreq">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">FREQ</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="vcfRes">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">RES</div>
+        </div>
+
+        <div class="inv-sw" id="vcfInvBtn">
+          <div class="inv-label">ENV</div>
+          <div class="inv-box" id="vcfInvBox">&darr;</div>
+          <div class="inv-label">INV</div>
+        </div>
+
+        <div class="fader">
+          <div class="fader-track" data-param="vcfEnv">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">ENV</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="vcfLfo">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">LFO</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="vcfKbd">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">KYBD</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VCA -->
+    <div class="sec">
+      <div class="sec-hdr blue">VCA</div>
+      <div class="sec-body">
+        <div class="fader">
+          <div class="fader-track" data-param="vcaLevel">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">LEVEL</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+          <div class="led-btn" id="gateBtn">
+            <div class="led-dot" id="gateLed"></div>
+            <div class="led-lbl">GATE</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENV -->
+    <div class="sec">
+      <div class="sec-hdr blue">ENV</div>
+      <div class="sec-body">
+        <div class="fader">
+          <div class="fader-track" data-param="envA">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">A</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="envD">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">D</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="envS">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">S</div>
+        </div>
+        <div class="fader">
+          <div class="fader-track" data-param="envR">
+            <div class="fader-handle"></div>
+          </div>
+          <div class="fader-lbl">R</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHORUS -->
+    <div class="sec">
+      <div class="sec-hdr blue">CHORUS</div>
+      <div class="sec-body" style="gap:6px;">
+        <div class="led-btn" id="chorusOffBtn" data-chorus="0">
+          <div class="led-dot" id="chorusOffLed"></div>
+          <div class="led-lbl">OFF</div>
+        </div>
+        <div class="led-btn" id="chorusIBtn" data-chorus="1">
+          <div class="led-dot on" id="chorusILed"></div>
+          <div class="led-lbl">I</div>
+        </div>
+        <div class="led-btn" id="chorusIIBtn" data-chorus="2">
+          <div class="led-dot" id="chorusIILed"></div>
+          <div class="led-lbl">II</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCOPE + PRESET -->
+    <div class="sec" style="border-right:none;">
+      <div class="scope-area">
+        <div class="scope-box">
+          <canvas class="scope-canvas" id="scopeCanvas" width="320" height="144"></canvas>
+        </div>
+        <div style="display:flex; align-items:center; gap:4px;">
+          <div class="pnav">
+            <div class="pnav-btn" id="prevPreset">&lsaquo;</div>
+            <div class="pnav-btn" id="nextPreset">&rsaquo;</div>
+          </div>
+          <div class="preset-lcd" id="presetDisplay">A11 Brass</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM: LEFT CONTROLS + KEYBOARD -->
+  <div class="bottom-panel">
+    <div class="left-controls">
+      <div class="knob-group">
+        <div class="knob" data-param="masterVol" id="knobVol">
+          <div class="knob-indicator" id="knobVolInd"></div>
+        </div>
+        <div class="knob-lbl">VOLUME</div>
+      </div>
+      <div class="knob-group">
+        <div class="knob" data-param="portaRate" id="knobPorta">
+          <div class="knob-indicator" id="knobPortaInd"></div>
+        </div>
+        <div class="knob-lbl">PORTA</div>
+      </div>
+      <div class="bender-group">
+        <div class="fader bender-fader">
+          <div class="fader-lbl">DCO</div>
+        </div>
+        <div class="fader bender-fader">
+          <div class="fader-lbl">VCF</div>
+        </div>
+        <div class="fader bender-fader">
+          <div class="fader-lbl">LFO</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="keyboard-wrap">
+      <div class="keyboard" id="keyboard"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div class="status-bar">
+  <div class="midi-status" id="midiStatus">MIDI: NOT CONNECTED</div>
+  <div>KEYS: A-L NOTES &middot; Z/X OCTAVE &middot; &larr;&rarr; PRESETS</div>
+</div>
+
+<script>
+// ==================== PRESETS ====================
+const PRESETS = [
+  { name: "A11 Brass", p: { lfoRate:0.15748, lfoDelay:0.385827, dcoLfo:0, dcoPwm:0.80315, dcoSub:0, dcoNoise:0, hpf:0.333, vcfFreq:0.275591, vcfRes:0.102362, vcfEnv:0.456693, vcfLfo:0, vcfKbd:0.677165, vcaLevel:0.850394, envA:0.023622, envD:0.385827, envS:0.354331, envR:0.251969, pulseOn:false, sawOn:true, subOn:false, chorusMode:1, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "A15 Moving Strings", p: { lfoRate:0.496063, lfoDelay:0, dcoLfo:0, dcoPwm:0.307087, dcoSub:0.110236, dcoNoise:0, hpf:0.333, vcfFreq:0.606299, vcfRes:0.15748, vcfEnv:0.0314961, vcfLfo:0, vcfKbd:0.874016, vcaLevel:0.267717, envA:0.102362, envD:0.685039, envS:0.692913, envR:0.275591, pulseOn:true, sawOn:true, subOn:true, chorusMode:2, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "A17 Choir", p: { lfoRate:0.464567, lfoDelay:0.110236, dcoLfo:0.102362, dcoPwm:0.19685, dcoSub:0, dcoNoise:0, hpf:0.667, vcfFreq:0.464567, vcfRes:0.740157, vcfEnv:0.015748, vcfLfo:0, vcfKbd:0.488189, vcaLevel:1, envA:0.535433, envD:0.0866142, envS:1, envR:0.377953, pulseOn:true, sawOn:false, subOn:false, chorusMode:1, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "A18 Piano I", p: { lfoRate:0.15748, lfoDelay:0.385827, dcoLfo:0, dcoPwm:0.629921, dcoSub:0.677165, dcoNoise:0, hpf:0.333, vcfFreq:0.511811, vcfRes:0.0944882, vcfEnv:0.0787402, vcfLfo:0, vcfKbd:0.212598, vcaLevel:0.811024, envA:0, envD:0.519685, envS:0, envR:0.23622, pulseOn:true, sawOn:false, subOn:true, chorusMode:0, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "A21 Organ I", p: { lfoRate:0.425197, lfoDelay:0.11811, dcoLfo:0, dcoPwm:0.417323, dcoSub:0.181102, dcoNoise:0, hpf:0, vcfFreq:0.338583, vcfRes:0.598425, vcfEnv:0.110236, vcfLfo:0.00787402, vcfKbd:1, vcaLevel:0.787402, envA:0, envD:0.0787402, envS:0.645669, envR:0, pulseOn:true, sawOn:false, subOn:true, chorusMode:0, vcaMode:1, masterVol:0.8, portaRate:0 }},
+  { name: "A27 Elect. Piano I", p: { lfoRate:0.464567, lfoDelay:0, dcoLfo:0, dcoPwm:0, dcoSub:0, dcoNoise:0, hpf:1, vcfFreq:0.125984, vcfRes:0.244094, vcfEnv:0.480315, vcfLfo:0.0472441, vcfKbd:0.275591, vcaLevel:1, envA:0.00787402, envD:0.669291, envS:0.338583, envR:0.314961, pulseOn:true, sawOn:false, subOn:false, chorusMode:2, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "A44 Guitar", p: { lfoRate:0.677165, lfoDelay:0.456693, dcoLfo:0, dcoPwm:0.511811, dcoSub:0, dcoNoise:0, hpf:0.333, vcfFreq:0.0944882, vcfRes:0.11811, vcfEnv:0.559055, vcfLfo:0, vcfKbd:0.23622, vcaLevel:0.755906, envA:0, envD:0.409449, envS:0.425197, envR:0.244094, pulseOn:true, sawOn:true, subOn:false, chorusMode:2, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "A48 Synth Bass I", p: { lfoRate:0.456693, lfoDelay:0.125984, dcoLfo:0.00787402, dcoPwm:0.448819, dcoSub:0.80315, dcoNoise:0.393701, hpf:0, vcfFreq:0.251969, vcfRes:0, vcfEnv:0.519685, vcfLfo:0, vcfKbd:0.275591, vcaLevel:0.590551, envA:0, envD:0.267717, envS:0, envR:0.283465, pulseOn:true, sawOn:false, subOn:true, chorusMode:2, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "A51 Lead I", p: { lfoRate:0.566929, lfoDelay:0.692913, dcoLfo:0.141732, dcoPwm:0, dcoSub:0, dcoNoise:0, hpf:0, vcfFreq:0.314961, vcfRes:0.76378, vcfEnv:0.283465, vcfLfo:0, vcfKbd:0.409449, vcaLevel:0.779528, envA:0, envD:0.354331, envS:0.574803, envR:0, pulseOn:true, sawOn:false, subOn:false, chorusMode:1, vcaMode:1, masterVol:0.8, portaRate:0 }},
+  { name: "A55 Synth Bass II", p: { lfoRate:0.708661, lfoDelay:0.165354, dcoLfo:0, dcoPwm:0, dcoSub:0.354331, dcoNoise:0, hpf:0, vcfFreq:0.338583, vcfRes:0, vcfEnv:0.370079, vcfLfo:0, vcfKbd:0, vcaLevel:0.614173, envA:0, envD:0.291339, envS:0.0708661, envR:0.173228, pulseOn:false, sawOn:true, subOn:true, chorusMode:2, vcaMode:1, masterVol:0.8, portaRate:0 }},
+  { name: "A68 Synth Pad", p: { lfoRate:0.440945, lfoDelay:0, dcoLfo:0.0393701, dcoPwm:0.338583, dcoSub:0.291339, dcoNoise:0, hpf:0, vcfFreq:0.291339, vcfRes:0, vcfEnv:0.661417, vcfLfo:0, vcfKbd:1, vcaLevel:0.401575, envA:0, envD:0.669291, envS:0.590551, envR:0.488189, pulseOn:true, sawOn:false, subOn:true, chorusMode:2, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "A71 Sweep I", p: { lfoRate:0.614173, lfoDelay:0, dcoLfo:0, dcoPwm:0.80315, dcoSub:0.330709, dcoNoise:0.220472, hpf:0.333, vcfFreq:0.905512, vcfRes:0.314961, vcfEnv:0.527559, vcfLfo:0, vcfKbd:0, vcaLevel:0.76378, envA:0, envD:0.496063, envS:1, envR:0.645669, pulseOn:true, sawOn:false, subOn:true, chorusMode:2, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "A82 Resonance Funk", p: { lfoRate:0.464567, lfoDelay:0, dcoLfo:0, dcoPwm:0, dcoSub:0, dcoNoise:0, hpf:0.333, vcfFreq:0.204724, vcfRes:1, vcfEnv:0.354331, vcfLfo:0, vcfKbd:0.700787, vcaLevel:1, envA:0, envD:0.149606, envS:0, envR:0.173228, pulseOn:false, sawOn:false, subOn:false, chorusMode:0, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "B11 Strings", p: { lfoRate:0.448819, lfoDelay:0.354331, dcoLfo:0, dcoPwm:0.433071, dcoSub:0, dcoNoise:0, hpf:0, vcfFreq:0.669291, vcfRes:0, vcfEnv:0, vcfLfo:0, vcfKbd:0.850394, vcaLevel:0.409449, envA:0.464567, envD:0.251969, envS:0.677165, envR:0.314961, pulseOn:true, sawOn:true, subOn:false, chorusMode:2, vcaMode:0, masterVol:0.8, portaRate:0 }},
+  { name: "B35 Tomita", p: { lfoRate:0.614173, lfoDelay:0, dcoLfo:0, dcoPwm:0.826772, dcoSub:0, dcoNoise:0, hpf:0, vcfFreq:0.385827, vcfRes:0.984252, vcfEnv:0.11811, vcfLfo:0.015748, vcfKbd:1, vcaLevel:0.448819, envA:0, envD:0.110236, envS:0.622047, envR:0, pulseOn:false, sawOn:false, subOn:false, chorusMode:0, vcaMode:1, masterVol:0.8, portaRate:0 }},
+  { name: "B56 Ethereal", p: { lfoRate:0.543307, lfoDelay:0, dcoLfo:0, dcoPwm:0.826772, dcoSub:0.464567, dcoNoise:0, hpf:0, vcfFreq:0.370079, vcfRes:0.944882, vcfEnv:0, vcfLfo:0, vcfKbd:1, vcaLevel:0.472441, envA:0.724409, envD:0.393701, envS:1, envR:0.433071, pulseOn:true, sawOn:true, subOn:false, chorusMode:2, vcaMode:0, masterVol:0.8, portaRate:0 }},
+];
+
+// ==================== STATE ====================
+let audioCtx, synthNode;
+let currentPresetIdx = 0;
+let currentOctave = 4;
+let activeKeys = new Set();
+
+// ==================== AUDIO ====================
+async function initAudio() {
+  audioCtx = new AudioContext({ sampleRate: 44100 });
+  await audioCtx.audioWorklet.addModule('synth-processor.js');
+  synthNode = new AudioWorkletNode(audioCtx, 'kr106-processor', {
+    numberOfOutputs: 1,
+    outputChannelCount: [2]
+  });
+  synthNode.connect(audioCtx.destination);
+  synthNode.port.onmessage = (e) => {
+    if (e.data.type === 'scope') drawScope(e.data.data);
+  };
+  loadPreset(0);
+  // Only init MIDI directly if NOT in an iframe (parent handles routing)
+  if (window === window.parent) initMIDI();
+}
+
+// ==================== PRESETS ====================
+function loadPreset(idx) {
+  currentPresetIdx = idx;
+  const preset = PRESETS[idx];
+  document.getElementById('presetDisplay').textContent = preset.name;
+  synthNode.port.postMessage({ type: 'preset', params: preset.p });
+  updateUI(preset.p);
+}
+
+function updateUI(p) {
+  // Faders
+  document.querySelectorAll('.fader-track').forEach(track => {
+    const param = track.dataset.param;
+    if (p[param] !== undefined) {
+      const val = p[param];
+      const h = track.offsetHeight - 5;
+      track.querySelector('.fader-handle').style.bottom = (val * h) + 'px';
+      track._value = val;
+    }
+  });
+
+  // Wave buttons
+  document.getElementById('btnSaw').classList.toggle('active', !!p.sawOn);
+  document.getElementById('btnPulse').classList.toggle('active', !!p.pulseOn);
+  document.getElementById('btnSub').classList.toggle('active', !!p.subOn);
+
+  // Gate LED
+  const gateLed = document.getElementById('gateLed');
+  if (gateLed) gateLed.classList.toggle('on', p.vcaMode === 1);
+
+  // Chorus LEDs
+  const cm = p.chorusMode || 0;
+  document.getElementById('chorusOffLed').classList.toggle('on', cm === 0);
+  document.getElementById('chorusILed').classList.toggle('on', cm === 1);
+  document.getElementById('chorusIILed').classList.toggle('on', cm === 2);
+
+  // Knobs
+  updateKnob('knobVolInd', p.masterVol || 0.8);
+  updateKnob('knobPortaInd', p.portaRate || 0);
+}
+
+function updateKnob(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const angle = -135 + val * 270; // -135 to +135 degrees
+  el.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+}
+
+// ==================== FADERS ====================
+function initFaders() {
+  const updateFader = (track, clientY) => {
+    const rect = track.getBoundingClientRect();
+    const h = rect.height - 5;
+    let val = 1 - (clientY - rect.top - 2.5) / h;
+    val = Math.max(0, Math.min(1, val));
+    track.querySelector('.fader-handle').style.bottom = (val * h) + 'px';
+    track._value = val;
+    const param = track.dataset.param;
+    if (synthNode && param) {
+      synthNode.port.postMessage({ type: 'param', name: param, value: val });
+    }
+  };
+
+  document.querySelectorAll('.fader-track').forEach(track => {
+    if (!track.dataset.param) return;
+    track._value = 0;
+    track.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      track.setPointerCapture(e.pointerId);
+      updateFader(track, e.clientY);
+      const move = (ev) => updateFader(track, ev.clientY);
+      const up = () => {
+        track.removeEventListener('pointermove', move);
+        track.removeEventListener('pointerup', up);
+      };
+      track.addEventListener('pointermove', move);
+      track.addEventListener('pointerup', up);
+    });
+  });
+}
+
+// ==================== KNOBS ====================
+function initKnobs() {
+  const knobs = [
+    { el: 'knobVol', ind: 'knobVolInd', param: 'masterVol', val: 0.8 },
+    { el: 'knobPorta', ind: 'knobPortaInd', param: 'portaRate', val: 0 }
+  ];
+
+  knobs.forEach(k => {
+    const el = document.getElementById(k.el);
+    if (!el) return;
+    let startY, startVal;
+
+    el.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      startY = e.clientY;
+      startVal = k.val;
+      const move = (ev) => {
+        const dy = startY - ev.clientY;
+        k.val = Math.max(0, Math.min(1, startVal + dy / 100));
+        updateKnob(k.ind, k.val);
+        if (synthNode) synthNode.port.postMessage({ type: 'param', name: k.param, value: k.val });
+      };
+      const up = () => {
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerup', up);
+      };
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', up);
+    });
+  });
+}
+
+// ==================== BUTTONS ====================
+function initButtons() {
+  // Wave toggles
+  ['btnSaw', 'btnPulse', 'btnSub'].forEach(id => {
+    document.getElementById(id).addEventListener('click', () => {
+      const btn = document.getElementById(id);
+      btn.classList.toggle('active');
+      const param = btn.dataset.toggle;
+      const val = btn.classList.contains('active');
+      if (synthNode) synthNode.port.postMessage({ type: 'param', name: param, value: val });
+    });
+  });
+
+  // Gate mode
+  document.getElementById('gateBtn').addEventListener('click', () => {
+    const led = document.getElementById('gateLed');
+    led.classList.toggle('on');
+    const val = led.classList.contains('on') ? 1 : 0;
+    if (synthNode) synthNode.port.postMessage({ type: 'param', name: 'vcaMode', value: val });
+  });
+
+  // VCF Env Invert
+  document.getElementById('vcfInvBtn').addEventListener('click', () => {
+    const box = document.getElementById('vcfInvBox');
+    box.classList.toggle('active');
+    const val = box.classList.contains('active');
+    if (synthNode) synthNode.port.postMessage({ type: 'param', name: 'vcfEnvInv', value: val });
+  });
+
+  // Chorus
+  ['chorusOffBtn', 'chorusIBtn', 'chorusIIBtn'].forEach(id => {
+    document.getElementById(id).addEventListener('click', () => {
+      const mode = parseInt(document.getElementById(id).dataset.chorus);
+      document.getElementById('chorusOffLed').classList.toggle('on', mode === 0);
+      document.getElementById('chorusILed').classList.toggle('on', mode === 1);
+      document.getElementById('chorusIILed').classList.toggle('on', mode === 2);
+      if (synthNode) synthNode.port.postMessage({ type: 'param', name: 'chorusMode', value: mode });
+    });
+  });
+
+  // Arp
+  document.getElementById('arpOnBtn').addEventListener('click', () => {
+    const led = document.getElementById('arpLed');
+    led.classList.toggle('on');
+    const val = led.classList.contains('on');
+    if (synthNode) synthNode.port.postMessage({ type: 'param', name: 'arpEnabled', value: val });
+  });
+
+  // Preset nav
+  document.getElementById('prevPreset').addEventListener('click', () => {
+    loadPreset((currentPresetIdx - 1 + PRESETS.length) % PRESETS.length);
+  });
+  document.getElementById('nextPreset').addEventListener('click', () => {
+    loadPreset((currentPresetIdx + 1) % PRESETS.length);
+  });
+}
+
+// ==================== KEYBOARD ====================
+function buildKeyboard() {
+  const container = document.getElementById('keyboard');
+  const whiteNotes = [0,2,4,5,7,9,11];
+  const blackNoteMap = {0:1, 2:3, 5:6, 7:8, 9:10};
+  const numOctaves = 4;
+
+  let html = '';
+  for (let oct = 0; oct < numOctaves; oct++) {
+    for (let i = 0; i < 7; i++) {
+      const note = whiteNotes[i];
+      const midi = (currentOctave + oct) * 12 + note;
+      html += `<div class="wkey" data-note="${midi}"></div>`;
+    }
+  }
+  // Extra C at end
+  html += `<div class="wkey" data-note="${(currentOctave + numOctaves) * 12}"></div>`;
+  container.innerHTML = html;
+
+  // Black keys
+  const bkDiv = document.createElement('div');
+  bkDiv.className = 'bkeys';
+  const totalW = numOctaves * 7 + 1;
+  const ww = 100 / totalW;
+
+  for (let oct = 0; oct < numOctaves; oct++) {
+    for (let i = 0; i < 7; i++) {
+      const bn = blackNoteMap[whiteNotes[i]];
+      if (bn !== undefined) {
+        const midi = (currentOctave + oct) * 12 + bn;
+        const pos = (oct * 7 + i + 1) * ww - ww * 0.35;
+        const bk = document.createElement('div');
+        bk.className = 'bkey';
+        bk.dataset.note = midi;
+        bk.style.left = pos + '%';
+        bkDiv.appendChild(bk);
+      }
+    }
+  }
+  container.parentElement.appendChild(bkDiv);
+
+  // Interaction
+  const noteOn = (el) => {
+    const note = parseInt(el.dataset.note);
+    el.classList.add('active');
+    if (synthNode) synthNode.port.postMessage({ type: 'noteOn', note, velocity: 100 });
+  };
+  const noteOff = (el) => {
+    const note = parseInt(el.dataset.note);
+    el.classList.remove('active');
+    if (synthNode) synthNode.port.postMessage({ type: 'noteOff', note });
+  };
+
+  container.parentElement.querySelectorAll('.wkey, .bkey').forEach(el => {
+    el.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      noteOn(el);
+    });
+    el.addEventListener('pointerup', () => noteOff(el));
+    el.addEventListener('pointerleave', () => {
+      if (el.classList.contains('active')) noteOff(el);
+    });
+  });
+}
+
+// ==================== COMPUTER KEYBOARD ====================
+const keyMap = {
+  'a':0,'w':1,'s':2,'e':3,'d':4,'f':5,'t':6,'g':7,'y':8,'h':9,'u':10,'j':11,
+  'k':12,'o':13,'l':14,'p':15,';':16,"'":17
+};
+
+function initComputerKeyboard() {
+  document.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    const k = e.key.toLowerCase();
+    if (k === 'z') { currentOctave = Math.max(1, currentOctave - 1); buildKeyboard(); return; }
+    if (k === 'x') { currentOctave = Math.min(7, currentOctave + 1); buildKeyboard(); return; }
+    if (k === 'arrowleft') { loadPreset((currentPresetIdx - 1 + PRESETS.length) % PRESETS.length); return; }
+    if (k === 'arrowright') { loadPreset((currentPresetIdx + 1) % PRESETS.length); return; }
+
+    if (keyMap[k] !== undefined && !activeKeys.has(k)) {
+      activeKeys.add(k);
+      const note = currentOctave * 12 + keyMap[k];
+      if (synthNode) synthNode.port.postMessage({ type: 'noteOn', note, velocity: 100 });
+      highlightKey(note, true);
+    }
+  });
+  document.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    if (keyMap[k] !== undefined) {
+      activeKeys.delete(k);
+      const note = currentOctave * 12 + keyMap[k];
+      if (synthNode) synthNode.port.postMessage({ type: 'noteOff', note });
+      highlightKey(note, false);
+    }
+  });
+}
+
+function highlightKey(note, on) {
+  const el = document.querySelector(`.wkey[data-note="${note}"], .bkey[data-note="${note}"]`);
+  if (el) el.classList.toggle('active', on);
+}
+
+// ==================== MIDI ====================
+async function initMIDI() {
+  try {
+    const midi = await navigator.requestMIDIAccess();
+    const st = document.getElementById('midiStatus');
+    const connect = () => {
+      let c = false;
+      midi.inputs.forEach(inp => { inp.onmidimessage = handleMIDI; c = true; });
+      st.textContent = c ? 'MIDI: CONNECTED' : 'MIDI: NO DEVICES';
+      st.classList.toggle('connected', c);
+    };
+    connect();
+    midi.onstatechange = connect;
+  } catch(e) {}
+}
+
+function handleMIDI(msg) {
+  const [status, note, vel] = msg.data;
+  const cmd = status & 0xF0;
+  if (cmd === 0x90 && vel > 0) {
+    synthNode.port.postMessage({ type: 'noteOn', note, velocity: vel });
+    highlightKey(note, true);
+  } else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
+    synthNode.port.postMessage({ type: 'noteOff', note });
+    highlightKey(note, false);
+  } else if (cmd === 0xB0 && note === 1) {
+    synthNode.port.postMessage({ type: 'param', name: 'vcfFreq', value: vel / 127 });
+  }
+}
+
+// ==================== SCOPE ====================
+const scopeCanvas = document.getElementById('scopeCanvas');
+const scopeCtx = scopeCanvas.getContext('2d');
+
+function drawScope(data) {
+  const w = scopeCanvas.width;
+  const h = scopeCanvas.height;
+
+  // CRT background
+  scopeCtx.fillStyle = '#050a05';
+  scopeCtx.fillRect(0, 0, w, h);
+
+  // Grid lines
+  scopeCtx.strokeStyle = '#0a1a0a';
+  scopeCtx.lineWidth = 0.5;
+  for (let i = 1; i < 4; i++) {
+    const y = (h / 4) * i;
+    scopeCtx.beginPath(); scopeCtx.moveTo(0, y); scopeCtx.lineTo(w, y); scopeCtx.stroke();
+  }
+  for (let i = 1; i < 6; i++) {
+    const x = (w / 6) * i;
+    scopeCtx.beginPath(); scopeCtx.moveTo(x, 0); scopeCtx.lineTo(x, h); scopeCtx.stroke();
+  }
+
+  // Glow layer
+  scopeCtx.shadowColor = '#33ff33';
+  scopeCtx.shadowBlur = 6;
+  scopeCtx.strokeStyle = '#33dd33';
+  scopeCtx.lineWidth = 1.5;
+  scopeCtx.beginPath();
+  const step = w / data.length;
+  for (let i = 0; i < data.length; i++) {
+    const x = i * step;
+    const y = h / 2 - data[i] * h * 1.5;
+    if (i === 0) scopeCtx.moveTo(x, y);
+    else scopeCtx.lineTo(x, y);
+  }
+  scopeCtx.stroke();
+  scopeCtx.shadowBlur = 0;
+}
+
+// ==================== INIT ====================
+document.getElementById('startBtn').addEventListener('click', async () => {
+  document.getElementById('startOverlay').classList.add('hidden');
+  await initAudio();
+  initFaders();
+  initKnobs();
+  initButtons();
+  buildKeyboard();
+  initComputerKeyboard();
+});
+
+drawScope(new Array(256).fill(0));
+
+// ==================== IFRAME MIDI BRIDGE ====================
+if (window !== window.parent) {
+  window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (d && d.type === 'midi' && synthNode) {
+      handleMIDI({data: d.data});
+    }
+    if (d && d.type === 'keyboard-focus') {
+      // Enable/disable keyboard input
+      window.__kbEnabled = d.enabled;
+    }
+  });
+  // Override keyboard to respect focus
+  window.__kbEnabled = false;
+  const origKeyDown = document.onkeydown;
+  const origKeyUp = document.onkeyup;
+  document.addEventListener('keydown', (e) => {
+    if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true);
+  document.addEventListener('keyup', (e) => {
+    if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true);
+  // Tell parent we're ready
+  window.parent.postMessage({type: 'instrument-ready', name: 'kr106'}, '*');
+}
+</script>
+</body>
+</html>

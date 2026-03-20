@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STUDIO</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            background: #0a0a0a;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #ccc;
+            user-select: none;
+        }
+
+        .studio {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ROUTING BAR */
+        .routing-bar {
+            background: #141414;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .routing-title {
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: #666;
+            margin-right: 8px;
+        }
+        .midi-devices {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            overflow-x: auto;
+            align-items: center;
+        }
+        .midi-device {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .midi-device-name {
+            font-size: 8px;
+            letter-spacing: 1px;
+            color: #888;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .midi-device-led {
+            width: 5px;
+            height: 5px;
+            background: #333;
+            flex-shrink: 0;
+        }
+        .midi-device-led.active {
+            background: #33ff33;
+            box-shadow: 0 0 4px #33ff33;
+        }
+        .route-select {
+            background: #111;
+            border: 1px solid #444;
+            color: #aaa;
+            font-family: Arial, sans-serif;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 6px;
+            outline: none;
+            letter-spacing: 0.5px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .route-select option {
+            background: #111;
+            color: #aaa;
+        }
+
+        /* KEYBOARD ROUTING */
+        .kb-route {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .kb-label {
+            font-size: 8px;
+            color: #666;
+            letter-spacing: 1px;
+        }
+        .kb-btn {
+            padding: 5px 12px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            font-size: 8px;
+            color: #666;
+            letter-spacing: 1px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .kb-btn.active {
+            border-color: #228B22;
+            color: #228B22;
+            background: #0a1a0a;
+        }
+        .no-midi {
+            font-size: 8px;
+            color: #444;
+            letter-spacing: 1px;
+        }
+
+        /* INSTRUMENT FRAMES */
+        .instruments {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .inst-wrapper {
+            flex: 1;
+            position: relative;
+            border-bottom: 1px solid #222;
+            min-height: 0;
+        }
+        .inst-wrapper:last-child {
+            border-bottom: none;
+        }
+        .inst-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        .inst-focus-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: transparent;
+            z-index: 5;
+            pointer-events: none;
+            transition: background 0.15s;
+        }
+        .inst-wrapper.focused .inst-focus-indicator {
+            background: #228B22;
+            box-shadow: 0 0 8px rgba(34,139,34,0.4);
+        }
+        .inst-label {
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            font-size: 7px;
+            letter-spacing: 2px;
+            color: #333;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .inst-wrapper.focused .inst-label {
+            color: #228B22;
+        }
+    </style>
+</head>
+<body>
+
+<div class="studio">
+    <!-- MIDI ROUTING BAR -->
+    <div class="routing-bar">
+        <span class="routing-title">MIDI</span>
+        <div class="midi-devices" id="midiDevices">
+            <span class="no-midi" id="noMidi">NO MIDI DEVICES DETECTED</span>
+        </div>
+        <div class="kb-route">
+            <span class="kb-label">KEYBOARD</span>
+            <div class="kb-btn active" id="kbKr106" data-target="kr106">KR-106</div>
+            <div class="kb-btn" id="kbMpc" data-target="mpc">MPC</div>
+        </div>
+    </div>
+
+    <!-- INSTRUMENTS -->
+    <div class="instruments">
+        <div class="inst-wrapper focused" id="wrapKr106" data-inst="kr106">
+            <div class="inst-focus-indicator"></div>
+            <div class="inst-label">ULTRAMASTER KR-106</div>
+            <iframe id="frameKr106" src="kr106.html"></iframe>
+        </div>
+        <div class="inst-wrapper" id="wrapMpc" data-inst="mpc">
+            <div class="inst-focus-indicator"></div>
+            <div class="inst-label">AKAI MPC 4000</div>
+            <iframe id="frameMpc" src="mpc.html"></iframe>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================
+// STATE
+// ============================================
+let midiAccess = null;
+const midiRouting = {}; // inputId -> 'kr106' | 'mpc' | 'both' | 'none'
+let keyboardTarget = 'kr106';
+
+const frameKr106 = document.getElementById('frameKr106');
+const frameMpc = document.getElementById('frameMpc');
+
+function getFrame(target) {
+    if (target === 'kr106') return frameKr106;
+    if (target === 'mpc') return frameMpc;
+    return null;
+}
+
+// ============================================
+// MIDI ROUTING
+// ============================================
+async function initMIDI() {
+    if (!navigator.requestMIDIAccess) return;
+    try {
+        midiAccess = await navigator.requestMIDIAccess();
+        midiAccess.addEventListener('statechange', refreshMIDI);
+        refreshMIDI();
+    } catch(e) {}
+}
+
+function refreshMIDI() {
+    const container = document.getElementById('midiDevices');
+    const noMidi = document.getElementById('noMidi');
+    // Clear old device UIs
+    container.querySelectorAll('.midi-device').forEach(el => el.remove());
+
+    let hasDevices = false;
+    for (const [id, input] of midiAccess.inputs) {
+        hasDevices = true;
+        // Default routing: first device to kr106
+        if (!(id in midiRouting)) {
+            midiRouting[id] = Object.keys(midiRouting).length === 0 ? 'kr106' : 'mpc';
+        }
+
+        const dev = document.createElement('div');
+        dev.className = 'midi-device';
+        dev.innerHTML = `
+            <div class="midi-device-led" id="led-${id}"></div>
+            <span class="midi-device-name">${input.name}</span>
+            <select class="route-select" data-id="${id}">
+                <option value="kr106">KR-106</option>
+                <option value="mpc">MPC 4000</option>
+                <option value="both">BOTH</option>
+                <option value="none">NONE</option>
+            </select>
+        `;
+        container.appendChild(dev);
+
+        const sel = dev.querySelector('select');
+        sel.value = midiRouting[id];
+        sel.addEventListener('change', (e) => {
+            midiRouting[e.target.dataset.id] = e.target.value;
+        });
+
+        // Attach MIDI handler
+        input.onmidimessage = (msg) => {
+            const route = midiRouting[id] || 'none';
+
+            // Flash LED
+            const led = document.getElementById('led-' + id);
+            if (led) {
+                led.classList.add('active');
+                setTimeout(() => led.classList.remove('active'), 80);
+            }
+
+            // Route to target instrument(s)
+            const midiMsg = {type: 'midi', data: Array.from(msg.data)};
+            if (route === 'kr106' || route === 'both') {
+                frameKr106.contentWindow.postMessage(midiMsg, '*');
+            }
+            if (route === 'mpc' || route === 'both') {
+                frameMpc.contentWindow.postMessage(midiMsg, '*');
+            }
+        };
+    }
+
+    noMidi.style.display = hasDevices ? 'none' : 'block';
+}
+
+// ============================================
+// KEYBOARD ROUTING
+// ============================================
+function setKeyboardTarget(target) {
+    keyboardTarget = target;
+    document.querySelectorAll('.kb-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.kb-btn[data-target="${target}"]`).classList.add('active');
+
+    // Update focus indicators
+    document.querySelectorAll('.inst-wrapper').forEach(w => w.classList.remove('focused'));
+    document.querySelector(`.inst-wrapper[data-inst="${target}"]`).classList.add('focused');
+
+    // Tell iframes about keyboard state
+    frameKr106.contentWindow.postMessage({type: 'keyboard-focus', enabled: target === 'kr106'}, '*');
+    frameMpc.contentWindow.postMessage({type: 'keyboard-focus', enabled: target === 'mpc'}, '*');
+}
+
+document.querySelectorAll('.kb-btn').forEach(btn => {
+    btn.addEventListener('click', () => setKeyboardTarget(btn.dataset.target));
+});
+
+// Click on instrument area to focus it
+document.querySelectorAll('.inst-wrapper').forEach(wrapper => {
+    wrapper.addEventListener('mousedown', () => {
+        setKeyboardTarget(wrapper.dataset.inst);
+    });
+});
+
+// Tab key to toggle keyboard focus
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        setKeyboardTarget(keyboardTarget === 'kr106' ? 'mpc' : 'kr106');
+    }
+});
+
+// ============================================
+// IFRAME COMMUNICATION
+// ============================================
+window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (d && d.type === 'instrument-ready') {
+        // Send initial keyboard state
+        const enabled = d.name === keyboardTarget;
+        const frame = getFrame(d.name);
+        if (frame) {
+            frame.contentWindow.postMessage({type: 'keyboard-focus', enabled}, '*');
+        }
+    }
+});
+
+// ============================================
+// INIT
+// ============================================
+initMIDI();
+
+// Set initial keyboard state after frames load
+frameKr106.addEventListener('load', () => {
+    frameKr106.contentWindow.postMessage({type: 'keyboard-focus', enabled: keyboardTarget === 'kr106'}, '*');
+});
+frameMpc.addEventListener('load', () => {
+    frameMpc.contentWindow.postMessage({type: 'keyboard-focus', enabled: keyboardTarget === 'mpc'}, '*');
+});
+</script>
+
+</body>
+</html>
