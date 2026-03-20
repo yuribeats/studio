@@ -273,15 +273,12 @@ body {
 }
 .preset-menu {
   display: none;
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
+  position: fixed;
   background: #0a0f0a;
   border: 1px solid #333;
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: auto;
-  z-index: 200;
+  z-index: 9999;
 }
 .preset-menu.open { display: block; }
 .preset-menu::-webkit-scrollbar { width: 4px; }
@@ -963,9 +960,15 @@ function buildPresetMenu() {
     });
     menu.appendChild(opt);
   });
-  document.getElementById('presetDisplay').addEventListener('click', () => {
+  const lcd = document.getElementById('presetDisplay');
+  lcd.addEventListener('click', () => {
     menu.classList.toggle('open');
     if (menu.classList.contains('open')) {
+      const rect = lcd.getBoundingClientRect();
+      menu.style.left = rect.left + 'px';
+      menu.style.width = rect.width + 'px';
+      menu.style.bottom = (window.innerHeight - rect.top) + 'px';
+      menu.style.top = 'auto';
       const active = menu.querySelector('.active-preset');
       if (active) active.scrollIntoView({block: 'nearest'});
     }
