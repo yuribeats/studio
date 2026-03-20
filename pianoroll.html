@@ -463,9 +463,18 @@
         }
     });
 
-    // 808 drum tracks per kit (default CR-78, updated when 808 sends its kit info)
-    let drumTrackNames = ['KICK','SNARE','RIM','HI-HAT','HAT ACC','HAT METAL','CYMBAL','COWBELL','CONGA','BONGO H','BONGO L','TAMB','GUIRO'];
-    const DRUM_808_ROWS = []; // will be rebuilt
+    // 808 drum kits
+    const DRUM_KITS = {
+        cr78: { label: 'CR-78', tracks: ['KICK','KICK ACC','SNARE','SNARE ACC','RIM','HI-HAT','HAT ACC','HAT METAL','CYMBAL','COWBELL','CONGA','BONGO H','BONGO L','TAMB','GUIRO'] },
+        lm2: { label: 'LM-2', tracks: ['KICK','KICK ALT','SNARE H','SNARE M','SNARE L','CLAP','HAT CLOSED','HAT OPEN','CRASH','RIDE','TOM HH','TOM H','TOM M','TOM L','COWBELL'] },
+        mrk2: { label: 'MRK-2', tracks: ['KICK','SNARE','HAT CLOSED','HAT OPEN','CYMBAL L','CYMBAL S','TOM','BONGO','CLAVE','BLOCK'] },
+        tr505: { label: 'TR-505', tracks: ['KICK','SNARE','CLAP','RIM','HAT CLOSED','HAT OPEN','CRASH','RIDE','COWBELL H','COWBELL L','CONGA H','CONGA L','TOM H','TOM M','TOM L'] },
+        tr909: { label: 'TR-909', tracks: ['KICK','KICK SHORT','SNARE','CLAP 1','CLAP 2','RIM','HAT CLOSED','HAT OPEN','CYMBAL','RIDE','TOM H','TOM L'] },
+    };
+    const DRUM_KIT_IDS = Object.keys(DRUM_KITS);
+    let active808Kit = 'cr78';
+    let drumTrackNames = DRUM_KITS[active808Kit].tracks;
+    const DRUM_808_ROWS = [];
     function rebuild808Rows() {
         DRUM_808_ROWS.length = 0;
         drumTrackNames.forEach((name, i) => {
@@ -620,7 +629,47 @@
                 fullRender();
             });
             container.appendChild(tab);
+
+            // Kit dropdown for 808
+            if (ch === '808' && activeChannel === '808') {
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'position:relative;display:inline-block;';
+                const sel = document.createElement('div');
+                sel.className = 'ch-tab active';
+                sel.style.cssText = 'font-size:7px;letter-spacing:0.5px;margin-left:2px;';
+                sel.textContent = DRUM_KITS[active808Kit].label;
+                const menu = document.createElement('div');
+                menu.style.cssText = 'display:none;position:absolute;top:100%;left:0;background:#111;border:1px solid #228B22;z-index:100;min-width:70px;';
+                DRUM_KIT_IDS.forEach(kid => {
+                    const opt = document.createElement('div');
+                    opt.style.cssText = 'padding:4px 8px;font-size:7px;font-weight:700;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;color:' + (kid === active808Kit ? '#228B22' : '#888') + ';';
+                    opt.textContent = DRUM_KITS[kid].label;
+                    opt.addEventListener('mousedown', (e) => {
+                        e.stopPropagation();
+                        active808Kit = kid;
+                        drumTrackNames = DRUM_KITS[kid].tracks;
+                        rebuild808Rows();
+                        buildChannelTabs();
+                        fullRender();
+                    });
+                    opt.addEventListener('mouseenter', () => { opt.style.color = '#ccc'; });
+                    opt.addEventListener('mouseleave', () => { opt.style.color = kid === active808Kit ? '#228B22' : '#888'; });
+                    menu.appendChild(opt);
+                });
+                sel.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+                });
+                wrap.appendChild(sel);
+                wrap.appendChild(menu);
+                container.appendChild(wrap);
+            }
         });
+        // Close kit menu on outside click
+        document.addEventListener('mousedown', () => {
+            const menus = container.querySelectorAll('div[style*="position:absolute"]');
+            menus.forEach(m => m.style.display = 'none');
+        }, { once: true });
     }
 
     // ==================== GRID RESOLUTION ====================
