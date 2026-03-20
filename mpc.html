@@ -453,11 +453,13 @@ let loopEnabled = false;
 const actx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = actx.createGain();
 masterGain.gain.value = 0.6;
+const mixerGain = actx.createGain();
+mixerGain.connect(actx.destination);
 const comp = actx.createDynamicsCompressor();
 comp.threshold.value = -10; comp.ratio.value = 4;
 comp.attack.value = 0.002; comp.release.value = 0.08;
 comp.connect(masterGain);
-masterGain.connect(actx.destination);
+masterGain.connect(mixerGain);
 
 // ============================================
 // PAD SETUP
@@ -1317,6 +1319,10 @@ if (window !== window.parent) {
     }
     if (d && d.type === 'keyboard-focus') {
       window.__kbEnabled = d.enabled;
+    }
+    if (d && d.type === 'mixer') {
+      if (d.param === 'volume') mixerGain.gain.value = d.value;
+      if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
     }
   });
   window.__kbEnabled = false;

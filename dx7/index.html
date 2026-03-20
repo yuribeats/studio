@@ -173,5 +173,53 @@
 			</div>
 		</div>
 	<script src="bundle.js"></script>
+	<script>
+	// ==================== IFRAME MIDI/MIXER BRIDGE ====================
+	(function() {
+		if (window === window.parent) return;
+
+		var synthCtrl = null;
+
+		// Poll for the angular controller to be ready
+		var findCtrl = setInterval(function() {
+			try {
+				var el = document.querySelector('[ng-controller="MidiCtrl as midiCtrl"]');
+				if (el) {
+					var scope = angular.element(el).scope();
+					if (scope && scope.midiCtrl) {
+						synthCtrl = scope.midiCtrl;
+						clearInterval(findCtrl);
+					}
+				}
+			} catch(ex) {}
+		}, 200);
+
+		window.addEventListener('message', function(e) {
+			var d = e.data;
+			if (!d) return;
+
+			if (d.type === 'midi' && d.data) {
+				var fakeEvent = { data: new Uint8Array(d.data) };
+				if (synthCtrl && synthCtrl.queueMidiEvent) {
+					synthCtrl.queueMidiEvent(fakeEvent);
+				}
+			}
+
+			if (d.type === 'keyboard-focus') {
+				window.__kbEnabled = d.enabled;
+			}
+		});
+
+		window.__kbEnabled = false;
+		document.addEventListener('keydown', function(e) {
+			if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+		}, true);
+		document.addEventListener('keyup', function(e) {
+			if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+		}, true);
+
+		window.parent.postMessage({type: 'instrument-ready', name: 'dx7'}, '*');
+	})();
+	</script>
 </body>
 </html>
