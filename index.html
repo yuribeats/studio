@@ -30,7 +30,7 @@
             padding: 8px 16px;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             flex-shrink: 0;
             z-index: 10;
         }
@@ -38,7 +38,6 @@
             font-size: 12px;
             letter-spacing: 3px;
             color: #666;
-            margin-right: 8px;
         }
         .midi-devices {
             display: flex;
@@ -75,7 +74,10 @@
             background: #33ff33;
             box-shadow: 0 0 4px #33ff33;
         }
-        .route-select {
+
+        /* MIDI ROUTE DROPDOWN */
+        .route-dropdown { position: relative; }
+        .route-selected {
             background: #111;
             border: 1px solid #444;
             color: #aaa;
@@ -84,15 +86,33 @@
             font-weight: 700;
             text-transform: uppercase;
             padding: 3px 6px;
-            outline: none;
             letter-spacing: 0.5px;
-            -webkit-appearance: none;
-            appearance: none;
+            min-width: 50px;
+            text-align: center;
         }
-        .route-select option {
+        .route-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
             background: #111;
-            color: #aaa;
+            border: 1px solid #444;
+            border-top: none;
+            z-index: 100;
         }
+        .route-menu.open { display: block; }
+        .route-opt {
+            padding: 3px 6px;
+            font-size: 8px;
+            font-weight: 700;
+            font-family: Arial, sans-serif;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+        .route-opt:hover { background: #1a1a1a; color: #ccc; }
+        .route-opt.active-route { color: #228B22; }
 
         /* KEYBOARD ROUTING */
         .kb-route {
@@ -129,8 +149,8 @@
             letter-spacing: 1px;
         }
 
-        /* BACK BUTTON */
-        .back-btn {
+        /* TOOLBAR BUTTONS */
+        .bar-btn {
             padding: 5px 12px;
             background: #1a1a1a;
             border: 1px solid #333;
@@ -140,11 +160,12 @@
             font-family: Arial, sans-serif;
             font-weight: 700;
             text-transform: uppercase;
-            display: none;
             flex-shrink: 0;
         }
-        .back-btn.visible { display: block; }
-        .back-btn:hover { color: #ccc; border-color: #555; }
+        .bar-btn:hover { color: #ccc; border-color: #555; }
+        .bar-btn.hidden-btn { display: none; }
+
+        .bar-sep { width: 1px; height: 20px; background: #333; flex-shrink: 0; }
 
         /* INSTRUMENT FRAMES */
         .instruments {
@@ -208,60 +229,98 @@
             overflow: hidden;
             border: none;
         }
+
+        /* POPOUT BUTTONS ROW */
+        .popout-row {
+            display: flex;
+            gap: 6px;
+        }
     </style>
 </head>
 <body>
 
 <div class="studio">
-    <!-- MIDI ROUTING BAR -->
+    <!-- ROUTING BAR -->
     <div class="routing-bar">
-        <div class="back-btn" id="backBtn">SPLIT VIEW</div>
-        <div class="back-btn visible" id="popoutBtn" style="display:block">MPC WINDOW</div>
+        <div class="bar-btn hidden-btn" id="backBtn">SPLIT VIEW</div>
+        <div class="bar-sep"></div>
+        <div class="popout-row">
+            <div class="bar-btn" data-popout="kr106">KR-106 WINDOW</div>
+            <div class="bar-btn" data-popout="mpc">MPC WINDOW</div>
+            <div class="bar-btn" data-popout="cr78">808 WINDOW</div>
+        </div>
+        <div class="bar-sep"></div>
         <span class="routing-title">MIDI</span>
         <div class="midi-devices" id="midiDevices">
             <span class="no-midi" id="noMidi">NO MIDI DEVICES DETECTED</span>
         </div>
         <div class="kb-route">
             <span class="kb-label">KEYBOARD</span>
-            <div class="kb-btn active" id="kbKr106" data-target="kr106">KR-106</div>
-            <div class="kb-btn" id="kbMpc" data-target="mpc">MPC</div>
+            <div class="kb-btn active" data-target="kr106">KR-106</div>
+            <div class="kb-btn" data-target="mpc">MPC</div>
+            <div class="kb-btn" data-target="cr78">808</div>
         </div>
     </div>
 
     <!-- INSTRUMENTS -->
     <div class="instruments" id="instruments">
-        <div class="inst-wrapper focused" id="wrapKr106" data-inst="kr106">
+        <div class="inst-wrapper focused" data-inst="kr106">
             <div class="inst-focus-indicator"></div>
             <div class="inst-label">ULTRAMASTER KR-106</div>
             <iframe id="frameKr106" src="kr106.html"></iframe>
         </div>
-        <div class="inst-wrapper" id="wrapMpc" data-inst="mpc">
+        <div class="inst-wrapper" data-inst="mpc">
             <div class="inst-focus-indicator"></div>
             <div class="inst-label">AKAI MPC 4000</div>
             <iframe id="frameMpc" src="mpc.html"></iframe>
+        </div>
+        <div class="inst-wrapper" data-inst="cr78">
+            <div class="inst-focus-indicator"></div>
+            <div class="inst-label">STEP SEQUENCER</div>
+            <iframe id="frameCr78" src="808.html"></iframe>
         </div>
     </div>
 </div>
 
 <script>
 // ============================================
+// INSTRUMENT REGISTRY
+// ============================================
+const INSTRUMENTS = {
+    kr106: { frame: 'frameKr106', label: 'KR-106', file: 'kr106.html', windowName: 'kr106win' },
+    mpc:   { frame: 'frameMpc',   label: 'MPC 4000', file: 'mpc.html',   windowName: 'mpc4000' },
+    cr78:  { frame: 'frameCr78',  label: '808',     file: '808.html',   windowName: 'cr78win' },
+};
+const instIds = Object.keys(INSTRUMENTS);
+
+// ============================================
 // STATE
 // ============================================
 let midiAccess = null;
-const midiRouting = {};
+const midiRouting = {}; // deviceId -> instId or 'all' or 'none'
 let keyboardTarget = 'kr106';
-let fullscreenInst = null; // null = split, 'kr106' or 'mpc' = fullscreen
+let fullscreenInst = null;
+const popoutWindows = {}; // instId -> Window
 
-const frameKr106 = document.getElementById('frameKr106');
-const frameMpc = document.getElementById('frameMpc');
-const wrapKr106 = document.getElementById('wrapKr106');
-const wrapMpc = document.getElementById('wrapMpc');
-const backBtn = document.getElementById('backBtn');
+function getFrame(instId) {
+    const inst = INSTRUMENTS[instId];
+    return inst ? document.getElementById(inst.frame) : null;
+}
+function getWrap(instId) {
+    return document.querySelector(`.inst-wrapper[data-inst="${instId}"]`);
+}
 
-function getFrame(target) {
-    if (target === 'kr106') return frameKr106;
-    if (target === 'mpc') return frameMpc;
-    return null;
+// Send message to an instrument (iframe or popout)
+function sendToInst(instId, msg) {
+    const pop = popoutWindows[instId];
+    if (pop && !pop.closed) {
+        pop.postMessage(msg, '*');
+    } else {
+        const frame = getFrame(instId);
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage(msg, '*');
+        }
+    }
 }
 
 // ============================================
@@ -269,66 +328,82 @@ function getFrame(target) {
 // ============================================
 function goFullscreen(inst) {
     fullscreenInst = inst;
-    if (inst === 'kr106') {
-        wrapKr106.classList.add('fullscreen');
-        wrapKr106.classList.remove('hidden-inst');
-        wrapMpc.classList.add('hidden-inst');
-        wrapMpc.classList.remove('fullscreen');
-    } else {
-        wrapMpc.classList.add('fullscreen');
-        wrapMpc.classList.remove('hidden-inst');
-        wrapKr106.classList.add('hidden-inst');
-        wrapKr106.classList.remove('fullscreen');
-    }
-    backBtn.classList.add('visible');
+    instIds.forEach(id => {
+        const wrap = getWrap(id);
+        if (id === inst) {
+            wrap.classList.add('fullscreen');
+            wrap.classList.remove('hidden-inst');
+        } else {
+            wrap.classList.add('hidden-inst');
+            wrap.classList.remove('fullscreen');
+        }
+    });
+    document.getElementById('backBtn').classList.remove('hidden-btn');
     setKeyboardTarget(inst);
 }
 
 function goSplit() {
     fullscreenInst = null;
-    wrapKr106.classList.remove('fullscreen', 'hidden-inst');
-    wrapMpc.classList.remove('fullscreen', 'hidden-inst');
-    backBtn.classList.remove('visible');
+    instIds.forEach(id => {
+        const wrap = getWrap(id);
+        wrap.classList.remove('fullscreen', 'hidden-inst');
+        // Re-hide if popped out
+        if (popoutWindows[id] && !popoutWindows[id].closed) {
+            wrap.style.display = 'none';
+        }
+    });
+    document.getElementById('backBtn').classList.add('hidden-btn');
 }
 
-backBtn.addEventListener('click', goSplit);
+document.getElementById('backBtn').addEventListener('click', goSplit);
 
-// Double-click on instrument to fullscreen it
+// Double-click on instrument to fullscreen/split toggle
 document.querySelectorAll('.inst-wrapper').forEach(wrapper => {
     wrapper.addEventListener('dblclick', () => {
-        if (fullscreenInst) {
-            goSplit();
-        } else {
-            goFullscreen(wrapper.dataset.inst);
-        }
+        if (fullscreenInst) goSplit();
+        else goFullscreen(wrapper.dataset.inst);
     });
 });
 
 // ============================================
-// POP-OUT MPC WINDOW
+// POP-OUT WINDOWS (generic for all instruments)
 // ============================================
-let mpcWindow = null;
-document.getElementById('popoutBtn').addEventListener('click', () => {
-    if (mpcWindow && !mpcWindow.closed) {
-        mpcWindow.focus();
-        return;
-    }
-    mpcWindow = window.open('mpc.html', 'mpc4000', 'width=960,height=700');
-    // Hide MPC in main view, fullscreen KR-106
-    goFullscreen('kr106');
-    wrapMpc.style.display = 'none';
-    document.getElementById('popoutBtn').textContent = 'CLOSE MPC WINDOW';
+document.querySelectorAll('[data-popout]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const instId = btn.dataset.popout;
+        const inst = INSTRUMENTS[instId];
 
-    // Forward MIDI to popup window
-    const checkClosed = setInterval(() => {
-        if (mpcWindow && mpcWindow.closed) {
-            clearInterval(checkClosed);
-            mpcWindow = null;
-            wrapMpc.style.display = '';
-            goSplit();
-            document.getElementById('popoutBtn').textContent = 'MPC WINDOW';
+        // If already open, focus it
+        if (popoutWindows[instId] && !popoutWindows[instId].closed) {
+            popoutWindows[instId].focus();
+            return;
         }
-    }, 500);
+
+        popoutWindows[instId] = window.open(inst.file, inst.windowName, 'width=960,height=700');
+        getWrap(instId).style.display = 'none';
+        btn.textContent = 'CLOSE ' + inst.label;
+
+        // Check remaining visible instruments
+        const visible = instIds.filter(id => !(popoutWindows[id] && !popoutWindows[id].closed));
+        if (visible.length === 1) {
+            goFullscreen(visible[0]);
+        } else if (visible.length === 0) {
+            // All popped out, nothing to show
+        } else {
+            goSplit();
+        }
+
+        // Poll for window close
+        const check = setInterval(() => {
+            if (popoutWindows[instId] && popoutWindows[instId].closed) {
+                clearInterval(check);
+                popoutWindows[instId] = null;
+                getWrap(instId).style.display = '';
+                btn.textContent = inst.label + ' WINDOW';
+                goSplit();
+            }
+        }, 500);
+    });
 });
 
 // ============================================
@@ -352,48 +427,75 @@ function refreshMIDI() {
     for (const [id, input] of midiAccess.inputs) {
         hasDevices = true;
         if (!(id in midiRouting)) {
-            midiRouting[id] = Object.keys(midiRouting).length === 0 ? 'kr106' : 'mpc';
+            midiRouting[id] = instIds[Object.keys(midiRouting).length % instIds.length];
         }
 
         const dev = document.createElement('div');
         dev.className = 'midi-device';
-        dev.innerHTML = `
-            <div class="midi-device-led" id="led-${id}"></div>
-            <span class="midi-device-name">${input.name}</span>
-            <select class="route-select" data-id="${id}">
-                <option value="kr106">KR-106</option>
-                <option value="mpc">MPC 4000</option>
-                <option value="both">BOTH</option>
-                <option value="none">NONE</option>
-            </select>
-        `;
-        container.appendChild(dev);
 
-        const sel = dev.querySelector('select');
-        sel.value = midiRouting[id];
-        sel.addEventListener('change', (e) => {
-            midiRouting[e.target.dataset.id] = e.target.value;
+        const led = document.createElement('div');
+        led.className = 'midi-device-led';
+        led.id = 'led-' + id;
+
+        const name = document.createElement('span');
+        name.className = 'midi-device-name';
+        name.textContent = input.name;
+
+        // Custom route dropdown
+        const dropdown = document.createElement('div');
+        dropdown.className = 'route-dropdown';
+        const selected = document.createElement('div');
+        selected.className = 'route-selected';
+        selected.textContent = routeLabel(midiRouting[id]);
+        const menu = document.createElement('div');
+        menu.className = 'route-menu';
+
+        const options = [
+            {value: 'kr106', label: 'KR-106'},
+            {value: 'mpc', label: 'MPC 4000'},
+            {value: 'cr78', label: '808'},
+            {value: 'all', label: 'ALL'},
+            {value: 'none', label: 'NONE'},
+        ];
+        options.forEach(opt => {
+            const el = document.createElement('div');
+            el.className = 'route-opt' + (midiRouting[id] === opt.value ? ' active-route' : '');
+            el.textContent = opt.label;
+            el.addEventListener('click', () => {
+                midiRouting[id] = opt.value;
+                selected.textContent = opt.label;
+                menu.classList.remove('open');
+                menu.querySelectorAll('.route-opt').forEach(o => o.classList.remove('active-route'));
+                el.classList.add('active-route');
+            });
+            menu.appendChild(el);
         });
+
+        selected.addEventListener('click', () => {
+            document.querySelectorAll('.route-menu.open').forEach(m => m.classList.remove('open'));
+            menu.classList.toggle('open');
+        });
+
+        dropdown.appendChild(selected);
+        dropdown.appendChild(menu);
+        dev.appendChild(led);
+        dev.appendChild(name);
+        dev.appendChild(dropdown);
+        container.appendChild(dev);
 
         input.onmidimessage = (msg) => {
             const route = midiRouting[id] || 'none';
-
-            const led = document.getElementById('led-' + id);
-            if (led) {
-                led.classList.add('active');
-                setTimeout(() => led.classList.remove('active'), 80);
+            const ledEl = document.getElementById('led-' + id);
+            if (ledEl) {
+                ledEl.classList.add('active');
+                setTimeout(() => ledEl.classList.remove('active'), 80);
             }
 
             const midiMsg = {type: 'midi', data: Array.from(msg.data)};
-            if (route === 'kr106' || route === 'both') {
-                frameKr106.contentWindow.postMessage(midiMsg, '*');
-            }
-            if (route === 'mpc' || route === 'both') {
-                if (mpcWindow && !mpcWindow.closed) {
-                    mpcWindow.postMessage(midiMsg, '*');
-                } else {
-                    frameMpc.contentWindow.postMessage(midiMsg, '*');
-                }
+            if (route === 'all') {
+                instIds.forEach(instId => sendToInst(instId, midiMsg));
+            } else if (route !== 'none') {
+                sendToInst(route, midiMsg);
             }
         };
     }
@@ -401,37 +503,56 @@ function refreshMIDI() {
     noMidi.style.display = hasDevices ? 'none' : 'block';
 }
 
+function routeLabel(route) {
+    if (route === 'kr106') return 'KR-106';
+    if (route === 'mpc') return 'MPC 4000';
+    if (route === 'cr78') return '808';
+    if (route === 'all') return 'ALL';
+    return 'NONE';
+}
+
+// Close route menus on outside click
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.route-dropdown')) {
+        document.querySelectorAll('.route-menu.open').forEach(m => m.classList.remove('open'));
+    }
+});
+
 // ============================================
 // KEYBOARD ROUTING
 // ============================================
 function setKeyboardTarget(target) {
     keyboardTarget = target;
     document.querySelectorAll('.kb-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.kb-btn[data-target="${target}"]`).classList.add('active');
+    const btn = document.querySelector(`.kb-btn[data-target="${target}"]`);
+    if (btn) btn.classList.add('active');
 
     document.querySelectorAll('.inst-wrapper').forEach(w => w.classList.remove('focused'));
-    document.querySelector(`.inst-wrapper[data-inst="${target}"]`).classList.add('focused');
+    const wrap = getWrap(target);
+    if (wrap) wrap.classList.add('focused');
 
-    frameKr106.contentWindow.postMessage({type: 'keyboard-focus', enabled: target === 'kr106'}, '*');
-    frameMpc.contentWindow.postMessage({type: 'keyboard-focus', enabled: target === 'mpc'}, '*');
+    instIds.forEach(id => {
+        sendToInst(id, {type: 'keyboard-focus', enabled: id === target});
+    });
 }
 
 document.querySelectorAll('.kb-btn').forEach(btn => {
     btn.addEventListener('click', () => setKeyboardTarget(btn.dataset.target));
 });
 
-// Single click on instrument: focus keyboard. Double click: fullscreen.
+// Single click on instrument: focus keyboard
 document.querySelectorAll('.inst-wrapper').forEach(wrapper => {
     wrapper.addEventListener('mousedown', () => {
         setKeyboardTarget(wrapper.dataset.inst);
     });
 });
 
-// Tab to toggle keyboard, Escape to return to split
+// Tab to cycle keyboard, Escape to return to split
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') {
         e.preventDefault();
-        setKeyboardTarget(keyboardTarget === 'kr106' ? 'mpc' : 'kr106');
+        const idx = instIds.indexOf(keyboardTarget);
+        setKeyboardTarget(instIds[(idx + 1) % instIds.length]);
     }
     if (e.key === 'Escape' && fullscreenInst) {
         goSplit();
@@ -444,11 +565,7 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener('message', (e) => {
     const d = e.data;
     if (d && d.type === 'instrument-ready') {
-        const enabled = d.name === keyboardTarget;
-        const frame = getFrame(d.name);
-        if (frame) {
-            frame.contentWindow.postMessage({type: 'keyboard-focus', enabled}, '*');
-        }
+        sendToInst(d.name, {type: 'keyboard-focus', enabled: d.name === keyboardTarget});
     }
 });
 
@@ -457,11 +574,13 @@ window.addEventListener('message', (e) => {
 // ============================================
 initMIDI();
 
-frameKr106.addEventListener('load', () => {
-    frameKr106.contentWindow.postMessage({type: 'keyboard-focus', enabled: keyboardTarget === 'kr106'}, '*');
-});
-frameMpc.addEventListener('load', () => {
-    frameMpc.contentWindow.postMessage({type: 'keyboard-focus', enabled: keyboardTarget === 'mpc'}, '*');
+instIds.forEach(id => {
+    const frame = getFrame(id);
+    if (frame) {
+        frame.addEventListener('load', () => {
+            sendToInst(id, {type: 'keyboard-focus', enabled: id === keyboardTarget});
+        });
+    }
 });
 </script>
 

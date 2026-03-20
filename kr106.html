@@ -1267,6 +1267,20 @@ function scaleToFit() {
 window.addEventListener('resize', scaleToFit);
 setTimeout(scaleToFit, 100);
 
+// ==================== AUTO-START IN IFRAME ====================
+if (window !== window.parent) {
+  // Skip start overlay, auto-init
+  document.getElementById('startOverlay').classList.add('hidden');
+  (async () => {
+    await initAudio();
+    initFaders();
+    initKnobs();
+    initButtons();
+    buildKeyboard();
+    initComputerKeyboard();
+  })();
+}
+
 // ==================== IFRAME MIDI BRIDGE ====================
 if (window !== window.parent) {
   window.addEventListener('message', (e) => {
