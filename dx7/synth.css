@@ -44,7 +44,7 @@ body {
     display: flex;
     flex: 1;
     overflow: auto;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .dx7-container {
