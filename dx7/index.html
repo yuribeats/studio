@@ -255,19 +255,22 @@
 
 		function activateAudio() {
 			if (audioReady) return;
-			// Dispatch events to trigger any internal resume handlers in the bundle
-			document.body.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
-			document.body.dispatchEvent(new MouseEvent('click', {bubbles: true}));
 			if (window._dx7AudioCtx) {
 				if (window._dx7AudioCtx.state === 'running') {
 					audioReady = true;
 					flushPending();
 					return;
 				}
+				// Try resume — works if parent frame has had user interaction
 				window._dx7AudioCtx.resume().then(function() {
-					audioReady = true;
-					flushPending();
-				});
+					if (window._dx7AudioCtx.state === 'running') {
+						audioReady = true;
+						flushPending();
+					}
+				}).catch(function() {});
+				// Also dispatch synthetic events for bundle's internal handlers
+				document.body.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+				document.body.dispatchEvent(new MouseEvent('click', {bubbles: true}));
 			}
 		}
 
@@ -290,11 +293,12 @@
 			if (!d) return;
 
 			if (d.type === 'midi' && d.data) {
+				// Try to activate audio on every MIDI message if not ready
+				if (!audioReady) activateAudio();
 				var fakeEvent = { data: new Uint8Array(d.data) };
 				if (synthCtrl && synthCtrl.queueMidiEvent && audioReady) {
 					synthCtrl.queueMidiEvent(fakeEvent);
 				} else {
-					// Queue if not ready yet - will flush when activated
 					if (pendingMidi.length < 100) pendingMidi.push(fakeEvent);
 				}
 			}
