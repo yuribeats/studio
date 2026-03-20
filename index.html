@@ -654,11 +654,19 @@ window.addEventListener('message', (e) => {
     }
     // Route piano roll notes to target instruments
     if (d && d.type === 'pianoroll-note') {
-        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', dx7: 'dx7'};
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', dx7: 'dx7'};
         const instId = idMap[d.channel] || d.channel;
         if (INSTRUMENTS[instId]) {
-            sendToInst(instId, {type: 'midi', data: d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0]});
+            const midiData = d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0];
+            const msg = {type: 'midi', data: midiData};
+            if (d.kit) msg.kit = d.kit; // pass kit info for 808 multi-kit
+            sendToInst(instId, msg);
         }
+    }
+    // Handle active 808 kits notification — forward to mixer and pedals
+    if (d && d.type === 'active-808-kits') {
+        sendToInst('mixer', d);
+        sendToInst('pedals', d);
     }
     // Route transport messages to tape machine
     if (d && d.type === 'transport') {

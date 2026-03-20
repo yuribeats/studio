@@ -1016,11 +1016,37 @@ if (window !== window.parent) {
             const [status, note, vel] = d.data;
             const cmd = status & 0xf0;
             if (cmd === 0x90 && vel > 0) {
-                // Map MIDI notes 36-50 to tracks
-                const trackIdx = note - 36;
-                if (trackIdx >= 0 && trackIdx < TRACKS.length) {
-                    if (actx.state === 'suspended') actx.resume();
-                    playSample(trackIdx, actx.currentTime, false);
+                if (actx.state === 'suspended') actx.resume();
+                if (d.kit && KITS[d.kit]) {
+                    // Multi-kit: play sample from specified kit
+                    const kit = KITS[d.kit];
+                    const trackIdx = note - 36;
+                    if (trackIdx >= 0 && trackIdx < kit.tracks.length) {
+                        const track = kit.tracks[trackIdx];
+                        const bufKey = d.kit + '/' + track.file;
+                        if (buffers[bufKey]) {
+                            const src = actx.createBufferSource();
+                            src.buffer = buffers[bufKey];
+                            src.connect(actx.destination);
+                            src.start(actx.currentTime);
+                        } else {
+                            // Load on demand
+                            const url = SAMPLE_BASE + kit.path + track.file;
+                            fetch(url).then(r => r.arrayBuffer()).then(ab => actx.decodeAudioData(ab)).then(buf => {
+                                buffers[bufKey] = buf;
+                                const src = actx.createBufferSource();
+                                src.buffer = buf;
+                                src.connect(actx.destination);
+                                src.start(actx.currentTime);
+                            }).catch(() => {});
+                        }
+                    }
+                } else {
+                    // Default: play from current kit
+                    const trackIdx = note - 36;
+                    if (trackIdx >= 0 && trackIdx < TRACKS.length) {
+                        playSample(trackIdx, actx.currentTime, false);
+                    }
                 }
             }
             if (status === 0xfa) startSequencer();

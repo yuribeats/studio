@@ -433,16 +433,29 @@
 // ============================================
 // CHANNEL DEFINITIONS
 // ============================================
-const CHANNELS = [
-    { id: 'kr106', name: 'KR-106', num: '1', type: 'input' },
-    { id: 'mpc',   name: 'MPC',    num: '2', type: 'input' },
-    { id: 'cr78',  name: '808',    num: '3', type: 'input' },
-    { id: '_sep1', type: 'sep' },
-    { id: 'reverb', name: 'REVERB', num: 'R', type: 'return' },
-    { id: 'delay',  name: 'DELAY',  num: 'D', type: 'return' },
-    { id: '_sep2', type: 'sep' },
-    { id: 'master', name: 'MASTER', num: 'M', type: 'master' },
-];
+const KIT_LABELS = { cr78:'CR-78', lm2:'LM-2', mrk2:'MRK-2', tr505:'TR-505', tr909:'TR-909' };
+let active808Kits = [];
+
+function getChannels() {
+    const chs = [
+        { id: 'kr106', name: 'KR-106', num: '1', type: 'input' },
+        { id: 'mpc',   name: 'MPC',    num: '2', type: 'input' },
+        { id: 'cr78',  name: '808',    num: '3', type: 'input' },
+    ];
+    // Add extra kit channels
+    active808Kits.forEach((kid, i) => {
+        if (kid !== 'cr78') { // cr78 is the default 808 channel
+            chs.push({ id: '808-' + kid, name: KIT_LABELS[kid] || kid.toUpperCase(), num: String(4 + i), type: 'input' });
+        }
+    });
+    chs.push({ id: '_sep1', type: 'sep' });
+    chs.push({ id: 'reverb', name: 'REVERB', num: 'R', type: 'return' });
+    chs.push({ id: 'delay',  name: 'DELAY',  num: 'D', type: 'return' });
+    chs.push({ id: '_sep2', type: 'sep' });
+    chs.push({ id: 'master', name: 'MASTER', num: 'M', type: 'master' });
+    return chs;
+}
+let CHANNELS = getChannels();
 
 const SUBDIVISIONS = [
     { label: '1/4', mult: 1.0 },
@@ -883,6 +896,29 @@ window.addEventListener('message', (e) => {
     }
     if (d && d.type === 'keyboard-focus') {
         window.__kbEnabled = d.enabled;
+    }
+    if (d && d.type === 'active-808-kits') {
+        const newKits = (d.kits || []).sort();
+        const oldKits = active808Kits.sort();
+        if (JSON.stringify(newKits) !== JSON.stringify(oldKits)) {
+            active808Kits = d.kits || [];
+            CHANNELS = getChannels();
+            // Preserve existing state
+            const oldState = JSON.parse(JSON.stringify(state));
+            buildChannels();
+            initButtons();
+            // Restore state
+            Object.keys(oldState).forEach(k => {
+                if (state[k]) Object.assign(state[k], oldState[k]);
+            });
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.fader-track').forEach(track => {
+                    const chId = track.dataset.ch;
+                    if (chId && state[chId]) setFaderPosition(track, state[chId].volume);
+                });
+                scaleToFit();
+            });
+        }
     }
 });
 
