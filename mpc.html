@@ -1397,12 +1397,14 @@ if (window !== window.parent) {
   window.addEventListener('message', (e) => {
     const d = e.data;
     if (d && d.type === 'midi') {
+      if (actx.state === 'suspended') actx.resume();
       handleMIDI({data: d.data});
     }
     if (d && d.type === 'keyboard-focus') {
       window.__kbEnabled = d.enabled;
     }
     if (d && d.type === 'mixer') {
+      if (actx.state === 'suspended') actx.resume();
       if (d.param === 'volume') mixerGain.gain.value = d.value;
       if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
     }

@@ -621,6 +621,7 @@ if (window !== window.parent) {
     window.addEventListener('message', (e) => {
         const d = e.data;
         if (d && d.type === 'midi' && d.data) {
+            if (actx.state === 'suspended') actx.resume();
             const [status, note, vel] = d.data;
             const cmd = status & 0xf0;
             // MIDI note 60 (C4) triggers play/stop
@@ -636,6 +637,7 @@ if (window !== window.parent) {
             window.__kbEnabled = d.enabled;
         }
         if (d && d.type === 'mixer') {
+            if (actx.state === 'suspended') actx.resume();
             if (d.param === 'volume') mixerGain.gain.value = d.value;
             if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
         }

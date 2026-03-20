@@ -1084,6 +1084,7 @@ window.addEventListener('message', function(e) {
   }
 
   if (d.type === 'mixer') {
+    ensureAudio();
     if (d.param === 'volume' && mixerGain) mixerGain.gain.value = d.value;
     if (d.param === 'mute') {
       __muted = d.value > 0;

@@ -1310,6 +1310,7 @@ if (window !== window.parent) {
             window.__kbEnabled = d.enabled;
         }
         if (d && d.type === 'mixer') {
+            if (actx.state === 'suspended') actx.resume();
             if (d.param === 'volume') mixerGain.gain.value = d.value;
             if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
         }

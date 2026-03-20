@@ -640,12 +640,14 @@
         const d = e.data;
         if (!d) return;
         if (d.type === 'midi') {
+            ensureAudio();
             handleMIDI({ data: d.data });
         }
         if (d.type === 'keyboard-focus') {
             window.__kbEnabled = d.enabled;
         }
         if (d.type === 'mixer') {
+            ensureAudio();
             if (d.param === 'volume' && mixerGain) mixerGain.gain.value = d.value;
             if (d.param === 'mute') {
                 __muted = d.value > 0;
