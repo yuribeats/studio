@@ -11,8 +11,10 @@ let auPlugins = [];
 // ============================================
 let auHost = null;
 try {
-    auHost = require('./native/build/Release/au_host.node');
-    console.log('[AU_HOST] Native addon loaded');
+    // In packaged app, asar-unpacked path is used for native addons
+    const addonPath = path.join(__dirname, 'native', 'build', 'Release', 'au_host.node');
+    auHost = require(addonPath);
+    console.log('[AU_HOST] Native addon loaded from', addonPath);
 } catch (e) {
     console.warn('[AU_HOST] Native addon not available — AU hosting disabled');
     console.warn('[AU_HOST]', e.message);

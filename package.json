@@ -32,6 +32,11 @@
       "!build/**/*",
       "!dist/**/*",
       "!.git/**/*",
+      "!native/src/**/*",
+      "!native/build/**/*",
+      "native/build/Release/au_host.node"
+    ],
+    "asarUnpack": [
       "native/build/Release/au_host.node"
     ],
     "extraResources": []
