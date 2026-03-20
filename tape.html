@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAPE MACHINE</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            background: #111;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            user-select: none;
+        }
+        body { display: flex; justify-content: center; align-items: center; }
+        .scale-wrap { transform-origin: center center; }
+
+        /* MACHINE BODY */
+        .machine {
+            width: 700px;
+            background: linear-gradient(180deg, #222 0%, #1a1a1a 100%);
+            border: 2px solid #333;
+        }
+
+        /* HEADER */
+        .machine-hdr {
+            background: #1e1e1e;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .hdr-brand {
+            font-size: 9px;
+            color: #555;
+            letter-spacing: 3px;
+        }
+        .hdr-model {
+            font-size: 13px;
+            color: #888;
+            letter-spacing: 2px;
+        }
+
+        /* ==================== TOP SECTION: REELS ==================== */
+        .reel-section {
+            height: 300px;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            position: relative;
+            border-bottom: 1px solid #252525;
+        }
+
+        /* REEL */
+        .reel-assembly {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .reel {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 45% 40%, #333 0%, #1a1a1a 60%, #111 100%);
+            border: 2px solid #292929;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+        /* Center hub */
+        .reel-hub {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle at 40% 35%, #777 0%, #444 60%, #333 100%);
+            border: 1px solid #555;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            z-index: 2;
+        }
+        .reel-hub::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #222;
+            border: 1px solid #333;
+        }
+        /* Spokes */
+        .reel-spokes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+        .spoke {
+            position: absolute;
+            width: 4px;
+            height: 50px;
+            background: linear-gradient(180deg, #444 0%, #2a2a2a 100%);
+            top: 50%;
+            left: 50%;
+            transform-origin: center 0;
+            margin-left: -2px;
+            box-shadow: 1px 0 2px rgba(0,0,0,0.3);
+        }
+        .spoke:nth-child(1) { transform: rotate(0deg) translateY(0); }
+        .spoke:nth-child(2) { transform: rotate(120deg) translateY(0); }
+        .spoke:nth-child(3) { transform: rotate(240deg) translateY(0); }
+        /* Outer ring */
+        .reel-ring {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #2a2a2a;
+        }
+        .reel-label {
+            font-size: 7px;
+            color: #444;
+            letter-spacing: 1.5px;
+        }
+
+        /* CENTER DISPLAY */
+        .center-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand-top {
+            font-size: 9px;
+            color: #555;
+            letter-spacing: 4px;
+        }
+        .tape-counter {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            padding: 8px 16px;
+            min-width: 140px;
+            text-align: center;
+        }
+        .counter-text {
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            color: #33ff33;
+            letter-spacing: 2px;
+            text-shadow: 0 0 6px rgba(51, 255, 51, 0.3);
+        }
+        .model-bottom {
+            font-size: 8px;
+            color: #444;
+            letter-spacing: 3px;
+        }
+
+        /* ==================== MIDDLE SECTION: HEAD BLOCK ==================== */
+        .head-section {
+            background: #151515;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            border-bottom: 1px solid #252525;
+        }
+        /* Tape path line */
+        .tape-path {
+            flex: 1;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, #3a3a3a 10%, #555 30%, #555 70%, #3a3a3a 90%, transparent 100%);
+            position: relative;
+        }
+        .tape-path::before, .tape-path::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 12px;
+            background: #666;
+            top: -4px;
+            border: 1px solid #555;
+        }
+        .tape-path::before { left: 25%; }
+        .tape-path::after { right: 25%; }
+        /* VU Meters */
+        .vu-meters {
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+        }
+        .vu-label {
+            font-size: 6px;
+            color: #444;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 2px;
+        }
+        .vu-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .vu-meter {
+            width: 12px;
+            height: 60px;
+            background: #0a0a0a;
+            border: 1px solid #252525;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 1px;
+            padding: 1px;
+        }
+        .vu-seg {
+            flex: 1;
+            min-height: 2px;
+            background: #1a1a1a;
+        }
+        .vu-seg.lit-green { background: #228B22; box-shadow: 0 0 2px rgba(34,139,34,0.3); }
+        .vu-seg.lit-yellow { background: #ccaa00; box-shadow: 0 0 2px rgba(204,170,0,0.3); }
+        .vu-seg.lit-red { background: #cc3333; box-shadow: 0 0 2px rgba(204,51,51,0.3); }
+
+        /* ==================== BOTTOM SECTION: CONTROLS ==================== */
+        .controls-section {
+            background: #1a1a1a;
+            padding: 16px 20px 12px;
+        }
+
+        /* KNOB AREA */
+        .knob-area {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #252525;
+            margin-bottom: 14px;
+        }
+        .knob-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .knob-group-label {
+            font-size: 6px;
+            color: #444;
+            letter-spacing: 1.5px;
+            margin-bottom: 2px;
+        }
+        .knob-group-row {
+            display: flex;
+            gap: 8px;
+        }
+        .knob-grp {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+        }
+        .knob {
+            width: 26px;
+            height: 26px;
+            position: relative;
+        }
+        .knob-body {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 40% 35%, #555 0%, #2a2a2a 70%, #222 100%);
+            border-radius: 50%;
+            border: 1.5px solid #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .knob-line {
+            position: absolute;
+            width: 2px;
+            height: 9px;
+            background: #ddd;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 2px rgba(255,255,255,0.3);
+        }
+        .knob-cap {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .knob-lbl {
+            font-size: 6px;
+            color: #444;
+            letter-spacing: 0.5px;
+        }
+        /* Cap colors */
+        .knob.sat .knob-cap { background: #cc8800; }
+        .knob.eq .knob-cap { background: #cc3300; }
+        .knob.comp .knob-cap { background: #3366cc; }
+        .knob.lim .knob-cap { background: #cc3333; }
+        .knob.out .knob-cap { background: #228B22; }
+
+        /* TRANSPORT */
+        .transport-row {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .transport-btn {
+            width: 70px;
+            height: 32px;
+            background: #252525;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #666;
+            letter-spacing: 1px;
+        }
+        .transport-btn:active { background: #2a2a2a; }
+        .transport-btn.active { background: #1a3a1a; border-color: #228B22; color: #33ff33; }
+        .transport-btn.rec-btn { color: #555; }
+        .transport-btn.rec-btn.armed { background: #3a1a1a; border-color: #cc3333; color: #ff3333; }
+        .transport-btn.rec-btn.recording {
+            background: #3a1a1a;
+            border-color: #ff3333;
+            color: #ff3333;
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #252525;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status-label {
+            font-size: 7px;
+            color: #444;
+            letter-spacing: 1px;
+        }
+        .led {
+            width: 6px;
+            height: 6px;
+        }
+        .led.off { background: #333; }
+        .led.red { background: #ff3333; box-shadow: 0 0 6px rgba(255,51,51,0.5); }
+        .led.red-flash {
+            background: #ff3333;
+            box-shadow: 0 0 6px rgba(255,51,51,0.5);
+            animation: flash 0.5s infinite;
+        }
+        .led.green { background: #33ff33; box-shadow: 0 0 6px rgba(51,255,51,0.5); }
+
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        .file-display {
+            background: #0a0a0a;
+            border: 1px solid #252525;
+            padding: 3px 10px;
+            font-size: 7px;
+            color: #666;
+            letter-spacing: 0.5px;
+            min-width: 160px;
+            text-align: center;
+        }
+
+        /* FOOTER */
+        .machine-ftr {
+            background: #1e1e1e;
+            border-top: 1px solid #2a2a2a;
+            padding: 4px 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .ftr-text {
+            font-size: 6px;
+            color: #333;
+            letter-spacing: 1.5px;
+        }
+
+        /* REEL SPIN ANIMATION */
+        .reel.spinning-cw .reel-spokes {
+            animation: spin-cw 3s linear infinite;
+        }
+        .reel.spinning-ccw .reel-spokes {
+            animation: spin-ccw 3s linear infinite;
+        }
+        @keyframes spin-cw {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes spin-ccw {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+        }
+
+        /* KNOB GROUP DIVIDERS */
+        .knob-divider {
+            width: 1px;
+            height: 50px;
+            background: #252525;
+            align-self: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="scale-wrap" id="scaleWrap">
+<div class="machine">
+    <div class="machine-hdr">
+        <span class="hdr-brand">STUDIO</span>
+        <span class="hdr-model">TAPE MACHINE</span>
+    </div>
+
+    <!-- TOP SECTION: REELS -->
+    <div class="reel-section">
+        <div class="reel-assembly">
+            <div class="reel" id="reelLeft">
+                <div class="reel-ring"></div>
+                <div class="reel-spokes">
+                    <div class="spoke"></div>
+                    <div class="spoke"></div>
+                    <div class="spoke"></div>
+                </div>
+                <div class="reel-hub"></div>
+            </div>
+            <span class="reel-label">SUPPLY</span>
+        </div>
+
+        <div class="center-display">
+            <span class="brand-top">STUDIO</span>
+            <div class="tape-counter">
+                <span class="counter-text" id="counter">00:00.00</span>
+            </div>
+            <span class="model-bottom">TAPE MACHINE</span>
+        </div>
+
+        <div class="reel-assembly">
+            <div class="reel" id="reelRight">
+                <div class="reel-ring"></div>
+                <div class="reel-spokes">
+                    <div class="spoke"></div>
+                    <div class="spoke"></div>
+                    <div class="spoke"></div>
+                </div>
+                <div class="reel-hub"></div>
+            </div>
+            <span class="reel-label">TAKE-UP</span>
+        </div>
+    </div>
+
+    <!-- MIDDLE SECTION: HEAD BLOCK -->
+    <div class="head-section">
+        <div class="tape-path"></div>
+        <div class="vu-meters">
+            <div class="vu-wrap">
+                <span class="vu-label">L</span>
+                <div class="vu-meter" id="vuL"></div>
+            </div>
+            <div class="vu-wrap">
+                <span class="vu-label">R</span>
+                <div class="vu-meter" id="vuR"></div>
+            </div>
+        </div>
+        <div class="tape-path"></div>
+    </div>
+
+    <!-- BOTTOM SECTION: CONTROLS -->
+    <div class="controls-section">
+        <!-- KNOBS -->
+        <div class="knob-area" id="knobArea"></div>
+
+        <!-- TRANSPORT -->
+        <div class="transport-row">
+            <div class="transport-btn" id="btnPause" data-action="pause">PAUSE</div>
+            <div class="transport-btn" id="btnRew" data-action="rew">REW</div>
+            <div class="transport-btn" id="btnFF" data-action="ff">FF</div>
+            <div class="transport-btn" id="btnPlay" data-action="play">PLAY</div>
+            <div class="transport-btn" id="btnStop" data-action="stop">STOP</div>
+            <div class="transport-btn rec-btn" id="btnRec" data-action="rec">REC</div>
+        </div>
+
+        <!-- STATUS -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">ARM</span>
+                <div class="led off" id="ledArm"></div>
+            </div>
+            <div class="status-item">
+                <span class="status-label">REC</span>
+                <div class="led off" id="ledRec"></div>
+            </div>
+            <div class="status-item">
+                <span class="status-label">PLAY</span>
+                <div class="led off" id="ledPlay"></div>
+            </div>
+            <div class="file-display" id="fileDisplay">NO RECORDING</div>
+        </div>
+    </div>
+
+    <div class="machine-ftr">
+        <span class="ftr-text">STEREO TAPE RECORDER</span>
+        <span class="ftr-text">16-BIT / 44.1KHZ</span>
+    </div>
+</div>
+</div>
+
+<script>
+// ============================================
+// STATE
+// ============================================
+let armed = false;
+let recording = false;
+let playing = false;
+let paused = false;
+let recordStartTime = 0;
+let elapsedTime = 0;
+let counterRAF = null;
+let meterRAF = null;
+
+// Audio
+let audioCtx = null;
+let mediaStreamDest = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let analyserL = null;
+let analyserR = null;
+let splitter = null;
+
+// Effects state
+const fx = {
+    drive: 20,
+    eqLo: 0,
+    eqHi: 0,
+    compThresh: -24,
+    compRatio: 4,
+    limThresh: -1,
+    output: 80
+};
+
+// Knob definitions
+const KNOB_DEFS = [
+    { group: 'SATURATION', knobs: [
+        { id: 'drive', label: 'DRIVE', cls: 'sat', min: 0, max: 100, def: 20 }
+    ]},
+    { group: 'EQ', knobs: [
+        { id: 'eqLo', label: 'LOW', cls: 'eq', min: -12, max: 12, def: 0 },
+        { id: 'eqHi', label: 'HIGH', cls: 'eq', min: -12, max: 12, def: 0 }
+    ]},
+    { group: 'COMPRESSOR', knobs: [
+        { id: 'compThresh', label: 'THR', cls: 'comp', min: -60, max: 0, def: -24 },
+        { id: 'compRatio', label: 'RAT', cls: 'comp', min: 1, max: 20, def: 4 }
+    ]},
+    { group: 'LIMITER', knobs: [
+        { id: 'limThresh', label: 'THR', cls: 'lim', min: -20, max: 0, def: -1 }
+    ]},
+    { group: 'OUTPUT', knobs: [
+        { id: 'output', label: 'LEVEL', cls: 'out', min: 0, max: 100, def: 80 }
+    ]}
+];
+
+// ============================================
+// BUILD VU METERS
+// ============================================
+function buildVU() {
+    const segs = 16;
+    ['vuL', 'vuR'].forEach(id => {
+        const el = document.getElementById(id);
+        el.innerHTML = '';
+        for (let i = 0; i < segs; i++) {
+            const seg = document.createElement('div');
+            seg.className = 'vu-seg';
+            seg.dataset.seg = i;
+            el.appendChild(seg);
+        }
+    });
+}
+
+// ============================================
+// BUILD KNOBS
+// ============================================
+function buildKnobs() {
+    const area = document.getElementById('knobArea');
+    area.innerHTML = '';
+
+    KNOB_DEFS.forEach((group, gi) => {
+        if (gi > 0) {
+            const div = document.createElement('div');
+            div.className = 'knob-divider';
+            area.appendChild(div);
+        }
+
+        const grp = document.createElement('div');
+        grp.className = 'knob-group';
+        grp.innerHTML = `<span class="knob-group-label">${group.group}</span>`;
+
+        const row = document.createElement('div');
+        row.className = 'knob-group-row';
+
+        group.knobs.forEach(k => {
+            const pct = (k.def - k.min) / (k.max - k.min);
+            const angle = -135 + pct * 270;
+            row.innerHTML += `
+                <div class="knob-grp">
+                    <div class="knob ${k.cls}" data-param="${k.id}" data-min="${k.min}" data-max="${k.max}" data-default="${k.def}">
+                        <div class="knob-body" style="transform:rotate(${angle}deg)">
+                            <div class="knob-line"></div>
+                            <div class="knob-cap"></div>
+                        </div>
+                    </div>
+                    <span class="knob-lbl">${k.label}</span>
+                </div>
+            `;
+        });
+
+        grp.appendChild(row);
+        area.appendChild(grp);
+    });
+}
+
+// ============================================
+// KNOB INTERACTION
+// ============================================
+let activeKnob = null;
+let knobStartY = 0;
+let knobStartVal = 0;
+
+document.addEventListener('mousedown', (e) => {
+    const knobEl = e.target.closest('.knob');
+    if (!knobEl) return;
+    e.preventDefault();
+    activeKnob = knobEl;
+    const param = knobEl.dataset.param;
+    knobStartY = e.clientY;
+    knobStartVal = fx[param];
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!activeKnob) return;
+    const min = parseFloat(activeKnob.dataset.min);
+    const max = parseFloat(activeKnob.dataset.max);
+    const param = activeKnob.dataset.param;
+    const dy = knobStartY - e.clientY;
+    const range = max - min;
+    const sensitivity = e.shiftKey ? 400 : 150;
+    const newVal = Math.max(min, Math.min(max, knobStartVal + dy * range / sensitivity));
+    fx[param] = newVal;
+    updateKnobVisual(activeKnob, newVal);
+});
+
+document.addEventListener('mouseup', () => { activeKnob = null; });
+
+document.addEventListener('dblclick', (e) => {
+    const knobEl = e.target.closest('.knob');
+    if (!knobEl) return;
+    const def = parseFloat(knobEl.dataset.default);
+    const param = knobEl.dataset.param;
+    fx[param] = def;
+    updateKnobVisual(knobEl, def);
+});
+
+function updateKnobVisual(knobEl, value) {
+    const min = parseFloat(knobEl.dataset.min);
+    const max = parseFloat(knobEl.dataset.max);
+    const pct = (value - min) / (max - min);
+    const angle = -135 + pct * 270;
+    knobEl.querySelector('.knob-body').style.transform = `rotate(${angle}deg)`;
+}
+
+// ============================================
+// AUDIO CONTEXT
+// ============================================
+function getAudioCtx() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+}
+
+function initCapture() {
+    const ctx = getAudioCtx();
+    mediaStreamDest = ctx.createMediaStreamDestination();
+
+    // Analyser nodes for VU meters
+    splitter = ctx.createChannelSplitter(2);
+    analyserL = ctx.createAnalyser();
+    analyserR = ctx.createAnalyser();
+    analyserL.fftSize = 256;
+    analyserR.fftSize = 256;
+
+    // Connect destination output to analysers
+    // We capture from the main destination by connecting it
+    // through a MediaStreamSource
+    try {
+        const destStream = ctx.createMediaStreamSource(mediaStreamDest.stream);
+        destStream.connect(splitter);
+        splitter.connect(analyserL, 0);
+        splitter.connect(analyserR, 1);
+    } catch(e) {
+        // Fallback: single channel
+    }
+}
+
+// ============================================
+// RECORDING
+// ============================================
+function startRecording() {
+    const ctx = getAudioCtx();
+    if (!mediaStreamDest) initCapture();
+
+    recordedChunks = [];
+    recording = true;
+    playing = true;
+    paused = false;
+    recordStartTime = performance.now();
+    elapsedTime = 0;
+
+    // Start MediaRecorder
+    try {
+        mediaRecorder = new MediaRecorder(mediaStreamDest.stream, {
+            mimeType: 'audio/webm;codecs=opus'
+        });
+    } catch(e) {
+        try {
+            mediaRecorder = new MediaRecorder(mediaStreamDest.stream);
+        } catch(e2) {
+            recording = false;
+            playing = false;
+            return;
+        }
+    }
+
+    mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+        processAndExport();
+    };
+
+    mediaRecorder.start(100);
+
+    // UI
+    updateTransportUI();
+    startCounter();
+    startReels();
+    startMeters();
+
+    sendStatus();
+}
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
+    recording = false;
+    playing = false;
+    paused = false;
+
+    stopCounter();
+    stopReels();
+
+    updateTransportUI();
+    sendStatus();
+}
+
+function startPlayback() {
+    if (recording) return;
+    playing = true;
+    paused = false;
+    if (armed) {
+        startRecording();
+        return;
+    }
+    recordStartTime = performance.now() - elapsedTime;
+    updateTransportUI();
+    startCounter();
+    startReels();
+}
+
+function stopPlayback() {
+    if (recording) {
+        stopRecording();
+        return;
+    }
+    playing = false;
+    paused = false;
+    stopCounter();
+    stopReels();
+    updateTransportUI();
+}
+
+function togglePause() {
+    if (!playing && !recording) return;
+    paused = !paused;
+    if (paused) {
+        elapsedTime = performance.now() - recordStartTime;
+        stopReels();
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.pause();
+        }
+    } else {
+        recordStartTime = performance.now() - elapsedTime;
+        startReels();
+        if (mediaRecorder && mediaRecorder.state === 'paused') {
+            mediaRecorder.resume();
+        }
+    }
+    updateTransportUI();
+}
+
+// ============================================
+// COUNTER
+// ============================================
+function startCounter() {
+    stopCounter();
+    updateCounter();
+}
+
+function stopCounter() {
+    if (counterRAF) cancelAnimationFrame(counterRAF);
+    counterRAF = null;
+}
+
+function updateCounter() {
+    if (!playing && !recording) return;
+    if (!paused) {
+        elapsedTime = performance.now() - recordStartTime;
+    }
+    const totalSec = elapsedTime / 1000;
+    const min = Math.floor(totalSec / 60);
+    const sec = Math.floor(totalSec % 60);
+    const ms = Math.floor((totalSec * 100) % 100);
+    document.getElementById('counter').textContent =
+        String(min).padStart(2, '0') + ':' +
+        String(sec).padStart(2, '0') + '.' +
+        String(ms).padStart(2, '0');
+    counterRAF = requestAnimationFrame(updateCounter);
+}
+
+// ============================================
+// REEL ANIMATION
+// ============================================
+function startReels() {
+    document.getElementById('reelLeft').classList.add('spinning-ccw');
+    document.getElementById('reelRight').classList.add('spinning-cw');
+}
+
+function stopReels() {
+    document.getElementById('reelLeft').classList.remove('spinning-ccw');
+    document.getElementById('reelRight').classList.remove('spinning-cw');
+}
+
+// ============================================
+// VU METERS
+// ============================================
+function startMeters() {
+    if (meterRAF) return;
+    animateMeters();
+}
+
+function animateMeters() {
+    if (analyserL && analyserR && (recording || playing)) {
+        const bufL = new Uint8Array(analyserL.frequencyBinCount);
+        const bufR = new Uint8Array(analyserR.frequencyBinCount);
+        analyserL.getByteFrequencyData(bufL);
+        analyserR.getByteFrequencyData(bufR);
+
+        const levelL = rmsLevel(bufL);
+        const levelR = rmsLevel(bufR);
+        drawVU('vuL', levelL);
+        drawVU('vuR', levelR);
+    } else if (!recording && !playing) {
+        drawVU('vuL', 0);
+        drawVU('vuR', 0);
+    }
+    meterRAF = requestAnimationFrame(animateMeters);
+}
+
+function rmsLevel(buf) {
+    let sum = 0;
+    for (let i = 0; i < buf.length; i++) {
+        const v = buf[i] / 255;
+        sum += v * v;
+    }
+    return Math.sqrt(sum / buf.length);
+}
+
+function drawVU(id, level) {
+    const meter = document.getElementById(id);
+    if (!meter) return;
+    const segs = meter.querySelectorAll('.vu-seg');
+    const total = segs.length;
+    const litCount = Math.floor(level * total);
+
+    segs.forEach((seg, i) => {
+        seg.className = 'vu-seg';
+        if (i < litCount) {
+            if (i >= total - 2) seg.classList.add('lit-red');
+            else if (i >= total - 4) seg.classList.add('lit-yellow');
+            else seg.classList.add('lit-green');
+        }
+    });
+}
+
+// ============================================
+// UI UPDATES
+// ============================================
+function updateTransportUI() {
+    const ledArm = document.getElementById('ledArm');
+    const ledRec = document.getElementById('ledRec');
+    const ledPlay = document.getElementById('ledPlay');
+    const btnRecEl = document.getElementById('btnRec');
+    const btnPlayEl = document.getElementById('btnPlay');
+    const btnPauseEl = document.getElementById('btnPause');
+    const btnStopEl = document.getElementById('btnStop');
+
+    // ARM LED
+    ledArm.className = 'led ' + (armed ? 'red' : 'off');
+
+    // REC LED
+    ledRec.className = 'led ' + (recording ? 'red-flash' : 'off');
+
+    // PLAY LED
+    ledPlay.className = 'led ' + (playing && !paused ? 'green' : 'off');
+
+    // REC button
+    btnRecEl.className = 'transport-btn rec-btn';
+    if (recording) btnRecEl.classList.add('recording');
+    else if (armed) btnRecEl.classList.add('armed');
+
+    // PLAY button
+    btnPlayEl.classList.toggle('active', playing && !paused);
+
+    // PAUSE button
+    btnPauseEl.classList.toggle('active', paused);
+
+    // STOP button
+    btnStopEl.classList.toggle('active', !playing && !recording);
+}
+
+// ============================================
+// AUDIO PROCESSING & EXPORT
+// ============================================
+async function processAndExport() {
+    if (recordedChunks.length === 0) {
+        document.getElementById('fileDisplay').textContent = 'NO DATA CAPTURED';
+        return;
+    }
+
+    document.getElementById('fileDisplay').textContent = 'PROCESSING...';
+
+    const blob = new Blob(recordedChunks, { type: recordedChunks[0].type || 'audio/webm' });
+
+    try {
+        const ctx = getAudioCtx();
+        const arrayBuf = await blob.arrayBuffer();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuf);
+
+        // Process through effects chain offline
+        const processed = await applyEffectsOffline(audioBuffer);
+
+        // Encode to WAV
+        const wavBlob = encodeWAV(processed);
+
+        // Generate filename
+        const now = new Date();
+        const ts = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0') + '_' +
+            String(now.getHours()).padStart(2, '0') + '-' +
+            String(now.getMinutes()).padStart(2, '0') + '-' +
+            String(now.getSeconds()).padStart(2, '0');
+        const fileName = 'STUDIO_' + ts + '.wav';
+
+        document.getElementById('fileDisplay').textContent = fileName;
+
+        // Try File System Access API first
+        if (window.showSaveFilePicker) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: fileName,
+                    startIn: 'desktop',
+                    types: [{
+                        description: 'WAV AUDIO',
+                        accept: { 'audio/wav': ['.wav'] }
+                    }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(wavBlob);
+                await writable.close();
+                document.getElementById('fileDisplay').textContent = 'SAVED: ' + fileName;
+                return;
+            } catch(e) {
+                if (e.name === 'AbortError') {
+                    document.getElementById('fileDisplay').textContent = 'SAVE CANCELLED';
+                    return;
+                }
+            }
+        }
+
+        // Fallback: download link
+        const url = URL.createObjectURL(wavBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        document.getElementById('fileDisplay').textContent = 'DOWNLOADED: ' + fileName;
+
+    } catch(e) {
+        // If decoding fails, just save the raw blob
+        const now = new Date();
+        const ts = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0') + '_' +
+            String(now.getHours()).padStart(2, '0') + '-' +
+            String(now.getMinutes()).padStart(2, '0');
+        const fileName = 'STUDIO_' + ts + '.webm';
+        document.getElementById('fileDisplay').textContent = fileName;
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+}
+
+// ============================================
+// OFFLINE EFFECTS PROCESSING
+// ============================================
+async function applyEffectsOffline(inputBuffer) {
+    const sr = inputBuffer.sampleRate;
+    const len = inputBuffer.length;
+    const channels = inputBuffer.numberOfChannels;
+
+    const offCtx = new OfflineAudioContext(channels, len, sr);
+    const source = offCtx.createBufferSource();
+    source.buffer = inputBuffer;
+
+    let lastNode = source;
+
+    // 1. Tape saturation (WaveShaperNode)
+    const driveAmount = fx.drive / 100;
+    if (driveAmount > 0.01) {
+        const waveshaper = offCtx.createWaveShaper();
+        waveshaper.curve = makeSaturationCurve(driveAmount);
+        waveshaper.oversample = '2x';
+        lastNode.connect(waveshaper);
+        lastNode = waveshaper;
+    }
+
+    // 2. EQ: lowshelf at 300Hz
+    if (Math.abs(fx.eqLo) > 0.1) {
+        const loShelf = offCtx.createBiquadFilter();
+        loShelf.type = 'lowshelf';
+        loShelf.frequency.value = 300;
+        loShelf.gain.value = fx.eqLo;
+        lastNode.connect(loShelf);
+        lastNode = loShelf;
+    }
+
+    // 3. EQ: highshelf at 3000Hz
+    if (Math.abs(fx.eqHi) > 0.1) {
+        const hiShelf = offCtx.createBiquadFilter();
+        hiShelf.type = 'highshelf';
+        hiShelf.frequency.value = 3000;
+        hiShelf.gain.value = fx.eqHi;
+        lastNode.connect(hiShelf);
+        lastNode = hiShelf;
+    }
+
+    // 4. Compressor
+    const comp = offCtx.createDynamicsCompressor();
+    comp.threshold.value = fx.compThresh;
+    comp.ratio.value = fx.compRatio;
+    comp.knee.value = 6;
+    comp.attack.value = 0.01;
+    comp.release.value = 0.1;
+    lastNode.connect(comp);
+    lastNode = comp;
+
+    // 5. Limiter
+    const limiter = offCtx.createDynamicsCompressor();
+    limiter.threshold.value = fx.limThresh;
+    limiter.ratio.value = 20;
+    limiter.knee.value = 0;
+    limiter.attack.value = 0.001;
+    limiter.release.value = 0.05;
+    lastNode.connect(limiter);
+    lastNode = limiter;
+
+    // 6. Output gain
+    const gain = offCtx.createGain();
+    gain.gain.value = fx.output / 100;
+    lastNode.connect(gain);
+    gain.connect(offCtx.destination);
+
+    source.start(0);
+    return offCtx.startRendering();
+}
+
+function makeSaturationCurve(amount) {
+    const k = amount * 50;
+    const samples = 8192;
+    const curve = new Float32Array(samples);
+    for (let i = 0; i < samples; i++) {
+        const x = (i * 2) / samples - 1;
+        if (k > 0) {
+            curve[i] = ((1 + k) * x) / (1 + k * Math.abs(x));
+        } else {
+            curve[i] = x;
+        }
+    }
+    return curve;
+}
+
+// ============================================
+// WAV ENCODER (16-bit PCM)
+// ============================================
+function encodeWAV(audioBuffer) {
+    const numChannels = audioBuffer.numberOfChannels;
+    const sampleRate = audioBuffer.sampleRate;
+    const bitsPerSample = 16;
+    const bytesPerSample = bitsPerSample / 8;
+    const blockAlign = numChannels * bytesPerSample;
+    const numSamples = audioBuffer.length;
+    const dataSize = numSamples * blockAlign;
+    const bufferSize = 44 + dataSize;
+
+    const buffer = new ArrayBuffer(bufferSize);
+    const view = new DataView(buffer);
+
+    // Get channel data
+    const channelData = [];
+    for (let c = 0; c < numChannels; c++) {
+        channelData.push(audioBuffer.getChannelData(c));
+    }
+
+    let offset = 0;
+
+    // RIFF header
+    writeString(view, offset, 'RIFF'); offset += 4;
+    view.setUint32(offset, bufferSize - 8, true); offset += 4;
+    writeString(view, offset, 'WAVE'); offset += 4;
+
+    // fmt chunk
+    writeString(view, offset, 'fmt '); offset += 4;
+    view.setUint32(offset, 16, true); offset += 4;
+    view.setUint16(offset, 1, true); offset += 2; // PCM
+    view.setUint16(offset, numChannels, true); offset += 2;
+    view.setUint32(offset, sampleRate, true); offset += 4;
+    view.setUint32(offset, sampleRate * blockAlign, true); offset += 4;
+    view.setUint16(offset, blockAlign, true); offset += 2;
+    view.setUint16(offset, bitsPerSample, true); offset += 2;
+
+    // data chunk
+    writeString(view, offset, 'data'); offset += 4;
+    view.setUint32(offset, dataSize, true); offset += 4;
+
+    // Interleave and write samples
+    for (let i = 0; i < numSamples; i++) {
+        for (let c = 0; c < numChannels; c++) {
+            let sample = channelData[c][i];
+            sample = Math.max(-1, Math.min(1, sample));
+            sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+            view.setInt16(offset, sample, true);
+            offset += 2;
+        }
+    }
+
+    return new Blob([buffer], { type: 'audio/wav' });
+}
+
+function writeString(view, offset, str) {
+    for (let i = 0; i < str.length; i++) {
+        view.setUint8(offset + i, str.charCodeAt(i));
+    }
+}
+
+// ============================================
+// TRANSPORT BUTTONS
+// ============================================
+document.getElementById('btnRec').addEventListener('mousedown', () => {
+    if (recording) {
+        // Disarm while recording = stop
+        stopRecording();
+        armed = false;
+    } else {
+        armed = !armed;
+        if (armed && playing) {
+            // Already playing, start recording now
+            startRecording();
+        }
+    }
+    updateTransportUI();
+});
+
+document.getElementById('btnPlay').addEventListener('mousedown', () => {
+    if (!playing) startPlayback();
+});
+
+document.getElementById('btnStop').addEventListener('mousedown', () => {
+    if (playing || recording) {
+        stopPlayback();
+    } else {
+        // Reset counter
+        elapsedTime = 0;
+        recordStartTime = performance.now();
+        document.getElementById('counter').textContent = '00:00.00';
+    }
+});
+
+document.getElementById('btnPause').addEventListener('mousedown', () => {
+    togglePause();
+});
+
+document.getElementById('btnRew').addEventListener('mousedown', () => {
+    if (recording) return;
+    elapsedTime = Math.max(0, elapsedTime - 5000);
+    recordStartTime = performance.now() - elapsedTime;
+    if (!playing) {
+        const totalSec = elapsedTime / 1000;
+        const min = Math.floor(totalSec / 60);
+        const sec = Math.floor(totalSec % 60);
+        const ms = Math.floor((totalSec * 100) % 100);
+        document.getElementById('counter').textContent =
+            String(min).padStart(2, '0') + ':' +
+            String(sec).padStart(2, '0') + '.' +
+            String(ms).padStart(2, '0');
+    }
+});
+
+document.getElementById('btnFF').addEventListener('mousedown', () => {
+    if (recording) return;
+    elapsedTime += 5000;
+    recordStartTime = performance.now() - elapsedTime;
+    if (!playing) {
+        const totalSec = elapsedTime / 1000;
+        const min = Math.floor(totalSec / 60);
+        const sec = Math.floor(totalSec % 60);
+        const ms = Math.floor((totalSec * 100) % 100);
+        document.getElementById('counter').textContent =
+            String(min).padStart(2, '0') + ':' +
+            String(sec).padStart(2, '0') + '.' +
+            String(ms).padStart(2, '0');
+    }
+});
+
+// ============================================
+// COMMUNICATION (postMessage)
+// ============================================
+function sendStatus() {
+    if (window !== window.parent) {
+        window.parent.postMessage({
+            type: 'tape-status',
+            recording: recording,
+            armed: armed
+        }, '*');
+    }
+}
+
+window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (!d) return;
+
+    if (d.type === 'transport') {
+        if (d.action === 'play') {
+            if (!playing) startPlayback();
+        } else if (d.action === 'stop') {
+            if (playing || recording) stopPlayback();
+        } else if (d.action === 'pause') {
+            togglePause();
+        }
+    }
+
+    if (d.type === 'keyboard-focus') {
+        window.__kbEnabled = d.enabled;
+    }
+
+    // Accept audio context from parent for capture
+    if (d.type === 'audio-context-ready') {
+        // Parent can send audio routing info
+    }
+});
+
+// ============================================
+// SCALE TO FIT
+// ============================================
+function scaleToFit() {
+    const wrap = document.getElementById('scaleWrap');
+    wrap.style.transform = 'none';
+    const w = wrap.scrollWidth;
+    const h = wrap.scrollHeight;
+    const scale = Math.min(window.innerWidth / w, window.innerHeight / h, 1) * 0.96;
+    wrap.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', scaleToFit);
+
+// ============================================
+// INIT
+// ============================================
+buildVU();
+buildKnobs();
+updateTransportUI();
+
+requestAnimationFrame(() => {
+    scaleToFit();
+    startMeters();
+});
+
+// ==================== IFRAME BRIDGE ====================
+if (window !== window.parent) {
+    window.__kbEnabled = false;
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+    }, true);
+    document.addEventListener('keyup', (e) => {
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+    }, true);
+    window.parent.postMessage({ type: 'instrument-ready', name: 'tape' }, '*');
+}
+</script>
+
+</body>
+</html>

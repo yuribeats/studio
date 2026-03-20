@@ -309,17 +309,8 @@
             </div>
         </div>
 
-        <!-- ROW 5: PIANO ROLL (full width) -->
+        <!-- ROW 5: PEDALS (hidden by default) + MIXER -->
         <div class="inst-row tall" data-row="4">
-            <div class="inst-wrapper" data-inst="pianoroll">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">PIANO ROLL</div>
-                <iframe id="framePianoroll" src="pianoroll.html"></iframe>
-            </div>
-        </div>
-
-        <!-- ROW 6: PEDALS (hidden by default) + MIXER -->
-        <div class="inst-row tall" data-row="5">
             <div class="inst-wrapper hidden-inst" data-inst="pedals">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">PEDALBOARD</div>
@@ -332,12 +323,21 @@
             </div>
         </div>
 
-        <!-- ROW 7: TAPE MACHINE (full width) -->
-        <div class="inst-row" data-row="6">
+        <!-- ROW 6: TAPE MACHINE (full width) -->
+        <div class="inst-row" data-row="5">
             <div class="inst-wrapper" data-inst="tape">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">TAPE MACHINE</div>
                 <iframe id="frameTape" src="tape.html"></iframe>
+            </div>
+        </div>
+
+        <!-- ROW 7: PIANO ROLL (always last) -->
+        <div class="inst-row tall" data-row="6">
+            <div class="inst-wrapper" data-inst="pianoroll">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">PIANO ROLL</div>
+                <iframe id="framePianoroll" src="pianoroll.html"></iframe>
             </div>
         </div>
     </div>
