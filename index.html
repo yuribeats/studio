@@ -252,6 +252,7 @@
             <div class="bar-btn" data-popout="cr78">808</div>
             <div class="bar-btn" data-popout="dx7">DX7</div>
             <div class="bar-btn" data-popout="bass">BASS</div>
+            <div class="bar-btn" data-popout="pedals">PEDALS</div>
             <div class="bar-btn" data-popout="mixer">MIXER</div>
         </div>
         <div class="bar-sep"></div>
@@ -280,22 +281,17 @@
             </div>
         </div>
 
-        <!-- ROW 2: MPC + MIXER (side by side) -->
+        <!-- ROW 2: MPC (full width) -->
         <div class="inst-row tall" data-row="1">
             <div class="inst-wrapper" data-inst="mpc">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">AKAI MPC 4000</div>
                 <iframe id="frameMpc" src="mpc.html"></iframe>
             </div>
-            <div class="inst-wrapper" data-inst="mixer">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">MIXING CONSOLE</div>
-                <iframe id="frameMixer" src="mixer.html"></iframe>
-            </div>
         </div>
 
         <!-- ROW 3: 808 SEQUENCER (full width) -->
-        <div class="inst-row" data-row="2">
+        <div class="inst-row tall" data-row="2">
             <div class="inst-wrapper" data-inst="cr78">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">STEP SEQUENCER</div>
@@ -303,17 +299,35 @@
             </div>
         </div>
 
-        <!-- ROW 4: DX7 + BASS SYNTH (side by side) -->
+        <!-- ROW 4: DX7 (full width) -->
         <div class="inst-row tall" data-row="3">
             <div class="inst-wrapper" data-inst="dx7">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">YAMAHA DX7</div>
                 <iframe id="frameDx7" src="dx7/index.html"></iframe>
             </div>
+        </div>
+
+        <!-- ROW 5: BASS SYNTH (full width) -->
+        <div class="inst-row tall" data-row="4">
             <div class="inst-wrapper" data-inst="bass">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">BASS SYNTH</div>
                 <iframe id="frameBass" src="bass/index.html"></iframe>
+            </div>
+        </div>
+
+        <!-- ROW 6: PEDALS + MIXER (side by side) -->
+        <div class="inst-row" data-row="5">
+            <div class="inst-wrapper" data-inst="pedals">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">PEDALBOARD</div>
+                <iframe id="framePedals" src="pedals.html"></iframe>
+            </div>
+            <div class="inst-wrapper" data-inst="mixer">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">MIXING CONSOLE</div>
+                <iframe id="frameMixer" src="mixer.html"></iframe>
             </div>
         </div>
     </div>
@@ -329,11 +343,11 @@ const INSTRUMENTS = {
     cr78:  { frame: 'frameCr78',  label: '808',     file: '808.html',        windowName: 'cr78win' },
     dx7:   { frame: 'frameDx7',   label: 'DX7',     file: 'dx7/index.html',  windowName: 'dx7win' },
     bass:  { frame: 'frameBass',  label: 'BASS',    file: 'bass/index.html', windowName: 'basswin' },
+    pedals:{ frame: 'framePedals',label: 'PEDALS',  file: 'pedals.html',     windowName: 'pedalswin' },
     mixer: { frame: 'frameMixer', label: 'MIXER',   file: 'mixer.html',      windowName: 'mixerwin' },
 };
 const instIds = Object.keys(INSTRUMENTS);
-// Instruments that support our postMessage protocol (local builds)
-const localInsts = ['juno', 'mpc', 'cr78', 'mixer'];
+const localInsts = ['juno', 'mpc', 'cr78', 'pedals', 'mixer'];
 
 // ============================================
 // STATE
@@ -606,6 +620,14 @@ window.addEventListener('message', (e) => {
         // Map old name 'kr106' to 'juno'
         const name = d.name === 'kr106' ? 'juno' : d.name;
         sendToInst(name, {type: 'keyboard-focus', enabled: name === keyboardTarget});
+    }
+    // Route pedal-control messages to target instruments
+    if (d && d.type === 'pedal-control') {
+        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno'};
+        const instId = idMap[d.channel] || d.channel;
+        if (INSTRUMENTS[instId]) {
+            sendToInst(instId, {type: 'pedals', pedals: d.pedals});
+        }
     }
     if (d && d.type === 'mixer-control') {
         const target = d.channel;

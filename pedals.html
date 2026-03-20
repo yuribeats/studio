@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEDALBOARD</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            background: #111;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            user-select: none;
+        }
+        body { display: flex; justify-content: center; align-items: center; }
+        .scale-wrap { transform-origin: center center; }
+
+        /* TOP BAR */
+        .top-bar {
+            background: #1a1a1a;
+            border-bottom: 2px solid #333;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .bar-title {
+            font-size: 9px;
+            color: #555;
+            letter-spacing: 3px;
+            margin-right: 8px;
+        }
+        .bar-model {
+            font-size: 13px;
+            color: #888;
+            letter-spacing: 2px;
+            margin-right: auto;
+        }
+
+        /* CHANNEL TABS */
+        .ch-tabs {
+            display: flex;
+            gap: 4px;
+        }
+        .ch-tab {
+            padding: 5px 14px;
+            font-size: 9px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #555;
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+        .ch-tab.active {
+            color: #fff;
+            background: #228B22;
+            border-color: #228B22;
+        }
+
+        /* BOARD AREA */
+        .board-wrap {
+            background: #0e0e0e;
+            border-top: 1px solid #222;
+            padding: 24px 20px;
+            min-height: 300px;
+        }
+        .board {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        /* SIGNAL FLOW ARROW */
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            height: 220px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        /* PEDAL */
+        .pedal {
+            width: 140px;
+            height: 220px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        /* REMOVE BUTTON */
+        .pedal-remove {
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            font-size: 10px;
+            color: #444;
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .pedal-remove:hover { color: #cc3333; }
+
+        /* PEDAL NAME */
+        .pedal-name {
+            text-align: center;
+            font-size: 9px;
+            letter-spacing: 2px;
+            padding: 8px 4px 4px;
+        }
+
+        /* LED */
+        .pedal-led {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            margin: 0 auto 4px;
+        }
+        .pedal-led.on {
+            background: #228B22;
+            border-color: #228B22;
+            box-shadow: 0 0 6px rgba(34,139,34,0.6);
+        }
+
+        /* KNOBS AREA */
+        .pedal-knobs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            padding: 4px 8px;
+            flex: 1;
+        }
+        .knob-grp {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .knob {
+            width: 26px;
+            height: 26px;
+            position: relative;
+        }
+        .knob-body {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 40% 35%, #555 0%, #2a2a2a 70%, #222 100%);
+            border-radius: 50%;
+            border: 1.5px solid #111;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .knob-line {
+            position: absolute;
+            width: 2px;
+            height: 9px;
+            background: #ddd;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 2px rgba(255,255,255,0.3);
+        }
+        .knob-cap {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .knob-lbl {
+            font-size: 6px;
+            color: #555;
+            letter-spacing: 0.5px;
+        }
+
+        /* BYPASS FOOTSWITCH */
+        .pedal-bypass {
+            height: 40px;
+            margin: 4px 10px 10px;
+            background: #252525;
+            border: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+        }
+        .pedal-bypass.active {
+            background: #1a3a1a;
+            border-color: #228B22;
+            color: #33ff33;
+        }
+
+        /* ADD PEDAL BUTTON */
+        .add-pedal-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .add-pedal {
+            width: 80px;
+            height: 220px;
+            background: #151515;
+            border: 2px dashed #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #444;
+        }
+        .add-pedal:hover { border-color: #555; color: #666; }
+        .add-pedal-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+        .add-pedal-text {
+            font-size: 7px;
+            letter-spacing: 1.5px;
+        }
+
+        /* DROPDOWN */
+        .pedal-dropdown {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 84px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            z-index: 100;
+            min-width: 140px;
+        }
+        .pedal-dropdown.open { display: block; }
+        .pedal-dropdown-item {
+            padding: 8px 14px;
+            font-size: 9px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #888;
+            border-bottom: 1px solid #222;
+        }
+        .pedal-dropdown-item:hover { background: #252525; color: #fff; }
+        .pedal-dropdown-item:last-child { border-bottom: none; }
+
+        /* EMPTY STATE */
+        .empty-msg {
+            font-size: 9px;
+            color: #333;
+            letter-spacing: 2px;
+            align-self: center;
+            padding: 0 16px;
+        }
+
+        /* FOOTER */
+        .ftr {
+            background: #1a1a1a;
+            border-top: 2px solid #333;
+            padding: 6px 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .ftr-text {
+            font-size: 6px;
+            color: #333;
+            letter-spacing: 1.5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="scale-wrap" id="scaleWrap">
+<div style="display:flex;flex-direction:column;">
+    <div class="top-bar">
+        <span class="bar-title">STUDIO</span>
+        <span class="bar-model">PEDALBOARD</span>
+        <div class="ch-tabs" id="chTabs"></div>
+    </div>
+    <div class="board-wrap">
+        <div class="board" id="board"></div>
+    </div>
+    <div class="ftr">
+        <span class="ftr-text">SIGNAL CHAIN</span>
+        <span class="ftr-text">INPUT > PEDALS > MIXER</span>
+    </div>
+</div>
+</div>
+
+<script>
+// ============================================
+// PEDAL TYPE DEFINITIONS
+// ============================================
+const PEDAL_TYPES = {
+    overdrive: {
+        name: 'OVERDRIVE',
+        color: '#cc3300',
+        params: [
+            { id: 'gain', label: 'GAIN', min: 0, max: 100, def: 50 },
+            { id: 'tone', label: 'TONE', min: 0, max: 100, def: 50 },
+            { id: 'level', label: 'LEVEL', min: 0, max: 100, def: 80 }
+        ]
+    },
+    eq: {
+        name: 'EQ',
+        color: '#3366cc',
+        params: [
+            { id: 'low', label: 'LOW', min: -12, max: 12, def: 0 },
+            { id: 'mid', label: 'MID', min: -12, max: 12, def: 0 },
+            { id: 'high', label: 'HIGH', min: -12, max: 12, def: 0 }
+        ]
+    },
+    compressor: {
+        name: 'COMPRESSOR',
+        color: '#cc8800',
+        params: [
+            { id: 'threshold', label: 'THRESH', min: -60, max: 0, def: -24 },
+            { id: 'ratio', label: 'RATIO', min: 1, max: 20, def: 4 },
+            { id: 'attack', label: 'ATK', min: 0, max: 100, def: 20 },
+            { id: 'release', label: 'REL', min: 0, max: 100, def: 50 }
+        ]
+    },
+    chorus: {
+        name: 'CHORUS',
+        color: '#228B22',
+        params: [
+            { id: 'rate', label: 'RATE', min: 0, max: 100, def: 40 },
+            { id: 'depth', label: 'DEPTH', min: 0, max: 100, def: 50 },
+            { id: 'mix', label: 'MIX', min: 0, max: 100, def: 50 }
+        ]
+    },
+    phaser: {
+        name: 'PHASER',
+        color: '#9933cc',
+        params: [
+            { id: 'rate', label: 'RATE', min: 0, max: 100, def: 40 },
+            { id: 'depth', label: 'DEPTH', min: 0, max: 100, def: 50 },
+            { id: 'feedback', label: 'FDBK', min: 0, max: 100, def: 30 }
+        ]
+    }
+};
+
+// ============================================
+// CHANNELS
+// ============================================
+const CHANNEL_LIST = [
+    { id: 'juno', name: 'JUNO' },
+    { id: 'mpc', name: 'MPC' },
+    { id: '808', name: '808' },
+    { id: 'dx7', name: 'DX7' },
+    { id: 'bass', name: 'BASS' }
+];
+
+// ============================================
+// STATE
+// ============================================
+let activeChannel = 'juno';
+const chains = {};
+CHANNEL_LIST.forEach(ch => { chains[ch.id] = []; });
+
+let dropdownOpen = false;
+
+// ============================================
+// KNOB INTERACTION
+// ============================================
+let activeKnob = null;
+let knobStartY = 0;
+let knobStartVal = 0;
+
+document.addEventListener('mousedown', (e) => {
+    const knobEl = e.target.closest('.knob');
+    if (!knobEl) return;
+    e.preventDefault();
+    activeKnob = knobEl;
+    knobStartY = e.clientY;
+    knobStartVal = parseFloat(knobEl.dataset.value);
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!activeKnob) return;
+    const min = parseFloat(activeKnob.dataset.min);
+    const max = parseFloat(activeKnob.dataset.max);
+    const dy = knobStartY - e.clientY;
+    const range = max - min;
+    const sensitivity = e.shiftKey ? 400 : 150;
+    const newVal = Math.max(min, Math.min(max, knobStartVal + dy * range / sensitivity));
+    activeKnob.dataset.value = newVal;
+    updateKnobVisual(activeKnob, newVal);
+
+    // Update state
+    const pedalIdx = parseInt(activeKnob.dataset.pedalIdx);
+    const paramId = activeKnob.dataset.param;
+    if (chains[activeChannel][pedalIdx]) {
+        chains[activeChannel][pedalIdx].params[paramId] = newVal;
+        sendPedalState();
+    }
+});
+
+document.addEventListener('mouseup', () => { activeKnob = null; });
+
+document.addEventListener('dblclick', (e) => {
+    const knobEl = e.target.closest('.knob');
+    if (!knobEl) return;
+    const def = parseFloat(knobEl.dataset.default);
+    const pedalIdx = parseInt(knobEl.dataset.pedalIdx);
+    const paramId = knobEl.dataset.param;
+    knobEl.dataset.value = def;
+    updateKnobVisual(knobEl, def);
+    if (chains[activeChannel][pedalIdx]) {
+        chains[activeChannel][pedalIdx].params[paramId] = def;
+        sendPedalState();
+    }
+});
+
+function updateKnobVisual(knobEl, value) {
+    const min = parseFloat(knobEl.dataset.min);
+    const max = parseFloat(knobEl.dataset.max);
+    const pct = (value - min) / (max - min);
+    const angle = -135 + pct * 270;
+    knobEl.querySelector('.knob-body').style.transform = 'rotate(' + angle + 'deg)';
+}
+
+// ============================================
+// BUILD UI
+// ============================================
+function buildTabs() {
+    const container = document.getElementById('chTabs');
+    container.innerHTML = '';
+    CHANNEL_LIST.forEach(ch => {
+        const tab = document.createElement('div');
+        tab.className = 'ch-tab' + (ch.id === activeChannel ? ' active' : '');
+        tab.textContent = ch.name;
+        tab.addEventListener('click', () => {
+            activeChannel = ch.id;
+            buildTabs();
+            renderBoard();
+        });
+        container.appendChild(tab);
+    });
+}
+
+function renderBoard() {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+
+    const chain = chains[activeChannel];
+
+    if (chain.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-msg';
+        empty.textContent = 'NO PEDALS — ADD ONE';
+        board.appendChild(empty);
+    }
+
+    chain.forEach((pedal, idx) => {
+        if (idx > 0) {
+            const arrow = document.createElement('div');
+            arrow.className = 'flow-arrow';
+            arrow.innerHTML = '&#9654;';
+            board.appendChild(arrow);
+        }
+        board.appendChild(buildPedalEl(pedal, idx));
+    });
+
+    // Add pedal button
+    const addWrap = document.createElement('div');
+    addWrap.className = 'add-pedal-wrap';
+
+    const addBtn = document.createElement('div');
+    addBtn.className = 'add-pedal';
+    addBtn.innerHTML = '<div class="add-pedal-icon">+</div><div class="add-pedal-text">ADD PEDAL</div>';
+    addBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown(addWrap);
+    });
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'pedal-dropdown';
+    Object.keys(PEDAL_TYPES).forEach(typeId => {
+        const item = document.createElement('div');
+        item.className = 'pedal-dropdown-item';
+        item.textContent = PEDAL_TYPES[typeId].name;
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addPedal(typeId);
+            closeDropdown();
+        });
+        dropdown.appendChild(item);
+    });
+
+    addWrap.appendChild(addBtn);
+    addWrap.appendChild(dropdown);
+
+    if (chain.length > 0) {
+        const arrow = document.createElement('div');
+        arrow.className = 'flow-arrow';
+        arrow.innerHTML = '&#9654;';
+        board.appendChild(arrow);
+    }
+
+    board.appendChild(addWrap);
+}
+
+function buildPedalEl(pedal, idx) {
+    const typeDef = PEDAL_TYPES[pedal.type];
+    const el = document.createElement('div');
+    el.className = 'pedal';
+
+    // Remove button
+    const removeBtn = document.createElement('div');
+    removeBtn.className = 'pedal-remove';
+    removeBtn.textContent = 'X';
+    removeBtn.addEventListener('click', () => {
+        removePedal(idx);
+    });
+    el.appendChild(removeBtn);
+
+    // Name
+    const name = document.createElement('div');
+    name.className = 'pedal-name';
+    name.style.color = typeDef.color;
+    name.textContent = typeDef.name;
+    el.appendChild(name);
+
+    // LED
+    const led = document.createElement('div');
+    led.className = 'pedal-led' + (!pedal.bypassed ? ' on' : '');
+    el.appendChild(led);
+
+    // Knobs area
+    const knobsArea = document.createElement('div');
+    knobsArea.className = 'pedal-knobs';
+
+    typeDef.params.forEach(p => {
+        const val = pedal.params[p.id];
+        const pct = (val - p.min) / (p.max - p.min);
+        const angle = -135 + pct * 270;
+
+        const grp = document.createElement('div');
+        grp.className = 'knob-grp';
+        grp.innerHTML =
+            '<div class="knob" data-pedal-idx="' + idx + '" data-param="' + p.id + '" data-min="' + p.min + '" data-max="' + p.max + '" data-default="' + p.def + '" data-value="' + val + '">' +
+                '<div class="knob-body" style="transform:rotate(' + angle + 'deg)">' +
+                    '<div class="knob-line"></div>' +
+                    '<div class="knob-cap" style="background:' + typeDef.color + '"></div>' +
+                '</div>' +
+            '</div>' +
+            '<span class="knob-lbl">' + p.label + '</span>';
+        knobsArea.appendChild(grp);
+    });
+
+    el.appendChild(knobsArea);
+
+    // Bypass footswitch
+    const bypass = document.createElement('div');
+    bypass.className = 'pedal-bypass' + (!pedal.bypassed ? ' active' : '');
+    bypass.textContent = !pedal.bypassed ? 'ON' : 'BYPASS';
+    bypass.addEventListener('click', () => {
+        pedal.bypassed = !pedal.bypassed;
+        renderBoard();
+        sendPedalState();
+    });
+    el.appendChild(bypass);
+
+    return el;
+}
+
+// ============================================
+// ACTIONS
+// ============================================
+function addPedal(typeId) {
+    const typeDef = PEDAL_TYPES[typeId];
+    const params = {};
+    typeDef.params.forEach(p => { params[p.id] = p.def; });
+    chains[activeChannel].push({
+        type: typeId,
+        params: params,
+        bypassed: false
+    });
+    renderBoard();
+    sendPedalState();
+}
+
+function removePedal(idx) {
+    chains[activeChannel].splice(idx, 1);
+    renderBoard();
+    sendPedalState();
+}
+
+function toggleDropdown(wrap) {
+    const dd = wrap.querySelector('.pedal-dropdown');
+    if (dd.classList.contains('open')) {
+        dd.classList.remove('open');
+        dropdownOpen = false;
+    } else {
+        closeDropdown();
+        dd.classList.add('open');
+        dropdownOpen = true;
+    }
+}
+
+function closeDropdown() {
+    document.querySelectorAll('.pedal-dropdown.open').forEach(d => d.classList.remove('open'));
+    dropdownOpen = false;
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.add-pedal-wrap')) {
+        closeDropdown();
+    }
+});
+
+// ============================================
+// COMMUNICATION
+// ============================================
+function sendPedalState() {
+    const msg = {
+        type: 'pedal-control',
+        channel: activeChannel,
+        pedals: chains[activeChannel].map(p => ({
+            type: p.type,
+            params: Object.assign({}, p.params),
+            bypassed: p.bypassed
+        }))
+    };
+    if (window !== window.parent) {
+        window.parent.postMessage(msg, '*');
+    }
+}
+
+window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (d && d.type === 'keyboard-focus') {
+        window.__kbEnabled = d.enabled;
+    }
+});
+
+// ============================================
+// SCALE TO FIT
+// ============================================
+function scaleToFit() {
+    const wrap = document.getElementById('scaleWrap');
+    wrap.style.transform = 'none';
+    const w = wrap.scrollWidth;
+    const h = wrap.scrollHeight;
+    const scale = Math.min(window.innerWidth / w, window.innerHeight / h, 1) * 0.96;
+    wrap.style.transform = 'scale(' + scale + ')';
+}
+window.addEventListener('resize', scaleToFit);
+
+// ============================================
+// INIT
+// ============================================
+buildTabs();
+renderBoard();
+requestAnimationFrame(() => { scaleToFit(); });
+
+// ==================== IFRAME BRIDGE ====================
+if (window !== window.parent) {
+    window.__kbEnabled = false;
+    document.addEventListener('keydown', (e) => {
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+    }, true);
+    document.addEventListener('keyup', (e) => {
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+    }, true);
+    window.parent.postMessage({type: 'instrument-ready', name: 'pedals'}, '*');
+}
+</script>
+
+</body>
+</html>
