@@ -251,7 +251,6 @@
             <div class="bar-btn" data-popout="mpc">MPC</div>
             <div class="bar-btn" data-popout="cr78">808</div>
             <div class="bar-btn" data-popout="dx7">DX7</div>
-            <div class="bar-btn" data-popout="bass">BASS</div>
             <div class="bar-btn" data-popout="pedals">PEDALS</div>
             <div class="bar-btn" data-popout="mixer">MIXER</div>
         </div>
@@ -266,7 +265,6 @@
             <div class="kb-btn" data-target="mpc">MPC</div>
             <div class="kb-btn" data-target="cr78">808</div>
             <div class="kb-btn" data-target="dx7">DX7</div>
-            <div class="kb-btn" data-target="bass">BASS</div>
         </div>
     </div>
 
@@ -308,16 +306,7 @@
             </div>
         </div>
 
-        <!-- ROW 5: BASS SYNTH (full width) -->
-        <div class="inst-row tall" data-row="4">
-            <div class="inst-wrapper" data-inst="bass">
-                <div class="inst-focus-indicator"></div>
-                <div class="inst-label">BASS SYNTH</div>
-                <iframe id="frameBass" src="bass/index.html"></iframe>
-            </div>
-        </div>
-
-        <!-- ROW 6: PEDALS + MIXER (side by side) -->
+        <!-- ROW 5: PEDALS + MIXER (side by side) -->
         <div class="inst-row" data-row="5">
             <div class="inst-wrapper" data-inst="pedals">
                 <div class="inst-focus-indicator"></div>
@@ -342,7 +331,6 @@ const INSTRUMENTS = {
     mpc:   { frame: 'frameMpc',   label: 'MPC',     file: 'mpc.html',        windowName: 'mpc4000' },
     cr78:  { frame: 'frameCr78',  label: '808',     file: '808.html',        windowName: 'cr78win' },
     dx7:   { frame: 'frameDx7',   label: 'DX7',     file: 'dx7/index.html',  windowName: 'dx7win' },
-    bass:  { frame: 'frameBass',  label: 'BASS',    file: 'bass/index.html', windowName: 'basswin' },
     pedals:{ frame: 'framePedals',label: 'PEDALS',  file: 'pedals.html',     windowName: 'pedalswin' },
     mixer: { frame: 'frameMixer', label: 'MIXER',   file: 'mixer.html',      windowName: 'mixerwin' },
 };
@@ -483,7 +471,6 @@ const ROUTE_OPTIONS = [
     {value: 'mpc', label: 'MPC'},
     {value: 'cr78', label: '808'},
     {value: 'dx7', label: 'DX7'},
-    {value: 'bass', label: 'BASS'},
     {value: 'all', label: 'ALL'},
     {value: 'none', label: 'NONE'},
 ];
