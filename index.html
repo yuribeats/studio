@@ -255,6 +255,7 @@
             <div class="bar-btn" id="togglePedals">SHOW PEDALS</div>
             <div class="bar-btn" data-popout="pedals">PEDALS</div>
             <div class="bar-btn" data-popout="deck">DECK</div>
+            <div class="bar-btn" data-popout="rack">RACK</div>
             <div class="bar-btn" data-popout="mixer">MIXER</div>
             <div class="bar-btn" data-popout="tape">TAPE</div>
         </div>
@@ -333,8 +334,17 @@
             </div>
         </div>
 
-        <!-- ROW 6: PEDALS (hidden by default) + MIXER + TAPE MACHINE -->
+        <!-- ROW 6: EFFECTS RACK -->
         <div class="inst-row tall" data-row="5">
+            <div class="inst-wrapper" data-inst="rack">
+                <div class="inst-focus-indicator"></div>
+                <div class="inst-label">EFFECTS RACK</div>
+                <iframe id="frameRack" src="rack.html"></iframe>
+            </div>
+        </div>
+
+        <!-- ROW 7: PEDALS (hidden by default) + MIXER + TAPE MACHINE -->
+        <div class="inst-row tall" data-row="6">
             <div class="inst-wrapper hidden-inst" data-inst="pedals">
                 <div class="inst-focus-indicator"></div>
                 <div class="inst-label">PEDALBOARD</div>
@@ -375,11 +385,12 @@ const INSTRUMENTS = {
     pianoroll: { frame: 'framePianoroll', label: 'PIANO ROLL', file: 'pianoroll.html', windowName: 'pianorollwin' },
     pedals:{ frame: 'framePedals',label: 'PEDALS',  file: 'pedals.html',     windowName: 'pedalswin' },
     deck:  { frame: 'frameDeck',  label: 'DECK',    file: 'deck.html',       windowName: 'deckwin' },
+    rack:  { frame: 'frameRack',  label: 'RACK',    file: 'rack.html',       windowName: 'rackwin' },
     mixer: { frame: 'frameMixer', label: 'MIXER',   file: 'mixer.html',      windowName: 'mixerwin' },
     tape:  { frame: 'frameTape',  label: 'TAPE',    file: 'tape.html',       windowName: 'tapewin' },
 };
 const instIds = Object.keys(INSTRUMENTS);
-const localInsts = ['juno', 'mpc', 'cr78', 'dx7', 'pianoroll', 'pedals', 'deck', 'mixer', 'tape'];
+const localInsts = ['juno', 'mpc', 'cr78', 'dx7', 'pianoroll', 'pedals', 'deck', 'rack', 'mixer', 'tape'];
 
 // ============================================
 // STATE
@@ -720,6 +731,19 @@ window.addEventListener('message', (e) => {
     if (d && d.type === 'deck-export-mpc') {
         sendToInst('mpc', d);
     }
+    // Rack rescan request
+    if (d && d.type === 'rack-rescan') {
+        if (window.studioBridge) {
+            window.studioBridge.getAUPlugins().then(plugins => {
+                sendToInst('rack', { type: 'au-plugins', plugins });
+            });
+        }
+    }
+    // Rack state updates
+    if (d && d.type === 'rack-state') {
+        // Store rack inserts for potential audio processing
+        window._rackInserts = d.inserts;
+    }
     if (d && d.type === 'mixer-control') {
         const target = d.channel;
         if (target === 'master') {
@@ -741,7 +765,7 @@ window.addEventListener('message', (e) => {
 let pendingSave = null;
 const sessionParts = {};
 
-const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'deck'];
+const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'deck', 'rack'];
 
 function requestSessionData() {
     SESSION_SOURCES.forEach(s => sessionParts[s] = null);
@@ -759,7 +783,8 @@ function checkSaveReady() {
             pianoroll: sessionParts.pianoroll,
             drumMachine: sessionParts.cr78,
             mpc: sessionParts.mpc,
-            deck: sessionParts.deck
+            deck: sessionParts.deck,
+            rack: sessionParts.rack
         };
         const json = JSON.stringify(session, null, 2);
         const blob = new Blob([json], {type: 'application/json'});
@@ -777,6 +802,7 @@ function loadSession(session) {
     if (session.drumMachine) sendToInst('cr78', {type: 'load-session', data: session.drumMachine});
     if (session.mpc) sendToInst('mpc', {type: 'load-session', data: session.mpc});
     if (session.deck) sendToInst('deck', {type: 'load-session', data: session.deck});
+    if (session.rack) sendToInst('rack', {type: 'load-session', data: session.rack});
 }
 
 document.getElementById('btnSave').addEventListener('click', requestSessionData);
@@ -923,6 +949,7 @@ function addInstance(baseType) {
 
     // Notify mixer to add channel
     sendToInst('mixer', {type: 'add-channel', id: instId, name: label});
+    syncRackChannels();
 
     // Add to MIDI route options
     ROUTE_OPTIONS.splice(ROUTE_OPTIONS.length - 2, 0, {value: instId, label: label});
@@ -964,9 +991,23 @@ function removeInstance(instId) {
 
     // Notify mixer
     sendToInst('mixer', {type: 'remove-channel', id: instId});
+    syncRackChannels();
 
     // Reset keyboard target if needed
     if (keyboardTarget === instId) setKeyboardTarget('juno');
+}
+
+// ============================================
+// RACK CHANNEL SYNC
+// ============================================
+function syncRackChannels() {
+    const rackChs = [];
+    Object.keys(INSTRUMENTS).forEach(id => {
+        if (id === 'pianoroll' || id === 'pedals' || id === 'rack' || id === 'mixer' || id === 'tape') return;
+        rackChs.push({ id, name: INSTRUMENTS[id].label });
+    });
+    rackChs.push({ id: 'master', name: 'MASTER', isMaster: true });
+    sendToInst('rack', { type: 'rack-channels', channels: rackChs });
 }
 
 // ============================================
@@ -980,6 +1021,13 @@ instIds.forEach(id => {
         frame.addEventListener('load', () => {
             if (localInsts.includes(id)) {
                 sendToInst(id, {type: 'keyboard-focus', enabled: id === keyboardTarget});
+            }
+            // Send AU plugins to rack on load
+            if (id === 'rack' && window.studioBridge) {
+                window.studioBridge.getAUPlugins().then(plugins => {
+                    sendToInst('rack', { type: 'au-plugins', plugins });
+                    syncRackChannels();
+                });
             }
         });
     }
