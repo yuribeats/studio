@@ -129,6 +129,8 @@
             color: #ff3333;
         }
         .ctrl-sep { width: 1px; height: 20px; background: #333; }
+        .groove-opt { padding: 5px 12px; font-size: 11px; font-weight: 700; font-family: Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px; color: #fff; }
+        .groove-opt:hover { background: #1a1a1a; color: #ff6600; }
         .ctrl-slider {
             -webkit-appearance: none;
             appearance: none;
@@ -462,6 +464,25 @@
         <div class="ctrl-sep"></div>
         <div class="ctrl-btn" id="btnCopy">COPY</div>
         <div class="ctrl-btn" id="btnPaste">PASTE</div>
+        <div class="ctrl-sep"></div>
+        <div class="ctrl-group" style="position:relative;">
+            <div class="ctrl-btn" id="btnGroove">GROOVE</div>
+            <div id="grooveMenu" style="display:none;position:absolute;top:100%;left:0;background:#111;border:1px solid #444;z-index:100;min-width:140px;padding:4px 0;">
+                <div class="groove-opt" data-groove="humanize">HUMANIZE</div>
+                <div class="groove-opt" data-groove="lazy">LAZY</div>
+                <div class="groove-opt" data-groove="push">PUSH</div>
+                <div class="groove-opt" data-groove="shuffle">SHUFFLE</div>
+                <div class="groove-opt" data-groove="drunken">DRUNKEN</div>
+                <div class="groove-opt" data-groove="accent24">ACCENT 2+4</div>
+                <div class="groove-opt" data-groove="ghost">GHOST NOTES</div>
+                <div class="groove-opt" data-groove="strip">STRIP BACK</div>
+            </div>
+        </div>
+        <div class="ctrl-group">
+            <span class="ctrl-label">GROOVE</span>
+            <input class="ctrl-slider" id="grooveAmount" type="range" min="0" max="100" value="50" />
+            <span class="ctrl-label" id="grooveVal" style="min-width:25px">50%</span>
+        </div>
         <div style="flex:1"></div>
         <div class="ctrl-group">
             <span class="ctrl-label" id="stepDisplay">STEP --</span>
@@ -1042,6 +1063,153 @@ document.getElementById('swingSlider').addEventListener('input', (e) => {
 });
 document.getElementById('masterVol').addEventListener('input', (e) => {
     masterGain.gain.value = e.target.value / 100;
+});
+
+// ============================================
+// GROOVE ENGINE
+// ============================================
+let grooveAmount = 50;
+document.getElementById('grooveAmount').addEventListener('input', (e) => {
+    grooveAmount = parseInt(e.target.value);
+    document.getElementById('grooveVal').textContent = grooveAmount + '%';
+});
+
+document.getElementById('btnGroove').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = document.getElementById('grooveMenu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+});
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#btnGroove') && !e.target.closest('#grooveMenu')) {
+        document.getElementById('grooveMenu').style.display = 'none';
+    }
+});
+
+// Groove templates modify timing offsets and velocity patterns
+const GROOVE_TEMPLATES = {
+    // Humanize: random micro-timing offsets per track
+    humanize: function(pat, amount) {
+        const strength = amount / 100;
+        for (let t = 0; t < pat.length; t++) {
+            trackOffsets[t] = (Math.random() * 2 - 1) * 30 * strength;
+        }
+    },
+    // Lazy: push everything slightly late, hats lazier than kick
+    lazy: function(pat, amount) {
+        const ms = 15 * (amount / 100);
+        for (let t = 0; t < TRACKS.length; t++) {
+            const n = TRACKS[t].name.toLowerCase();
+            if (n.includes('kick')) { trackOffsets[t] = ms * 0.3; }
+            else if (n.includes('snare') || n.includes('clap')) { trackOffsets[t] = ms * 0.6; }
+            else if (n.includes('hat')) { trackOffsets[t] = ms * 1.0; trackOffsetModes[t] = 'odd'; }
+            else { trackOffsets[t] = ms * 0.5; }
+        }
+    },
+    // Push: everything slightly early, creates urgency
+    push: function(pat, amount) {
+        const ms = -12 * (amount / 100);
+        for (let t = 0; t < TRACKS.length; t++) {
+            const n = TRACKS[t].name.toLowerCase();
+            if (n.includes('hat')) { trackOffsets[t] = ms * 1.2; }
+            else if (n.includes('snare') || n.includes('clap')) { trackOffsets[t] = ms * 0.5; }
+            else { trackOffsets[t] = ms * 0.8; }
+        }
+    },
+    // Shuffle: set swing and add hat offsets
+    shuffle: function(pat, amount) {
+        swing = Math.round(40 * (amount / 100));
+        document.getElementById('swingSlider').value = swing;
+        document.getElementById('swingVal').textContent = swing + '%';
+        for (let t = 0; t < TRACKS.length; t++) {
+            const n = TRACKS[t].name.toLowerCase();
+            if (n.includes('hat')) {
+                trackOffsets[t] = 5 * (amount / 100);
+                trackOffsetModes[t] = 'even';
+            }
+        }
+    },
+    // Drunken: large random offsets, everything loose
+    drunken: function(pat, amount) {
+        const strength = amount / 100;
+        for (let t = 0; t < pat.length; t++) {
+            trackOffsets[t] = (Math.random() * 2 - 1) * 45 * strength;
+            trackOffsetModes[t] = Math.random() > 0.5 ? 'odd' : 'all';
+        }
+        swing = Math.round(20 * strength + Math.random() * 15 * strength);
+        document.getElementById('swingSlider').value = swing;
+        document.getElementById('swingVal').textContent = swing + '%';
+    },
+    // Accent 2+4: make snare hits on 2 and 4 accented
+    accent24: function(pat, amount) {
+        for (let t = 0; t < pat.length; t++) {
+            const n = TRACKS[t].name.toLowerCase();
+            if (n.includes('snare') || n.includes('clap')) {
+                if (pat[t][4] > 0) pat[t][4] = 2;  // beat 2
+                if (pat[t][12] > 0) pat[t][12] = 2; // beat 4
+            }
+            // Soften other hits
+            if (n.includes('hat')) {
+                for (let s = 0; s < STEPS; s++) {
+                    if (s % 4 !== 0 && pat[t][s] > 0 && Math.random() < amount / 100) {
+                        trackOffsets[t] = (Math.random() - 0.5) * 10;
+                    }
+                }
+            }
+        }
+    },
+    // Ghost notes: add low-velocity ghost hits between existing hits
+    ghost: function(pat, amount) {
+        const prob = 0.3 * (amount / 100);
+        for (let t = 0; t < pat.length; t++) {
+            const n = TRACKS[t].name.toLowerCase();
+            if (!n.includes('snare') && !n.includes('hat') && !n.includes('rim')) continue;
+            for (let s = 0; s < STEPS; s++) {
+                if (pat[t][s] === 0) {
+                    // Check if adjacent steps have hits
+                    const prev = pat[t][(s - 1 + STEPS) % STEPS];
+                    const next = pat[t][(s + 1) % STEPS];
+                    if ((prev > 0 || next > 0) && Math.random() < prob) {
+                        pat[t][s] = 1; // ghost hit (normal velocity, will sound softer via track volume)
+                    }
+                }
+            }
+        }
+    },
+    // Strip back: randomly remove hits for a sparser feel
+    strip: function(pat, amount) {
+        const removeProb = 0.4 * (amount / 100);
+        for (let t = 0; t < pat.length; t++) {
+            const n = TRACKS[t].name.toLowerCase();
+            // Never strip kick on 1/3 or snare on 2/4
+            for (let s = 0; s < STEPS; s++) {
+                if (pat[t][s] === 0) continue;
+                if (n.includes('kick') && (s === 0 || s === 8)) continue;
+                if ((n.includes('snare') || n.includes('clap')) && (s === 4 || s === 12)) continue;
+                if (Math.random() < removeProb) pat[t][s] = 0;
+            }
+        }
+    }
+};
+
+document.querySelectorAll('.groove-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+        const groove = opt.dataset.groove;
+        const fn = GROOVE_TEMPLATES[groove];
+        if (!fn) return;
+        const pat = patterns()[currentPattern];
+        fn(pat, grooveAmount);
+        refreshGrid();
+        notifyActiveKits();
+        syncPatternsToPianoRoll();
+        document.getElementById('grooveMenu').style.display = 'none';
+        // Flash the groove button
+        document.getElementById('btnGroove').style.borderColor = '#ff6600';
+        document.getElementById('btnGroove').style.color = '#ff6600';
+        setTimeout(() => {
+            document.getElementById('btnGroove').style.borderColor = '';
+            document.getElementById('btnGroove').style.color = '';
+        }, 400);
+    });
 });
 
 // Pattern switching
