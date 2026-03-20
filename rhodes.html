@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FENDER RHODES</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            background: #0a0a0a;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+            user-select: none;
+            cursor: default;
+        }
+        .rhodes {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            border: 2px solid #8B6914;
+        }
+        .top-bar {
+            background: #111;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .brand { font-size: 16px; letter-spacing: 4px; color: #8B6914; }
+        .model { font-size: 14px; letter-spacing: 2px; color: #aaa; }
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-left: auto;
+        }
+        .ctrl-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ctrl-label {
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: #888;
+        }
+        .knob-wrap {
+            width: 36px;
+            height: 36px;
+            position: relative;
+        }
+        .knob {
+            width: 36px;
+            height: 36px;
+            background: radial-gradient(circle at 40% 35%, #444, #1a1a1a);
+            border: 1px solid #555;
+            position: relative;
+        }
+        .knob-indicator {
+            position: absolute;
+            width: 2px;
+            height: 10px;
+            background: #8B6914;
+            top: 3px;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%);
+        }
+        .loading-bar {
+            background: #111;
+            padding: 4px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #222;
+        }
+        .loading-text {
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: #666;
+        }
+        .loading-track {
+            flex: 1;
+            height: 4px;
+            background: #1a1a1a;
+        }
+        .loading-fill {
+            height: 100%;
+            background: #8B6914;
+            width: 0%;
+            transition: width 0.2s;
+        }
+        .loading-bar.done { display: none; }
+        .keyboard-area {
+            flex: 1;
+            background: #0e0e0e;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0 10px 10px 10px;
+            overflow: hidden;
+        }
+        .keyboard {
+            display: flex;
+            position: relative;
+            height: 100%;
+            max-height: 200px;
+        }
+        .white-key {
+            width: 22px;
+            height: 100%;
+            background: linear-gradient(180deg, #e8e4dc 0%, #f5f2ea 10%, #faf9f5 90%, #e0dcd4 100%);
+            border: 1px solid #999;
+            border-top: none;
+            position: relative;
+            z-index: 1;
+            flex-shrink: 0;
+        }
+        .white-key.active {
+            background: linear-gradient(180deg, #c8c0a8 0%, #d8d0b8 50%, #e0d8c0 100%);
+        }
+        .black-key {
+            width: 14px;
+            height: 60%;
+            background: linear-gradient(180deg, #222 0%, #111 80%, #000 100%);
+            border: 1px solid #000;
+            position: absolute;
+            z-index: 2;
+            top: 0;
+        }
+        .black-key.active {
+            background: linear-gradient(180deg, #444 0%, #333 80%, #222 100%);
+        }
+        .octave-label {
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            color: #999;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="rhodes">
+    <div class="top-bar">
+        <span class="brand">FENDER</span>
+        <span class="model">RHODES MK I</span>
+        <div class="controls">
+            <div class="ctrl-group">
+                <span class="ctrl-label">VOLUME</span>
+                <div class="knob-wrap">
+                    <div class="knob" id="knobVol" data-param="volume" data-value="0.8">
+                        <div class="knob-indicator" id="indVol"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">TREM RATE</span>
+                <div class="knob-wrap">
+                    <div class="knob" id="knobTremRate" data-param="tremRate" data-value="0.3">
+                        <div class="knob-indicator" id="indTremRate"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">TREM DEPTH</span>
+                <div class="knob-wrap">
+                    <div class="knob" id="knobTremDepth" data-param="tremDepth" data-value="0">
+                        <div class="knob-indicator" id="indTremDepth"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-bar" id="loadingBar">
+        <span class="loading-text" id="loadingText">LOADING SAMPLES...</span>
+        <div class="loading-track"><div class="loading-fill" id="loadingFill"></div></div>
+    </div>
+
+    <div class="keyboard-area">
+        <div class="keyboard" id="keyboard"></div>
+    </div>
+</div>
+
+<script src="pedal-fx.js"></script>
+<script>
+(function() {
+    // ============================================
+    // AUDIO CONTEXT
+    // ============================================
+    let audioCtx = null;
+    let masterGain = null;
+    let mixerGain = null;
+    let rhodesPedalFX = null;
+    let tremoloGain = null;
+    let tremoloLFO = null;
+    let tremoloDepthGain = null;
+
+    function ensureAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.8;
+        mixerGain = audioCtx.createGain();
+        mixerGain.gain.value = 1.0;
+        tremoloGain = audioCtx.createGain();
+        tremoloGain.gain.value = 1.0;
+
+        // Tremolo LFO
+        tremoloLFO = audioCtx.createOscillator();
+        tremoloLFO.type = 'sine';
+        tremoloLFO.frequency.value = 4.0;
+        tremoloDepthGain = audioCtx.createGain();
+        tremoloDepthGain.gain.value = 0;
+        tremoloLFO.connect(tremoloDepthGain);
+        tremoloDepthGain.connect(tremoloGain.gain);
+        tremoloLFO.start();
+
+        rhodesPedalFX = new PedalFXChain(audioCtx);
+        rhodesPedalFX.getOutput().connect(mixerGain);
+        masterGain.connect(tremoloGain);
+        tremoloGain.connect(rhodesPedalFX.getInput());
+        mixerGain.connect(audioCtx.destination);
+    }
+
+    // ============================================
+    // SAMPLE ZONES (SFZ mapping)
+    // ============================================
+    const ZONES = [
+        { midi: 29, note: 'F1',  lo: 21, hi: 32, prefix: 'As_029__F1',  suffixes: [51, 279, 361, 431, 1109],         velRanges: [[1,47],[48,72],[73,95],[96,111],[112,127]] },
+        { midi: 35, note: 'B1',  lo: 33, hi: 37, prefix: 'As_035__B1',  suffixes: [53, 281, 363, 433, 1111],         velRanges: [[1,47],[48,72],[73,95],[96,111],[112,127]] },
+        { midi: 40, note: 'E2',  lo: 38, hi: 42, prefix: 'As_040__E2',  suffixes: [55, 283, 365, 435, 1113],         velRanges: [[1,47],[48,72],[73,95],[96,111],[112,127]] },
+        { midi: 45, note: 'A2',  lo: 43, hi: 47, prefix: 'As_045__A2',  suffixes: [57, 285, 367, 437, 1115],         velRanges: [[1,47],[48,72],[73,95],[96,111],[112,127]] },
+        { midi: 50, note: 'D3',  lo: 48, hi: 52, prefix: 'As_050__D3',  suffixes: [59, 287, 369, 439, 1117],         velRanges: [[1,47],[48,72],[73,95],[96,111],[112,127]] },
+        { midi: 55, note: 'G3',  lo: 53, hi: 57, prefix: 'As_055__G3',  suffixes: [511, 289, 371, 441, 1119],        velRanges: [[1,47],[48,72],[73,95],[96,111],[112,127]] },
+        { midi: 59, note: 'B3',  lo: 58, hi: 60, prefix: 'As_059__B3',  suffixes: [513, 291, 373, 443, 1121],        velRanges: [[1,47],[48,72],[73,95],[96,111],[112,127]] },
+        { midi: 62, note: 'D4',  lo: 61, hi: 63, prefix: 'As_062__D4',  suffixes: [513, 293, 375, 445, 1123],        velRanges: [[1,47],[48,72],[73,95],[96,111],[112,127]] },
+        { midi: 65, note: 'F4',  lo: 64, hi: 68, prefix: 'As_065__F4',  suffixes: [517, 295, 377, 447, 1125],        velRanges: [[1,47],[48,72],[73,95],[96,111],[112,127]] },
+        { midi: 71, note: 'B4',  lo: 69, hi: 73, prefix: 'As_071__B4',  suffixes: [297, 449, 519, 1127],             velRanges: [[1,72],[73,95],[96,111],[112,127]] },
+        { midi: 76, note: 'E5',  lo: 74, hi: 78, prefix: 'As_076__E5',  suffixes: [299, 451, 521, 1129],             velRanges: [[1,72],[73,95],[96,111],[112,127]] },
+        { midi: 81, note: 'A5',  lo: 79, hi: 83, prefix: 'As_081__A5',  suffixes: [453, 523, 2101],                  velRanges: [[1,95],[96,111],[112,127]] },
+        { midi: 86, note: 'D6',  lo: 84, hi: 88, prefix: 'As_086__D6',  suffixes: [455, 525, 2103],                  velRanges: [[1,95],[96,111],[112,127]] },
+        { midi: 91, note: 'G6',  lo: 89, hi: 93, prefix: 'As_091__G6',  suffixes: [457, 527, 2105],                  velRanges: [[1,95],[96,111],[112,127]] },
+        { midi: 96, note: 'C7',  lo: 94, hi: 108,prefix: 'As_096__C7',  suffixes: [459, 529, 2107],                  velRanges: [[1,95],[96,111],[112,127]] },
+    ];
+
+    // Sort suffixes ascending for each zone (already sorted above, but ensure)
+    ZONES.forEach(z => z.suffixes.sort((a, b) => a - b));
+
+    // Buffers: keyed by "prefix_suffix"
+    const buffers = {};
+    let totalSamples = 0;
+    let loadedSamples = 0;
+    ZONES.forEach(z => totalSamples += z.suffixes.length);
+
+    // ============================================
+    // LOAD SAMPLES
+    // ============================================
+    async function loadSamples() {
+        ensureAudio();
+        const loadingFill = document.getElementById('loadingFill');
+        const loadingText = document.getElementById('loadingText');
+        const loadingBar = document.getElementById('loadingBar');
+
+        const promises = [];
+        ZONES.forEach(zone => {
+            zone.suffixes.forEach(suffix => {
+                const filename = zone.prefix + '_' + suffix + '-stereo.flac';
+                const url = 'rhodes/samples/' + filename;
+                const key = zone.prefix + '_' + suffix;
+                const p = fetch(url)
+                    .then(r => {
+                        if (!r.ok) throw new Error('Failed: ' + url);
+                        return r.arrayBuffer();
+                    })
+                    .then(ab => audioCtx.decodeAudioData(ab))
+                    .then(buf => {
+                        buffers[key] = buf;
+                        loadedSamples++;
+                        const pct = Math.round((loadedSamples / totalSamples) * 100);
+                        loadingFill.style.width = pct + '%';
+                        loadingText.textContent = 'LOADING ' + loadedSamples + ' / ' + totalSamples;
+                    })
+                    .catch(err => {
+                        console.warn('Sample load error:', err);
+                        loadedSamples++;
+                        const pct = Math.round((loadedSamples / totalSamples) * 100);
+                        loadingFill.style.width = pct + '%';
+                    });
+                promises.push(p);
+            });
+        });
+
+        await Promise.all(promises);
+        loadingBar.classList.add('done');
+    }
+
+    // ============================================
+    // FIND ZONE + VELOCITY LAYER
+    // ============================================
+    function findZone(midiNote) {
+        for (let i = 0; i < ZONES.length; i++) {
+            if (midiNote >= ZONES[i].lo && midiNote <= ZONES[i].hi) return ZONES[i];
+        }
+        return null;
+    }
+
+    function findVelLayer(zone, velocity) {
+        for (let i = 0; i < zone.velRanges.length; i++) {
+            if (velocity >= zone.velRanges[i][0] && velocity <= zone.velRanges[i][1]) {
+                return zone.suffixes[i];
+            }
+        }
+        // Default to last layer
+        return zone.suffixes[zone.suffixes.length - 1];
+    }
+
+    // ============================================
+    // NOTE PLAYBACK
+    // ============================================
+    const activeVoices = {};
+
+    function noteOn(midiNote, velocity) {
+        if (!audioCtx) ensureAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const zone = findZone(midiNote);
+        if (!zone) return;
+
+        const suffix = findVelLayer(zone, velocity);
+        const key = zone.prefix + '_' + suffix;
+        const buffer = buffers[key];
+        if (!buffer) return;
+
+        // Kill existing voice on same note
+        if (activeVoices[midiNote]) {
+            releaseVoice(midiNote);
+        }
+
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+
+        // Pitch shift: semitone difference from zone center
+        const semitones = midiNote - zone.midi;
+        source.playbackRate.value = Math.pow(2, semitones / 12);
+
+        // Gain envelope
+        const envGain = audioCtx.createGain();
+        envGain.gain.value = 0;
+
+        source.connect(envGain);
+        envGain.connect(masterGain);
+
+        const now = audioCtx.currentTime;
+        const velAmp = (velocity / 127);
+
+        // ADSR: attack 5ms, sustain level based on velocity
+        const attack = 0.005;
+        const decayTime = 0.3 + (1.0 - (midiNote - 21) / 87) * 0.5;
+        const sustainLevel = 0.7 * velAmp;
+
+        envGain.gain.setValueAtTime(0, now);
+        envGain.gain.linearRampToValueAtTime(velAmp, now + attack);
+        envGain.gain.linearRampToValueAtTime(sustainLevel, now + attack + decayTime);
+
+        source.start(now);
+
+        activeVoices[midiNote] = { source, envGain, released: false };
+        highlightKey(midiNote, true);
+    }
+
+    function noteOff(midiNote) {
+        releaseVoice(midiNote);
+        highlightKey(midiNote, false);
+    }
+
+    function releaseVoice(midiNote) {
+        const voice = activeVoices[midiNote];
+        if (!voice || voice.released) return;
+        voice.released = true;
+
+        const now = audioCtx.currentTime;
+        const release = 0.3;
+        voice.envGain.gain.cancelScheduledValues(now);
+        voice.envGain.gain.setValueAtTime(voice.envGain.gain.value, now);
+        voice.envGain.gain.linearRampToValueAtTime(0, now + release);
+        voice.source.stop(now + release + 0.05);
+
+        setTimeout(() => {
+            if (activeVoices[midiNote] === voice) delete activeVoices[midiNote];
+        }, (release + 0.1) * 1000);
+    }
+
+    // ============================================
+    // KEYBOARD RENDERING (61 keys: C2=36 to C7=96)
+    // ============================================
+    const FIRST_MIDI = 36;
+    const LAST_MIDI = 96;
+    const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const BLACK_INDICES = [1, 3, 6, 8, 10];
+
+    function isBlack(midi) {
+        return BLACK_INDICES.includes(midi % 12);
+    }
+
+    const keyElements = {};
+
+    function buildKeyboard() {
+        const kb = document.getElementById('keyboard');
+        kb.innerHTML = '';
+
+        // Build white keys first, track positions
+        const whiteKeys = [];
+        for (let m = FIRST_MIDI; m <= LAST_MIDI; m++) {
+            if (!isBlack(m)) whiteKeys.push(m);
+        }
+
+        const whiteKeyWidth = 22;
+        const totalWidth = whiteKeys.length * whiteKeyWidth;
+        kb.style.width = totalWidth + 'px';
+
+        // Create white keys
+        whiteKeys.forEach((m, i) => {
+            const el = document.createElement('div');
+            el.className = 'white-key';
+            el.dataset.midi = m;
+            el.style.left = (i * whiteKeyWidth) + 'px';
+            el.style.position = 'absolute';
+            el.style.width = whiteKeyWidth + 'px';
+
+            // Octave label on C notes
+            if (m % 12 === 0) {
+                const label = document.createElement('div');
+                label.className = 'octave-label';
+                label.textContent = 'C' + (Math.floor(m / 12) - 1);
+                el.appendChild(label);
+            }
+
+            kb.appendChild(el);
+            keyElements[m] = el;
+
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                ensureAudio();
+                noteOn(m, 100);
+                mouseNoteDown = m;
+            });
+            el.addEventListener('mouseenter', (e) => {
+                if (mouseNoteDown !== null && e.buttons === 1) {
+                    noteOff(mouseNoteDown);
+                    noteOn(m, 80);
+                    mouseNoteDown = m;
+                }
+            });
+        });
+
+        // Create black keys
+        for (let m = FIRST_MIDI; m <= LAST_MIDI; m++) {
+            if (!isBlack(m)) continue;
+
+            // Find position: black key sits between the white keys on either side
+            const prevWhite = whiteKeys.indexOf(m - 1);
+            if (prevWhite < 0) continue;
+
+            const el = document.createElement('div');
+            el.className = 'black-key';
+            el.dataset.midi = m;
+            const blackKeyWidth = 14;
+            el.style.left = ((prevWhite + 1) * whiteKeyWidth - blackKeyWidth / 2) + 'px';
+            el.style.width = blackKeyWidth + 'px';
+
+            kb.appendChild(el);
+            keyElements[m] = el;
+
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                ensureAudio();
+                noteOn(m, 100);
+                mouseNoteDown = m;
+            });
+            el.addEventListener('mouseenter', (e) => {
+                if (mouseNoteDown !== null && e.buttons === 1) {
+                    noteOff(mouseNoteDown);
+                    noteOn(m, 80);
+                    mouseNoteDown = m;
+                }
+            });
+        }
+    }
+
+    let mouseNoteDown = null;
+    document.addEventListener('mouseup', () => {
+        if (mouseNoteDown !== null) {
+            noteOff(mouseNoteDown);
+            mouseNoteDown = null;
+        }
+    });
+
+    function highlightKey(midi, on) {
+        const el = keyElements[midi];
+        if (el) {
+            if (on) el.classList.add('active');
+            else el.classList.remove('active');
+        }
+    }
+
+    // ============================================
+    // KNOB CONTROLS
+    // ============================================
+    let volume = 0.8;
+    let tremRate = 0.3;
+    let tremDepth = 0;
+
+    function updateKnobVisual(knobId, indicatorId, value) {
+        const angle = -135 + value * 270;
+        const ind = document.getElementById(indicatorId);
+        if (ind) ind.style.transform = 'translateX(-50%) rotate(' + angle + 'deg)';
+    }
+
+    function applyParam(param, value) {
+        if (param === 'volume') {
+            volume = value;
+            if (masterGain) masterGain.gain.value = value;
+        } else if (param === 'tremRate') {
+            tremRate = value;
+            if (tremoloLFO) tremoloLFO.frequency.value = 0.5 + value * 10;
+        } else if (param === 'tremDepth') {
+            tremDepth = value;
+            if (tremoloDepthGain) tremoloDepthGain.gain.value = value * 0.5;
+        }
+    }
+
+    function initKnobs() {
+        const knobs = document.querySelectorAll('.knob');
+        knobs.forEach(knob => {
+            const param = knob.dataset.param;
+            const initVal = parseFloat(knob.dataset.value);
+            applyParam(param, initVal);
+            const indId = knob.querySelector('.knob-indicator').id;
+            updateKnobVisual(knob.id, indId, initVal);
+
+            let dragging = false;
+            let startY = 0;
+            let startVal = 0;
+
+            knob.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                dragging = true;
+                startY = e.clientY;
+                startVal = parseFloat(knob.dataset.value);
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!dragging) return;
+                const dy = startY - e.clientY;
+                let newVal = startVal + dy / 150;
+                newVal = Math.max(0, Math.min(1, newVal));
+                knob.dataset.value = newVal;
+                updateKnobVisual(knob.id, indId, newVal);
+                applyParam(param, newVal);
+            });
+
+            window.addEventListener('mouseup', () => { dragging = false; });
+        });
+    }
+
+    // ============================================
+    // COMPUTER KEYBOARD
+    // ============================================
+    let kbOctave = 4; // Middle C octave
+    const KEY_MAP = {
+        'a': 0, 'w': 1, 's': 2, 'e': 3, 'd': 4, 'f': 5,
+        't': 6, 'g': 7, 'y': 8, 'h': 9, 'u': 10, 'j': 11, 'k': 12,
+        'o': 13, 'l': 14
+    };
+    const kbNotesDown = {};
+
+    function kbMidi(key) {
+        const offset = KEY_MAP[key];
+        if (offset === undefined) return -1;
+        return (kbOctave + 1) * 12 + offset;
+    }
+
+    // ============================================
+    // IFRAME BRIDGE
+    // ============================================
+    window.__kbEnabled = false;
+    let __muted = false;
+
+    document.addEventListener('keydown', (e) => {
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); return; }
+        if (e.repeat) return;
+        const k = e.key.toLowerCase();
+        if (k === 'z') { kbOctave = Math.max(1, kbOctave - 1); return; }
+        if (k === 'x') { kbOctave = Math.min(7, kbOctave + 1); return; }
+        const m = kbMidi(k);
+        if (m >= 0 && !kbNotesDown[k]) {
+            ensureAudio();
+            kbNotesDown[k] = m;
+            noteOn(m, 100);
+        }
+    }, true);
+
+    document.addEventListener('keyup', (e) => {
+        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); return; }
+        const k = e.key.toLowerCase();
+        if (kbNotesDown[k]) {
+            noteOff(kbNotesDown[k]);
+            delete kbNotesDown[k];
+        }
+    }, true);
+
+    function handleMIDI(msg) {
+        if (!audioCtx) ensureAudio();
+        const data = msg.data || msg;
+        const cmd = data[0] & 0xF0;
+        const note = data[1];
+        const vel = data[2];
+
+        if (cmd === 0x90 && vel > 0) {
+            noteOn(note, vel);
+        } else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
+            noteOff(note);
+        }
+    }
+
+    window.addEventListener('message', (e) => {
+        const d = e.data;
+        if (!d) return;
+        if (d.type === 'midi') {
+            handleMIDI({ data: d.data });
+        }
+        if (d.type === 'keyboard-focus') {
+            window.__kbEnabled = d.enabled;
+        }
+        if (d.type === 'mixer') {
+            if (d.param === 'volume' && mixerGain) mixerGain.gain.value = d.value;
+            if (d.param === 'mute') {
+                __muted = d.value > 0;
+                if (mixerGain) mixerGain.gain.value = __muted ? 0 : 1;
+            }
+        }
+        if (d.type === 'pedals' && rhodesPedalFX) {
+            rhodesPedalFX.update(d.pedals);
+        }
+        if (d.type === 'get-session') {
+            window.parent.postMessage({
+                type: 'session-data',
+                source: 'rhodes',
+                data: {
+                    volume: volume,
+                    tremRate: tremRate,
+                    tremDepth: tremDepth,
+                    kbOctave: kbOctave
+                }
+            }, '*');
+        }
+        if (d.type === 'load-session' && d.data) {
+            if (d.data.volume !== undefined) {
+                volume = d.data.volume;
+                applyParam('volume', volume);
+                document.getElementById('knobVol').dataset.value = volume;
+                updateKnobVisual('knobVol', 'indVol', volume);
+            }
+            if (d.data.tremRate !== undefined) {
+                tremRate = d.data.tremRate;
+                applyParam('tremRate', tremRate);
+                document.getElementById('knobTremRate').dataset.value = tremRate;
+                updateKnobVisual('knobTremRate', 'indTremRate', tremRate);
+            }
+            if (d.data.tremDepth !== undefined) {
+                tremDepth = d.data.tremDepth;
+                applyParam('tremDepth', tremDepth);
+                document.getElementById('knobTremDepth').dataset.value = tremDepth;
+                updateKnobVisual('knobTremDepth', 'indTremDepth', tremDepth);
+            }
+            if (d.data.kbOctave !== undefined) kbOctave = d.data.kbOctave;
+        }
+    });
+
+    // ============================================
+    // INIT
+    // ============================================
+    buildKeyboard();
+    initKnobs();
+
+    // Lazy-load samples on first interaction or immediately
+    document.addEventListener('mousedown', function initLoad() {
+        document.removeEventListener('mousedown', initLoad);
+        loadSamples();
+    }, { once: true });
+
+    // Also start loading immediately for iframe usage
+    setTimeout(() => {
+        if (loadedSamples === 0) loadSamples();
+    }, 500);
+
+    window.parent.postMessage({ type: 'instrument-ready', name: 'rhodes' }, '*');
+})();
+</script>
+
+</body>
+</html>

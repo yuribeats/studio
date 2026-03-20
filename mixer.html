@@ -443,12 +443,13 @@ function getChannels() {
         { id: 'mpc',   name: 'MPC',    num: '2', type: 'input' },
         { id: 'cr78',  name: '808',    num: '3', type: 'input' },
         { id: 'dx7',   name: 'DX7',    num: '4', type: 'input' },
-        { id: 'deck',  name: 'DECK',   num: '5', type: 'input' },
+        { id: 'rhodes',name: 'RHODES', num: '5', type: 'input' },
+        { id: 'deck',  name: 'DECK',   num: '6', type: 'input' },
     ];
     // Add extra kit channels
     active808Kits.forEach((kid, i) => {
         if (kid !== 'cr78') { // cr78 is the default 808 channel
-            chs.push({ id: '808-' + kid, name: KIT_LABELS[kid] || kid.toUpperCase(), num: String(6 + i), type: 'input' });
+            chs.push({ id: '808-' + kid, name: KIT_LABELS[kid] || kid.toUpperCase(), num: String(7 + i), type: 'input' });
         }
     });
     chs.push({ id: '_sep1', type: 'sep' });
