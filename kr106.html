@@ -18,9 +18,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   min-height: 100vh;
   user-select: none;
   -webkit-user-select: none;
+  overflow: hidden;
 }
 
 /* ====== SYNTH BODY ====== */
@@ -1240,6 +1242,30 @@ document.getElementById('startBtn').addEventListener('click', async () => {
 });
 
 drawScope(new Array(256).fill(0));
+
+// ==================== AUTO-SCALE TO FIT VIEWPORT ====================
+function scaleToFit() {
+  const synth = document.querySelector('.synth');
+  const statusBar = document.querySelector('.status-bar');
+  if (!synth) return;
+  // Measure natural size
+  synth.style.transform = 'none';
+  if (statusBar) statusBar.style.transform = 'none';
+  const totalW = 960;
+  const totalH = synth.offsetHeight + (statusBar ? statusBar.offsetHeight + 60 : 60);
+  const scaleX = window.innerWidth / totalW;
+  const scaleY = window.innerHeight / totalH;
+  const scale = Math.min(scaleX, scaleY, 1);
+  synth.style.transform = `scale(${scale})`;
+  synth.style.transformOrigin = 'top center';
+  synth.style.margin = '10px auto 0';
+  if (statusBar) {
+    statusBar.style.transform = `scale(${scale})`;
+    statusBar.style.transformOrigin = 'top center';
+  }
+}
+window.addEventListener('resize', scaleToFit);
+setTimeout(scaleToFit, 100);
 
 // ==================== IFRAME MIDI BRIDGE ====================
 if (window !== window.parent) {
