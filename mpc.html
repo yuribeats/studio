@@ -428,6 +428,7 @@
 
 <div class="drop-overlay" id="dropOverlay">DROP AUDIO FILE</div>
 
+<script src="pedal-fx.js"></script>
 <script>
 // ============================================
 // STATE
@@ -517,11 +518,13 @@ const masterGain = actx.createGain();
 masterGain.gain.value = 0.6;
 const mixerGain = actx.createGain();
 mixerGain.connect(actx.destination);
+const mpcPedalFX = new PedalFXChain(actx);
+mpcPedalFX.getOutput().connect(mixerGain);
 const comp = actx.createDynamicsCompressor();
 comp.threshold.value = -10; comp.ratio.value = 4;
 comp.attack.value = 0.002; comp.release.value = 0.08;
 comp.connect(masterGain);
-masterGain.connect(mixerGain);
+masterGain.connect(mpcPedalFX.getInput());
 window._padBuffers = banks['A'].padBuffers;
 
 // ============================================
@@ -1402,6 +1405,9 @@ if (window !== window.parent) {
     if (d && d.type === 'mixer') {
       if (d.param === 'volume') mixerGain.gain.value = d.value;
       if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+    }
+    if (d && d.type === 'pedals' && mpcPedalFX) {
+      mpcPedalFX.update(d.pedals);
     }
     if (d && d.type === 'get-session') {
       saveBankState();

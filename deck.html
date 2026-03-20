@@ -222,6 +222,7 @@ html, body {
     </div>
 </div>
 
+<script src="pedal-fx.js"></script>
 <script>
 // ============================================
 // STATE
@@ -261,7 +262,9 @@ toneFilter.connect(convolver);
 convolver.connect(wetGain);
 dryGain.connect(masterGain);
 wetGain.connect(masterGain);
-masterGain.connect(mixerGain);
+const deckPedalFX = new PedalFXChain(actx);
+deckPedalFX.getOutput().connect(mixerGain);
+masterGain.connect(deckPedalFX.getInput());
 
 let sourceNode = null;
 let startedAt = 0;
@@ -635,6 +638,9 @@ if (window !== window.parent) {
         if (d && d.type === 'mixer') {
             if (d.param === 'volume') mixerGain.gain.value = d.value;
             if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+        }
+        if (d && d.type === 'pedals' && deckPedalFX) {
+            deckPedalFX.update(d.pedals);
         }
         if (d && d.type === 'get-session') {
             const bankData = loopBank.map(l => ({name: l.name, start: l.start, end: l.end}));

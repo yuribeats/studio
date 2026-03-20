@@ -484,6 +484,7 @@
 </div>
 </div>
 
+<script src="pedal-fx.js"></script>
 <script>
 // ============================================
 // KITS
@@ -649,7 +650,9 @@ const masterGain = actx.createGain();
 masterGain.gain.value = 0.8;
 const mixerGain = actx.createGain();
 mixerGain.connect(actx.destination);
-masterGain.connect(mixerGain);
+const drumPedalFX = new PedalFXChain(actx);
+drumPedalFX.getOutput().connect(mixerGain);
+masterGain.connect(drumPedalFX.getInput());
 
 const buffers = {};
 let trackGains = [];
@@ -1154,6 +1157,9 @@ if (window !== window.parent) {
         if (d && d.type === 'mixer') {
             if (d.param === 'volume') mixerGain.gain.value = d.value;
             if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+        }
+        if (d && d.type === 'pedals' && drumPedalFX) {
+            drumPedalFX.update(d.pedals);
         }
         if (d && d.type === 'get-session') {
             const data = {};

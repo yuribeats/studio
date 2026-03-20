@@ -196,8 +196,9 @@
 				-->
 			</div>
 		</div>
+	<script src="../pedal-fx.js"></script>
 	<script>
-	// Pre-bundle: intercept AudioContext.destination to insert mixer gain
+	// Pre-bundle: intercept AudioContext.destination to insert mixer gain + pedal FX
 	(function() {
 		var desc = Object.getOwnPropertyDescriptor(
 			(typeof BaseAudioContext !== 'undefined' ? BaseAudioContext : AudioContext).prototype,
@@ -210,10 +211,12 @@
 				var real = desc.get.call(this);
 				if (!this._mixerGain) {
 					this._mixerGain = this.createGain();
+					this._dx7PedalFX = new PedalFXChain(this);
+					this._dx7PedalFX.getOutput().connect(this._mixerGain);
 					this._mixerGain.connect(real);
 					window._dx7AudioCtx = this;
 				}
-				return this._mixerGain;
+				return this._dx7PedalFX.getInput();
 			}
 		});
 	})();
@@ -304,6 +307,12 @@
 				if (window._dx7AudioCtx && window._dx7AudioCtx._mixerGain) {
 					if (d.param === 'volume') window._dx7AudioCtx._mixerGain.gain.value = d.value;
 					if (d.param === 'mute') window._dx7AudioCtx._mixerGain.gain.value = d.value ? 0 : 1;
+				}
+			}
+
+			if (d.type === 'pedals') {
+				if (window._dx7AudioCtx && window._dx7AudioCtx._dx7PedalFX) {
+					window._dx7AudioCtx._dx7PedalFX.update(d.pedals);
 				}
 			}
 		});
