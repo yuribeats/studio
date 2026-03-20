@@ -693,125 +693,20 @@
     }
 
     // ==================== CHANNEL DROPDOWN ====================
-    let chMenuOpen = false;
     function buildChannelTabs() {
         const container = document.getElementById('channelTabs');
         container.innerHTML = '';
 
-        const wrap = document.createElement('div');
-        wrap.className = 'ch-dropdown-wrap';
-
-        // Button shows active channel name + count of visible
-        const btn = document.createElement('div');
-        btn.className = 'ch-dropdown-btn';
-        let label = CHANNEL_LABELS[activeChannel];
-        if (activeChannel === '808') label += ' / ' + DRUM_KITS[active808Kit].label;
-        if (visibleChannels.size > 1) label += ' +' + (visibleChannels.size - 1);
-        btn.innerHTML = label + ' <span class="ch-dropdown-arrow">&#9660;</span>';
-
-        const menu = document.createElement('div');
-        menu.className = 'ch-dropdown-menu' + (chMenuOpen ? ' open' : '');
-
-        CHANNELS.forEach(ch => {
-            const item = document.createElement('div');
-            const isVisible = visibleChannels.has(ch);
-            const isPrimary = ch === activeChannel;
-            item.className = 'ch-menu-item' + (isPrimary ? ' primary' : '');
-
-            const check = document.createElement('div');
-            check.className = 'ch-menu-check' + (isVisible ? ' on' : '');
-            check.style.borderColor = isVisible ? chColor(ch) : '';
-            check.style.background = isVisible ? chColor(ch) : '';
-
-            const swatch = document.createElement('div');
-            swatch.className = 'ch-menu-swatch';
-            swatch.style.background = chColor(ch);
-
-            const lbl = document.createElement('span');
-            lbl.className = 'ch-menu-label';
-            lbl.textContent = CHANNEL_LABELS[ch];
-            if (isPrimary) lbl.style.color = chColor(ch);
-
-            // Click checkbox = toggle visibility
-            check.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                if (isVisible && visibleChannels.size === 1) return; // keep at least one
-                if (isVisible) {
-                    visibleChannels.delete(ch);
-                    if (activeChannel === ch) {
-                        activeChannel = [...visibleChannels][0];
-                    }
-                } else {
-                    visibleChannels.add(ch);
-                }
-                buildChannelTabs();
-                fullRender();
-            });
-
-            // Click label = make primary (and ensure visible)
-            lbl.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                activeChannel = ch;
-                visibleChannels.add(ch);
-                buildChannelTabs();
-                fullRender();
-            });
-
-            item.appendChild(check);
-            item.appendChild(swatch);
-            item.appendChild(lbl);
-
-            // 808 kit sub-menu
-            if (ch === '808') {
-                const kitSel = document.createElement('span');
-                kitSel.style.cssText = 'margin-left:auto;font-size:10px;color:#777;letter-spacing:0.5px;';
-                kitSel.textContent = DRUM_KITS[active808Kit].label;
-                item.appendChild(kitSel);
-            }
-
-            menu.appendChild(item);
-
-            // 808 kit options (indented)
-            if (ch === '808' && isVisible) {
-                DRUM_KIT_IDS.forEach(kid => {
-                    const kitItem = document.createElement('div');
-                    kitItem.className = 'ch-menu-item';
-                    kitItem.style.paddingLeft = '32px';
-                    kitItem.style.fontSize = '11px';
-                    if (kid === active808Kit) kitItem.style.color = CH_COLORS['808'];
-                    kitItem.textContent = DRUM_KITS[kid].label;
-                    kitItem.addEventListener('mousedown', (e) => {
-                        e.stopPropagation();
-                        active808Kit = kid;
-                        drumTrackNames = DRUM_KITS[kid].tracks;
-                        rebuild808Rows();
-                        buildChannelTabs();
-                        fullRender();
-                    });
-                    menu.appendChild(kitItem);
-                });
-            }
-        });
-
-        btn.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
-            chMenuOpen = !chMenuOpen;
-            menu.classList.toggle('open', chMenuOpen);
-        });
-
-        wrap.appendChild(btn);
-        wrap.appendChild(menu);
-        container.appendChild(wrap);
+        // Channel label — auto-set by active instrument
+        const label = document.createElement('div');
+        label.className = 'ch-dropdown-btn';
+        label.style.color = chColor(activeChannel);
+        label.style.borderColor = chColor(activeChannel);
+        let text = CHANNEL_LABELS[activeChannel];
+        if (activeChannel === '808') text += ' / ' + DRUM_KITS[active808Kit].label;
+        label.textContent = text;
+        container.appendChild(label);
     }
-
-    // Close dropdown on outside click
-    document.addEventListener('mousedown', () => {
-        if (chMenuOpen) {
-            chMenuOpen = false;
-            const m = document.querySelector('.ch-dropdown-menu');
-            if (m) m.classList.remove('open');
-        }
-    });
 
     // ==================== GRID RESOLUTION ====================
     function buildGridSelect() {
