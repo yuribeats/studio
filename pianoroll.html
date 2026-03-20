@@ -170,7 +170,9 @@
             flex-direction: column;
             background: #0a0a0a;
             z-index: 3;
+            transition: width 0.15s;
         }
+        .piano-col.wide { width: 80px; }
         .piano-corner {
             height: 22px;
             background: #0e0e0e;
@@ -284,6 +286,11 @@
             height: 100%;
             cursor: default;
         }
+        .note-rect.ghost {
+            opacity: 0.35 !important;
+            border-style: dashed;
+            pointer-events: none;
+        }
         .note-rect .note-label {
             font-size: 7px;
             color: rgba(255,255,255,0.7);
@@ -317,6 +324,7 @@
         .velocity-piano-spacer {
             width: 52px;
             flex-shrink: 0;
+            transition: width 0.15s;
             background: #0e0e0e;
             border-right: 1px solid #222;
             display: flex;
@@ -333,6 +341,15 @@
         }
         .velocity-scroll canvas {
             display: block;
+        }
+        /* SELECTION MARQUEE */
+        .select-marquee {
+            position: absolute;
+            border: 1px solid #228B22;
+            background: rgba(34,139,34,0.1);
+            pointer-events: none;
+            z-index: 20;
+            display: none;
         }
     </style>
 </head>
@@ -389,6 +406,7 @@
                     <div class="grid-canvas-wrap" id="gridWrap">
                         <canvas id="gridCanvas"></canvas>
                         <div class="note-layer" id="noteLayer"></div>
+                        <div class="select-marquee" id="selectMarquee"></div>
                         <div class="playhead" id="playhead"></div>
                     </div>
                 </div>
@@ -419,6 +437,43 @@
     const MIN_NOTE = 24;
     const MAX_NOTE = 84;
     const TOTAL_NOTES = MAX_NOTE - MIN_NOTE + 1;
+
+    // MPC pads: 4 banks x 16 pads, MIDI 36-99
+    const MPC_BANKS = ['A', 'B', 'C', 'D'];
+    const MPC_PADS_PER_BANK = 16;
+    const MPC_PAD_ROWS = []; // {midi, label}
+    MPC_BANKS.forEach((bank, bi) => {
+        for (let p = 0; p < MPC_PADS_PER_BANK; p++) {
+            MPC_PAD_ROWS.push({ midi: 36 + bi * 16 + p, label: bank + (p + 1) });
+        }
+    });
+
+    // 808 drum tracks per kit (default CR-78, updated when 808 sends its kit info)
+    let drumTrackNames = ['KICK','SNARE','RIM','HI-HAT','HAT ACC','HAT METAL','CYMBAL','COWBELL','CONGA','BONGO H','BONGO L','TAMB','GUIRO'];
+    const DRUM_808_ROWS = []; // will be rebuilt
+    function rebuild808Rows() {
+        DRUM_808_ROWS.length = 0;
+        drumTrackNames.forEach((name, i) => {
+            DRUM_808_ROWS.push({ midi: 36 + i, label: name });
+        });
+    }
+    rebuild808Rows();
+
+    // Channel display mode
+    function isFixedRowChannel(ch) { return ch === 'mpc' || ch === '808'; }
+    function getFixedRows(ch) { return ch === 'mpc' ? MPC_PAD_ROWS : DRUM_808_ROWS; }
+    function getRowCount() {
+        if (isFixedRowChannel(activeChannel)) return getFixedRows(activeChannel).length;
+        return TOTAL_NOTES;
+    }
+    function getMinNote() {
+        if (isFixedRowChannel(activeChannel)) return getFixedRows(activeChannel)[getFixedRows(activeChannel).length - 1].midi;
+        return MIN_NOTE;
+    }
+    function getMaxNote() {
+        if (isFixedRowChannel(activeChannel)) return getFixedRows(activeChannel)[0].midi;
+        return MAX_NOTE;
+    }
 
     // Grid resolutions in beats
     const GRID_OPTIONS = [
@@ -476,16 +531,30 @@
 
     // ==================== HELPERS ====================
     function noteName(midi) {
+        if (isFixedRowChannel(activeChannel)) {
+            const rows = getFixedRows(activeChannel);
+            const r = rows.find(r => r.midi === midi);
+            return r ? r.label : 'N' + midi;
+        }
         return NOTE_NAMES[midi % 12] + Math.floor(midi / 12 - 1);
     }
     function isBlackKey(midi) {
+        if (isFixedRowChannel(activeChannel)) return false;
         return BLACK_KEYS.includes(midi % 12);
     }
     function midiToRow(midi) {
-        // Row 0 = MAX_NOTE (top), Row TOTAL_NOTES-1 = MIN_NOTE (bottom)
+        if (isFixedRowChannel(activeChannel)) {
+            const rows = getFixedRows(activeChannel);
+            const idx = rows.findIndex(r => r.midi === midi);
+            return idx >= 0 ? idx : 0;
+        }
         return MAX_NOTE - midi;
     }
     function rowToMidi(row) {
+        if (isFixedRowChannel(activeChannel)) {
+            const rows = getFixedRows(activeChannel);
+            return row >= 0 && row < rows.length ? rows[row].midi : 36;
+        }
         return MAX_NOTE - row;
     }
     function beatToX(beat) {
@@ -501,7 +570,7 @@
         return TOTAL_BEATS / gridResolution * cellW;
     }
     function getGridH() {
-        return TOTAL_NOTES * cellH;
+        return getRowCount() * cellH;
     }
 
     // ==================== CHANNEL TABS ====================
@@ -515,8 +584,7 @@
             tab.addEventListener('mousedown', () => {
                 activeChannel = ch;
                 buildChannelTabs();
-                renderNotes();
-                renderVelocity();
+                fullRender();
             });
             container.appendChild(tab);
         });
@@ -715,35 +783,59 @@
     // ==================== PIANO KEYS ====================
     function buildPianoKeys() {
         pianoKeysInner.innerHTML = '';
-        const h = getGridH();
+        const rc = getRowCount();
+        const h = rc * cellH;
         pianoKeysInner.style.height = h + 'px';
 
-        for (let i = 0; i < TOTAL_NOTES; i++) {
-            const midi = rowToMidi(i);
-            const key = document.createElement('div');
-            const black = isBlackKey(midi);
-            key.className = 'piano-key ' + (black ? 'black' : 'white');
-            key.style.top = (i * cellH) + 'px';
-            key.style.height = cellH + 'px';
-            key.dataset.midi = midi;
-
-            // Show label on C notes and black keys if tall enough
-            if (midi % 12 === 0 || cellH >= 14) {
-                key.textContent = noteName(midi);
-            }
-
-            key.addEventListener('mousedown', () => {
-                sendNoteOn(activeChannel, midi, 100);
-                highlightPianoKey(midi, true);
-                const up = () => {
-                    sendNoteOff(activeChannel, midi);
-                    highlightPianoKey(midi, false);
-                    window.removeEventListener('mouseup', up);
-                };
-                window.addEventListener('mouseup', up);
+        if (isFixedRowChannel(activeChannel)) {
+            const rows = getFixedRows(activeChannel);
+            rows.forEach((r, i) => {
+                const key = document.createElement('div');
+                key.className = 'piano-key white';
+                key.style.top = (i * cellH) + 'px';
+                key.style.height = cellH + 'px';
+                key.dataset.midi = r.midi;
+                if (i % 2 === 1) key.style.background = '#a8a8a8';
+                key.textContent = r.label;
+                key.addEventListener('mousedown', () => {
+                    sendNoteOn(activeChannel, r.midi, 100);
+                    highlightPianoKey(r.midi, true);
+                    const up = () => {
+                        sendNoteOff(activeChannel, r.midi);
+                        highlightPianoKey(r.midi, false);
+                        window.removeEventListener('mouseup', up);
+                    };
+                    window.addEventListener('mouseup', up);
+                });
+                pianoKeysInner.appendChild(key);
             });
+        } else {
+            for (let i = 0; i < rc; i++) {
+                const midi = rowToMidi(i);
+                const key = document.createElement('div');
+                const black = isBlackKey(midi);
+                key.className = 'piano-key ' + (black ? 'black' : 'white');
+                key.style.top = (i * cellH) + 'px';
+                key.style.height = cellH + 'px';
+                key.dataset.midi = midi;
 
-            pianoKeysInner.appendChild(key);
+                if (midi % 12 === 0 || cellH >= 14) {
+                    key.textContent = noteName(midi);
+                }
+
+                key.addEventListener('mousedown', () => {
+                    sendNoteOn(activeChannel, midi, 100);
+                    highlightPianoKey(midi, true);
+                    const up = () => {
+                        sendNoteOff(activeChannel, midi);
+                        highlightPianoKey(midi, false);
+                        window.removeEventListener('mouseup', up);
+                    };
+                    window.addEventListener('mouseup', up);
+                });
+
+                pianoKeysInner.appendChild(key);
+            }
         }
     }
 
@@ -775,25 +867,29 @@
         gridWrap.style.height = h + 'px';
 
         // Draw row backgrounds
-        for (let i = 0; i < TOTAL_NOTES; i++) {
+        const rc = getRowCount();
+        for (let i = 0; i < rc; i++) {
             const midi = rowToMidi(i);
             const black = isBlackKey(midi);
-            gridCtx.fillStyle = black ? '#101010' : '#141414';
+            if (isFixedRowChannel(activeChannel)) {
+                gridCtx.fillStyle = i % 2 === 0 ? '#141414' : '#111';
+            } else {
+                gridCtx.fillStyle = black ? '#101010' : '#141414';
+            }
             gridCtx.fillRect(0, i * cellH, w, cellH);
         }
 
         // Draw horizontal lines (between rows)
         gridCtx.strokeStyle = '#1a1a1a';
         gridCtx.lineWidth = 0.5;
-        for (let i = 0; i <= TOTAL_NOTES; i++) {
+        for (let i = 0; i <= rc; i++) {
             const y = i * cellH;
             gridCtx.beginPath();
             gridCtx.moveTo(0, y);
             gridCtx.lineTo(w, y);
             gridCtx.stroke();
-            // Slightly brighter line at C notes
             const midi = rowToMidi(i);
-            if (midi % 12 === 0) {
+            if (!isFixedRowChannel(activeChannel) && midi % 12 === 0) {
                 gridCtx.strokeStyle = '#252525';
                 gridCtx.beginPath();
                 gridCtx.moveTo(0, y);
@@ -1078,14 +1174,25 @@
                 }
             }
 
+            // Alt/Option key: copy mode
+            const isCopy = e.altKey;
             dragState = {
                 type: 'move',
                 note: n,
                 startX: mx,
                 startY: my,
                 origStart: n.start,
-                origPitch: n.pitch
+                origPitch: n.pitch,
+                isCopy: isCopy,
+                origPositions: null
             };
+            if (isCopy) {
+                // Store original positions of all selected notes
+                dragState.origPositions = new Map();
+                selectedNotes.forEach(sn => {
+                    dragState.origPositions.set(sn, { start: sn.start, pitch: sn.pitch });
+                });
+            }
 
             renderNotes();
             renderVelocity();
@@ -1093,38 +1200,25 @@
             return;
         }
 
-        // Clicked on empty grid: create note
+        // Clicked on empty grid: start marquee select or create note
         if (!e.shiftKey) selectedNotes.clear();
 
         const beat = snapBeat(xToBeat(mx));
         const row = Math.floor(my / cellH);
         const pitch = rowToMidi(row);
 
-        if (pitch < MIN_NOTE || pitch > MAX_NOTE) return;
-
-        const newNote = {
-            pitch: pitch,
-            start: beat,
-            duration: gridResolution,
-            velocity: 100
-        };
-        notes[activeChannel].push(newNote);
-        selectedNotes.clear();
-        selectedNotes.add(newNote);
-
         dragState = {
-            type: 'create',
-            note: newNote,
+            type: 'marquee',
             startX: mx,
-            startBeat: beat
+            startY: my,
+            startBeat: beat,
+            startRow: row,
+            startPitch: pitch,
+            hasMoved: false
         };
 
         renderNotes();
         renderVelocity();
-
-        // Play preview note
-        sendNoteOn(activeChannel, pitch, 100);
-        setTimeout(() => sendNoteOff(activeChannel, pitch), 150);
     });
 
     gridWrap.addEventListener('dblclick', (e) => {
@@ -1142,7 +1236,38 @@
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
 
-        if (dragState.type === 'create') {
+        if (dragState.type === 'marquee') {
+            const dx = Math.abs(mx - dragState.startX);
+            const dy = Math.abs(my - dragState.startY);
+            if (dx > 3 || dy > 3) dragState.hasMoved = true;
+            if (dragState.hasMoved) {
+                const marquee = document.getElementById('selectMarquee');
+                const x1 = Math.min(mx, dragState.startX);
+                const y1 = Math.min(my, dragState.startY);
+                const x2 = Math.max(mx, dragState.startX);
+                const y2 = Math.max(my, dragState.startY);
+                marquee.style.display = 'block';
+                marquee.style.left = x1 + 'px';
+                marquee.style.top = y1 + 'px';
+                marquee.style.width = (x2 - x1) + 'px';
+                marquee.style.height = (y2 - y1) + 'px';
+
+                // Select notes within marquee
+                selectedNotes.clear();
+                notes[activeChannel].forEach(n => {
+                    const nRow = midiToRow(n.pitch);
+                    const nx = beatToX(n.start);
+                    const nw = beatToX(n.duration);
+                    const ny = nRow * cellH;
+                    const nh = cellH;
+                    if (nx + nw > x1 && nx < x2 && ny + nh > y1 && ny < y2) {
+                        selectedNotes.add(n);
+                    }
+                });
+                renderNotes();
+            }
+            return;
+        } else if (dragState.type === 'create') {
             const currentBeat = snapBeat(xToBeat(mx));
             const dur = Math.max(gridResolution, currentBeat - dragState.startBeat);
             dragState.note.duration = dur;
@@ -1159,17 +1284,111 @@
             const beatDelta = snapBeat(dx / cellW * gridResolution);
             const rowDelta = Math.round(dy / cellH);
 
-            const newStart = Math.max(0, dragState.origStart + beatDelta);
-            const newPitch = Math.max(MIN_NOTE, Math.min(MAX_NOTE, dragState.origPitch - rowDelta));
+            if (dragState.isCopy) {
+                // Copy mode: don't move originals, show ghost at new positions
+                renderNotes();
+                // Draw ghost outlines for selected notes at offset
+                selectedNotes.forEach(sn => {
+                    const orig = dragState.origPositions.get(sn);
+                    if (!orig) return;
+                    const ns = Math.max(0, orig.start + beatDelta);
+                    let np;
+                    if (isFixedRowChannel(activeChannel)) {
+                        const rows = getFixedRows(activeChannel);
+                        const origRow = rows.findIndex(r => r.midi === orig.pitch);
+                        const newRow = Math.max(0, Math.min(rows.length - 1, origRow + rowDelta));
+                        np = rows[newRow].midi;
+                    } else {
+                        np = Math.max(MIN_NOTE, Math.min(MAX_NOTE, orig.pitch - rowDelta));
+                    }
+                    const ghostEl = document.createElement('div');
+                    ghostEl.className = 'note-rect ghost';
+                    const row2 = midiToRow(np);
+                    ghostEl.style.left = beatToX(ns) + 'px';
+                    ghostEl.style.top = (row2 * cellH) + 'px';
+                    ghostEl.style.width = Math.max(4, beatToX(sn.duration)) + 'px';
+                    ghostEl.style.height = (cellH - 1) + 'px';
+                    noteLayer.appendChild(ghostEl);
+                });
+                dragState._beatDelta = beatDelta;
+                dragState._rowDelta = rowDelta;
+            } else {
+                // Normal move: move all selected notes together
+                const startDelta = beatDelta;
+                let pitchDelta;
+                if (isFixedRowChannel(activeChannel)) {
+                    pitchDelta = rowDelta; // row-based
+                } else {
+                    pitchDelta = -rowDelta; // pitch-based (invert)
+                }
 
-            dragState.note.start = newStart;
-            dragState.note.pitch = newPitch;
-            renderNotes();
+                const newStart = Math.max(0, dragState.origStart + startDelta);
+                let newPitch;
+                if (isFixedRowChannel(activeChannel)) {
+                    const rows = getFixedRows(activeChannel);
+                    const origRow = rows.findIndex(r => r.midi === dragState.origPitch);
+                    const newRow = Math.max(0, Math.min(rows.length - 1, origRow + rowDelta));
+                    newPitch = rows[newRow].midi;
+                } else {
+                    newPitch = Math.max(MIN_NOTE, Math.min(MAX_NOTE, dragState.origPitch - rowDelta));
+                }
+
+                dragState.note.start = newStart;
+                dragState.note.pitch = newPitch;
+                renderNotes();
+            }
         }
     });
 
-    window.addEventListener('mouseup', () => {
+    window.addEventListener('mouseup', (e) => {
         if (dragState) {
+            // Finalize copy on alt+drag
+            if (dragState.type === 'move' && dragState.isCopy && dragState._beatDelta !== undefined) {
+                const copies = [];
+                selectedNotes.forEach(sn => {
+                    const orig = dragState.origPositions.get(sn);
+                    if (!orig) return;
+                    const ns = Math.max(0, orig.start + dragState._beatDelta);
+                    let np;
+                    if (isFixedRowChannel(activeChannel)) {
+                        const rows = getFixedRows(activeChannel);
+                        const origRow = rows.findIndex(r => r.midi === orig.pitch);
+                        const newRow = Math.max(0, Math.min(rows.length - 1, origRow + dragState._rowDelta));
+                        np = rows[newRow].midi;
+                    } else {
+                        np = Math.max(MIN_NOTE, Math.min(MAX_NOTE, orig.pitch - dragState._rowDelta));
+                    }
+                    copies.push({ pitch: np, start: ns, duration: sn.duration, velocity: sn.velocity });
+                });
+                copies.forEach(c => notes[activeChannel].push(c));
+                selectedNotes.clear();
+                copies.forEach(c => selectedNotes.add(c));
+            }
+            if (dragState.type === 'marquee') {
+                const marquee = document.getElementById('selectMarquee');
+                marquee.style.display = 'none';
+                if (!dragState.hasMoved) {
+                    // Single click on empty space: create note
+                    const row = dragState.startRow;
+                    const pitch = dragState.startPitch;
+                    const beat = dragState.startBeat;
+                    let valid = true;
+                    if (isFixedRowChannel(activeChannel)) {
+                        const rows = getFixedRows(activeChannel);
+                        if (row < 0 || row >= rows.length) valid = false;
+                    } else {
+                        if (pitch < MIN_NOTE || pitch > MAX_NOTE) valid = false;
+                    }
+                    if (valid) {
+                        const newNote = { pitch, start: beat, duration: gridResolution, velocity: 100 };
+                        notes[activeChannel].push(newNote);
+                        selectedNotes.clear();
+                        selectedNotes.add(newNote);
+                        sendNoteOn(activeChannel, pitch, 100);
+                        setTimeout(() => sendNoteOff(activeChannel, pitch), 150);
+                    }
+                }
+            }
             dragState = null;
             renderNotes();
             renderVelocity();
@@ -1247,7 +1466,6 @@
     // ==================== KEYBOARD SHORTCUTS ====================
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT') return;
-        if (window.__kbEnabled === false) return;
 
         if (e.key === ' ' || e.code === 'Space') {
             e.preventDefault();
@@ -1291,6 +1509,10 @@
     function fullRender() {
         cellW = ZOOM_H_LEVELS[zoomHIndex];
         cellH = ZOOM_V_LEVELS[zoomVIndex];
+        const wide = isFixedRowChannel(activeChannel);
+        document.querySelector('.piano-col').classList.toggle('wide', wide);
+        const spacer = document.querySelector('.velocity-piano-spacer');
+        spacer.style.width = wide ? '80px' : '52px';
         buildPianoKeys();
         renderGrid();
         renderTimeline();
@@ -1318,7 +1540,12 @@
         });
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT') return;
-            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+            // Always allow Delete/Backspace, Cmd+A, Cmd+D, Space for piano roll operations
+            const allowedKeys = ['Delete', 'Backspace', ' '];
+            const isModCombo = (e.ctrlKey || e.metaKey) && ['a','d'].includes(e.key);
+            if (!window.__kbEnabled && !allowedKeys.includes(e.key) && !isModCombo) {
+                e.stopImmediatePropagation(); e.preventDefault();
+            }
         }, true);
         document.addEventListener('keyup', (e) => {
             if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
