@@ -395,6 +395,10 @@ function openInstrument(instId) {
     instFrame.src = inst.file;
     instFrameId = instId;
     setKeyboardTarget(instId);
+    // Sync piano roll to show this instrument's channel
+    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', deck:'deck'};
+    const prCh = prChannelMap[instId];
+    if (prCh) sendToInst('pianoroll', {type: 'set-channel', channel: prCh});
 }
 
 document.querySelectorAll('.panel-tile[data-open]').forEach(tile => {

@@ -2090,6 +2090,17 @@
                     if (isRecording) recordNoteOff(midi);
                 }
             }
+            // Auto-switch channel when instrument changes
+            if (d && d.type === 'set-channel' && d.channel) {
+                const ch = d.channel;
+                if (CHANNELS.includes(ch) && ch !== activeChannel) {
+                    activeChannel = ch;
+                    visibleChannels.add(ch);
+                    chMenuOpen = false;
+                    buildChannelTabs();
+                    fullRender();
+                }
+            }
             // 808 step sequencer pattern sync → convert to piano roll notes
             if (d && d.type === '808-pattern-sync') {
                 handle808PatternSync(d);
