@@ -1563,8 +1563,17 @@
             loopEnd = Math.ceil(loopEnd / BEATS_PER_BAR) * BEATS_PER_BAR;
             if (loopEnd <= loopStart) loopEnd = loopStart + BEATS_PER_BAR;
             renderTimeline();
+            broadcastLoopRegion();
         }
     });
+
+    function broadcastLoopRegion() {
+        if (loopRegionSet) {
+            msgToParent({type: 'loop-region', start: loopStart, end: loopEnd, length: loopEnd - loopStart});
+        } else {
+            msgToParent({type: 'loop-region', start: 0, end: 16, length: 16});
+        }
+    }
 
     // Double-click timeline to clear loop region
     timelineCanvas.addEventListener('dblclick', () => {
@@ -1572,6 +1581,7 @@
         loopStart = 0;
         loopEnd = 16;
         renderTimeline();
+        broadcastLoopRegion();
     });
 
     // ==================== VELOCITY RENDERING ====================

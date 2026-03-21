@@ -576,7 +576,7 @@ const KITS = {
 
 let currentKit = 'cr78';
 let TRACKS = KITS[currentKit].tracks;
-const STEPS = 16;
+var STEPS = 16;
 const NUM_PATTERNS = 4;
 
 // ============================================
@@ -605,6 +605,28 @@ function initPatternsForKit(kitId) {
 }
 initPatternsForKit(currentKit);
 function patterns() { return allPatterns[currentKit]; }
+
+function setStepCount(newSteps) {
+    if (newSteps === STEPS || newSteps < 4 || newSteps > 128) return;
+    var oldSteps = STEPS;
+    STEPS = newSteps;
+    // Resize all pattern arrays
+    for (var kitId of Object.keys(allPatterns)) {
+        var pats = allPatterns[kitId];
+        for (var p = 0; p < pats.length; p++) {
+            for (var t = 0; t < pats[p].length; t++) {
+                var old = pats[p][t];
+                var arr = new Uint8Array(STEPS);
+                for (var s = 0; s < Math.min(old.length, STEPS); s++) arr[s] = old[s];
+                pats[p][t] = arr;
+            }
+        }
+    }
+    if (currentStep >= STEPS) currentStep = -1;
+    buildGrid();
+    updateGrid();
+    syncPatternsToPianoRoll();
+}
 
 let patternClipboard = null;
 let lastKitReport = '';
@@ -1377,6 +1399,14 @@ if (window !== window.parent) {
         }
         if (d && d.type === 'pedals' && drumPedalFX) {
             drumPedalFX.update(d.pedals);
+        }
+        if (d && d.type === 'loop-region') {
+            // Loop length in beats → 16th note steps (4 steps per beat)
+            var loopBeats = d.length;
+            if (loopBeats > 0) {
+                var newSteps = Math.round(loopBeats * 4);
+                setStepCount(newSteps);
+            }
         }
         if (d && d.type === 'get-session') {
             const data = {};
