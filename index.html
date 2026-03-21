@@ -599,7 +599,9 @@ document.addEventListener('keydown', (e) => {
     const note = qwertyOctave * 12 + semi;
     if (note > 127 || qwertyHeld.has(note)) return;
     qwertyHeld.add(note);
-    sendToInst(keyboardTarget, {type: 'midi', data: [0x90, note, 100]});
+    const midiMsg = {type: 'midi', data: [0x90, note, 100]};
+    sendToInst(keyboardTarget, midiMsg);
+    sendToInst('pianoroll', midiMsg);
 });
 
 document.addEventListener('keyup', (e) => {
@@ -609,7 +611,9 @@ document.addEventListener('keyup', (e) => {
     const note = qwertyOctave * 12 + semi;
     if (!qwertyHeld.has(note)) return;
     qwertyHeld.delete(note);
-    sendToInst(keyboardTarget, {type: 'midi', data: [0x80, note, 0]});
+    const midiMsg = {type: 'midi', data: [0x80, note, 0]};
+    sendToInst(keyboardTarget, midiMsg);
+    sendToInst('pianoroll', midiMsg);
 });
 
 // ============================================
@@ -629,7 +633,9 @@ window.addEventListener('message', (e) => {
             const note = qwertyOctave * 12 + semi;
             if (note > 127 || qwertyHeld.has(note)) return;
             qwertyHeld.add(note);
-            sendToInst(keyboardTarget, {type: 'midi', data: [0x90, note, 100]});
+            const onMsg = {type: 'midi', data: [0x90, note, 100]};
+            sendToInst(keyboardTarget, onMsg);
+            sendToInst('pianoroll', onMsg);
         } else if (d.event === 'keyup') {
             const k = d.key.toLowerCase();
             const semi = QWERTY_MAP[k];
@@ -637,7 +643,9 @@ window.addEventListener('message', (e) => {
             const note = qwertyOctave * 12 + semi;
             if (!qwertyHeld.has(note)) return;
             qwertyHeld.delete(note);
-            sendToInst(keyboardTarget, {type: 'midi', data: [0x80, note, 0]});
+            const offMsg = {type: 'midi', data: [0x80, note, 0]};
+            sendToInst(keyboardTarget, offMsg);
+            sendToInst('pianoroll', offMsg);
         }
         return;
     }

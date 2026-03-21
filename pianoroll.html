@@ -1115,8 +1115,8 @@
         btnRec.classList.add('rec-armed');
         scheduledClickBeat = -1;
 
-        // Request keyboard focus from parent for QWERTY input
-        msgToParent({type: 'request-kb-focus', target: 'pianoroll'});
+        // QWERTY notes are forwarded to piano roll by index.html,
+        // so we don't steal keyboard focus from the active instrument
 
         // Start playback for count-in (1 bar)
         if (!isPlaying) {
