@@ -707,6 +707,8 @@ function sendPedalState() {
     };
     if (window !== window.parent) {
         window.parent.postMessage(msg, '*');
+    } else if (window._sendToParent) {
+        window._sendToParent(msg);
     }
 }
 
@@ -757,16 +759,22 @@ buildTabs();
 renderBoard();
 requestAnimationFrame(() => { scaleToFit(); });
 
-// ==================== IFRAME BRIDGE ====================
-if (window !== window.parent) {
-    window.__kbEnabled = false;
-    document.addEventListener('keydown', (e) => {
-        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
-    }, true);
-    document.addEventListener('keyup', (e) => {
-        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
-    }, true);
-    window.parent.postMessage({type: 'instrument-ready', name: 'pedals'}, '*');
+// ==================== IFRAME / POPOUT BRIDGE ====================
+const _isIframe = window !== window.parent;
+const _isPopout = window.opener && !_isIframe;
+if (_isIframe || _isPopout) {
+    window.__kbEnabled = _isPopout;
+    if (_isIframe) {
+        document.addEventListener('keydown', (e) => {
+            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+        }, true);
+        document.addEventListener('keyup', (e) => {
+            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+        }, true);
+        window.parent.postMessage({type: 'instrument-ready', name: 'pedals'}, '*');
+    } else {
+        window.dispatchEvent(new MessageEvent('message', {data: {type: 'instrument-ready', name: 'pedals'}}));
+    }
 }
 </script>
 

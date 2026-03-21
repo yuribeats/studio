@@ -1290,12 +1290,11 @@ document.getElementById('btnFF').addEventListener('mousedown', () => {
 // COMMUNICATION (postMessage)
 // ============================================
 function sendStatus() {
+    const msg = { type: 'tape-status', recording: recording, armed: armed };
     if (window !== window.parent) {
-        window.parent.postMessage({
-            type: 'tape-status',
-            recording: recording,
-            armed: armed
-        }, '*');
+        window.parent.postMessage(msg, '*');
+    } else if (window._sendToParent) {
+        window._sendToParent(msg);
     }
 }
 
@@ -1348,17 +1347,23 @@ requestAnimationFrame(() => {
     startMeters();
 });
 
-// ==================== IFRAME BRIDGE ====================
-if (window !== window.parent) {
-    window.__kbEnabled = false;
-    document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT') return;
-        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
-    }, true);
-    document.addEventListener('keyup', (e) => {
-        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
-    }, true);
-    window.parent.postMessage({ type: 'instrument-ready', name: 'tape' }, '*');
+// ==================== IFRAME / POPOUT BRIDGE ====================
+const _isIframe = window !== window.parent;
+const _isPopout = window.opener && !_isIframe;
+if (_isIframe || _isPopout) {
+    window.__kbEnabled = _isPopout;
+    if (_isIframe) {
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+        }, true);
+        document.addEventListener('keyup', (e) => {
+            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+        }, true);
+        window.parent.postMessage({ type: 'instrument-ready', name: 'tape' }, '*');
+    } else {
+        window.dispatchEvent(new MessageEvent('message', {data: {type: 'instrument-ready', name: 'tape'}}));
+    }
 }
 </script>
 

@@ -531,6 +531,14 @@
     const TOTAL_BARS = 32;
     const TOTAL_BEATS = TOTAL_BARS * BEATS_PER_BAR;
 
+    // Helper: send message to parent (works in both iframe and popout mode)
+    const isIframe = window !== window.parent;
+    const isPopout = window.opener && !isIframe;
+    function msgToParent(msg) {
+        if (isIframe) window.parent.postMessage(msg, '*');
+        else if (isPopout && window._sendToParent) window._sendToParent(msg);
+    }
+
     // Note range: C1 (MIDI 24) to C6 (MIDI 84) = 61 notes
     const MIN_NOTE = 24;
     const MAX_NOTE = 84;
@@ -1108,9 +1116,7 @@
         scheduledClickBeat = -1;
 
         // Request keyboard focus from parent for QWERTY input
-        if (window !== window.parent) {
-            window.parent.postMessage({type: 'request-kb-focus', target: 'pianoroll'}, '*');
-        }
+        msgToParent({type: 'request-kb-focus', target: 'pianoroll'});
 
         // Start playback for count-in (1 bar)
         if (!isPlaying) {
@@ -1286,37 +1292,32 @@
     }
 
     function sendNoteOn(channel, pitch, velocity) {
-        if (window !== window.parent) {
-            const msg = {
-                type: 'pianoroll-note',
-                channel: channel,
-                note: pitch,
-                velocity: velocity,
-                on: true
-            };
-            // For 808 sub-channels, include kit info
-            if (channel.startsWith('808-')) {
-                msg.kit = channel.replace('808-', '');
-                msg.channel = '808';
-            }
-            window.parent.postMessage(msg, '*');
+        const msg = {
+            type: 'pianoroll-note',
+            channel: channel,
+            note: pitch,
+            velocity: velocity,
+            on: true
+        };
+        if (channel.startsWith('808-')) {
+            msg.kit = channel.replace('808-', '');
+            msg.channel = '808';
         }
+        msgToParent(msg);
     }
 
     function sendNoteOff(channel, pitch) {
-        if (window !== window.parent) {
-            const msg = {
-                type: 'pianoroll-note',
-                channel: channel,
-                note: pitch,
-                on: false
-            };
-            if (channel.startsWith('808-')) {
-                msg.kit = channel.replace('808-', '');
-                msg.channel = '808';
-            }
-            window.parent.postMessage(msg, '*');
+        const msg = {
+            type: 'pianoroll-note',
+            channel: channel,
+            note: pitch,
+            on: false
+        };
+        if (channel.startsWith('808-')) {
+            msg.kit = channel.replace('808-', '');
+            msg.channel = '808';
         }
+        msgToParent(msg);
     }
 
     // ==================== PIANO KEYS ====================
@@ -1953,9 +1954,7 @@
         const report = kits.join(',');
         if (report === lastKitReport) return;
         lastKitReport = report;
-        if (window !== window.parent) {
-            window.parent.postMessage({ type: 'active-808-kits', kits: kits }, '*');
-        }
+        msgToParent({ type: 'active-808-kits', kits: kits });
     }
 
     function deleteNote(n) {
@@ -2189,9 +2188,9 @@
         if (activeChannel === 'mpc') renderNotes();
     }
 
-    // ==================== IFRAME BRIDGE ====================
-    if (window !== window.parent) {
-        window.__kbEnabled = false;
+    // ==================== IFRAME / POPOUT BRIDGE ====================
+    if (isIframe || isPopout) {
+        window.__kbEnabled = isPopout; // popout gets full keyboard by default
         window.addEventListener('message', (e) => {
             const d = e.data;
             if (d && d.type === 'keyboard-focus') {
@@ -2237,10 +2236,10 @@
                         }));
                     }
                 }
-                window.parent.postMessage({
+                msgToParent({
                     type: 'session-data', source: 'pianoroll',
                     data: { notes: noteData, bpm, activeChannel, active808Kit }
-                }, '*');
+                });
             }
             // Session load: restore note data
             if (d && d.type === 'load-session' && d.data) {
@@ -2265,22 +2264,26 @@
                 fullRender();
             }
         });
-        document.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT') return;
-            // Always allow Delete/Backspace, Cmd+A, Cmd+D, Space, R for piano roll operations
-            // Allow QWERTY keys during recording
-            const allowedKeys = ['Delete', 'Backspace', ' ', 'r'];
-            const isModCombo = (e.ctrlKey || e.metaKey) && ['a','d'].includes(e.key);
-            const isRecKey = isRecording && QWERTY_MAP[e.key.toLowerCase()] !== undefined;
-            if (!window.__kbEnabled && !allowedKeys.includes(e.key) && !isModCombo && !isRecKey) {
-                e.stopImmediatePropagation(); e.preventDefault();
-            }
-        }, true);
-        document.addEventListener('keyup', (e) => {
-            const isRecKey = (isRecording || qwertyHeld.size > 0) && QWERTY_MAP[e.key.toLowerCase()] !== undefined;
-            if (!window.__kbEnabled && !isRecKey) { e.stopImmediatePropagation(); e.preventDefault(); }
-        }, true);
-        window.parent.postMessage({ type: 'instrument-ready', name: 'pianoroll' }, '*');
+        if (isIframe) {
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+                const allowedKeys = ['Delete', 'Backspace', ' ', 'r'];
+                const isModCombo = (e.ctrlKey || e.metaKey) && ['a','d'].includes(e.key);
+                const isRecKey = isRecording && QWERTY_MAP[e.key.toLowerCase()] !== undefined;
+                if (!window.__kbEnabled && !allowedKeys.includes(e.key) && !isModCombo && !isRecKey) {
+                    e.stopImmediatePropagation(); e.preventDefault();
+                }
+            }, true);
+            document.addEventListener('keyup', (e) => {
+                const isRecKey = (isRecording || qwertyHeld.size > 0) && QWERTY_MAP[e.key.toLowerCase()] !== undefined;
+                if (!window.__kbEnabled && !isRecKey) { e.stopImmediatePropagation(); e.preventDefault(); }
+            }, true);
+        }
+        if (isIframe) {
+            window.parent.postMessage({ type: 'instrument-ready', name: 'pianoroll' }, '*');
+        } else {
+            window.dispatchEvent(new MessageEvent('message', {data: {type: 'instrument-ready', name: 'pianoroll'}}));
+        }
     }
 
     // ==================== INIT ====================
