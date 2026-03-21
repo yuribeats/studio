@@ -131,6 +131,8 @@
             <div class="kb-btn" data-target="solina">SOLINA</div>
 
             <div class="kb-btn" data-target="tb303">303</div>
+            <div class="kb-btn" data-target="hammond">B3</div>
+            <div class="kb-btn" data-target="minimoog">MOOG</div>
         </div>
     </div>
 
@@ -176,6 +178,14 @@
                     <span class="panel-tile-name">TB-303</span>
                     <span class="panel-tile-sub">ACID BASS</span>
                 </div>
+                <div class="panel-tile" data-open="hammond">
+                    <span class="panel-tile-name">HAMMOND</span>
+                    <span class="panel-tile-sub">TONEWHEEL ORGAN</span>
+                </div>
+                <div class="panel-tile" data-open="minimoog">
+                    <span class="panel-tile-name">MINIMOOG</span>
+                    <span class="panel-tile-sub">MONO SYNTH</span>
+                </div>
             </div>
 
             <!-- INSTRUMENT FRAME -->
@@ -214,6 +224,8 @@ const INSTRUMENTS = {
     solina:  { label: 'SOLINA',     file: 'solina.html',     windowName: 'solinawin' },
 
     tb303:   { label: 'TB-303',     file: 'tb303.html',      windowName: 'tb303win' },
+    hammond: { label: 'HAMMOND',    file: 'hammond.html',    windowName: 'hammondwin' },
+    minimoog:{ label: 'MINIMOOG',   file: 'minimoog.html',   windowName: 'minimoogwin' },
 };
 
 // Bottom-bar utilities (always loaded, not in panel)
@@ -401,7 +413,7 @@ function openInstrument(instId) {
     instFrameId = instId;
     setKeyboardTarget(instId);
     // Sync piano roll to show this instrument's channel
-    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', solina:'solina', tb303:'tb303'};
+    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', solina:'solina', tb303:'tb303', hammond:'hammond', minimoog:'minimoog'};
     const prCh = prChannelMap[instId];
     if (prCh) sendToInst('pianoroll', {type: 'set-channel', channel: prCh});
 }
@@ -471,6 +483,8 @@ const ROUTE_OPTIONS = [
     {value: 'solina', label: 'SOLINA'},
 
     {value: 'tb303', label: '303'},
+    {value: 'hammond', label: 'B3'},
+    {value: 'minimoog', label: 'MOOG'},
     {value: 'all', label: 'ALL'},
     {value: 'none', label: 'NONE'},
 ];
@@ -649,14 +663,14 @@ window.addEventListener('message', (e) => {
     }
     if (d.type === 'request-kb-focus') setKeyboardTarget(d.target);
     if (d.type === 'pedal-control') {
-        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', tb303: 'tb303'};
+        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', tb303: 'tb303', hammond: 'hammond', minimoog: 'minimoog'};
         var ch = d.channel;
         if (ch && ch.startsWith('808-')) ch = '808';
         const instId = idMap[ch] || ch;
         if (INSTRUMENTS[instId]) sendToInst(instId, {type: 'pedals', pedals: d.pedals});
     }
     if (d.type === 'pianoroll-note') {
-        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', tb303: 'tb303'};
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', tb303: 'tb303', hammond: 'hammond', minimoog: 'minimoog'};
         const instId = idMap[d.channel] || d.channel;
         if (INSTRUMENTS[instId]) {
             const midiData = d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0];
@@ -681,7 +695,7 @@ window.addEventListener('message', (e) => {
             });
         } else {
             const DRUM_KITS = ['cr78', 'lm2', 'mrk2', 'tr505', 'tr909'];
-            const idMap = {kr106: 'juno', mpc: 'mpc', solina: 'solina', tb303: 'tb303'};
+            const idMap = {kr106: 'juno', mpc: 'mpc', solina: 'solina', tb303: 'tb303', hammond: 'hammond', minimoog: 'minimoog'};
             if (DRUM_KITS.includes(target)) {
                 sendToInst('cr78', {type: 'mixer', kit: target, param: d.param, value: d.value});
             } else {
@@ -697,7 +711,7 @@ window.addEventListener('message', (e) => {
 // ============================================
 let pendingSave = null;
 const sessionParts = {};
-const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'rhodes', 'solina', 'tb303'];
+const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'rhodes', 'solina', 'tb303', 'hammond', 'minimoog'];
 
 function requestSessionData() {
     SESSION_SOURCES.forEach(s => { sessionParts[s] = null; });
@@ -718,7 +732,9 @@ function checkSaveReady() {
             rhodes: sessionParts.rhodes,
             solina: sessionParts.solina,
 
-            tb303: sessionParts.tb303
+            tb303: sessionParts.tb303,
+            hammond: sessionParts.hammond,
+            minimoog: sessionParts.minimoog
         };
         const blob = new Blob([JSON.stringify(session, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
@@ -738,6 +754,8 @@ function loadSession(session) {
     if (session.solina) sendToInst('solina', {type: 'load-session', data: session.solina});
 
     if (session.tb303) sendToInst('tb303', {type: 'load-session', data: session.tb303});
+    if (session.hammond) sendToInst('hammond', {type: 'load-session', data: session.hammond});
+    if (session.minimoog) sendToInst('minimoog', {type: 'load-session', data: session.minimoog});
 }
 
 document.getElementById('btnSave').addEventListener('click', requestSessionData);

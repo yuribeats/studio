@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINIMOOG</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            background: #000;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+            user-select: none;
+            cursor: default;
+        }
+        .minimoog {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .top-bar {
+            background: #000;
+            border-bottom: 1px solid #333;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .brand { font-size: 11px; letter-spacing: 3px; color: #fff; }
+        .model { font-size: 16px; letter-spacing: 3px; color: #228B22; }
+
+        /* KNOB PANEL */
+        .panel-sections {
+            display: flex;
+            background: #000;
+            border-bottom: 1px solid #222;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        .panel-group {
+            padding: 10px 12px;
+            border-right: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+        .panel-group-label { font-size: 9px; letter-spacing: 2px; color: #228B22; }
+        .panel-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .ctrl-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        .ctrl-label { font-size: 9px; letter-spacing: 0.5px; color: #fff; white-space: nowrap; }
+        .knob-wrap { width: 38px; height: 38px; position: relative; }
+        .knob {
+            width: 38px; height: 38px;
+            background: radial-gradient(circle at 40% 35%, #444, #1a1a1a);
+            border: 1px solid #555;
+            position: relative;
+        }
+        .knob-indicator {
+            position: absolute; width: 2px; height: 12px;
+            background: #228B22; top: 3px; left: 50%;
+            transform-origin: bottom center; transform: translateX(-50%);
+        }
+
+        /* WAVE SELECT */
+        .wave-row { display: flex; gap: 2px; }
+        .wave-btn {
+            padding: 4px 8px;
+            font-size: 10px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #fff;
+            background: #111;
+            border: 1px solid #333;
+        }
+        .wave-btn.active { border-color: #228B22; color: #228B22; background: #0a1a0a; }
+
+        /* TOGGLE */
+        .toggle-row { display: flex; gap: 8px; align-items: center; }
+        .toggle-btn {
+            padding: 4px 10px;
+            font-size: 10px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+            background: #111;
+            border: 1px solid #333;
+        }
+        .toggle-btn.active { border-color: #228B22; color: #228B22; background: #0a1a0a; }
+
+        /* KEYBOARD */
+        .keyboard-area {
+            flex: 1;
+            background: #000;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0 10px 10px 10px;
+            overflow: hidden;
+        }
+        .keyboard { display: flex; position: relative; height: 100%; max-height: 160px; }
+        .white-key {
+            width: 24px; height: 100%;
+            background: linear-gradient(180deg, #e8e4dc 0%, #faf9f5 90%, #e0dcd4 100%);
+            border: 1px solid #999; border-top: none;
+            position: absolute; z-index: 1;
+        }
+        .white-key.active { background: linear-gradient(180deg, #a8c8a8 0%, #c8e0c8 90%, #90b090 100%); }
+        .black-key {
+            width: 15px; height: 60%;
+            background: linear-gradient(180deg, #222 0%, #000 100%);
+            border: 1px solid #000;
+            position: absolute; z-index: 2; top: 0;
+        }
+        .black-key.active { background: linear-gradient(180deg, #2a4a2a 0%, #1a3a1a 100%); }
+
+        /* PITCH/MOD WHEELS */
+        .wheel-area {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+        .wheel-group { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .wheel-label { font-size: 8px; color: #888; }
+        .wheel-track {
+            width: 18px;
+            height: 80px;
+            background: #111;
+            border: 1px solid #333;
+            position: relative;
+        }
+        .wheel-thumb {
+            position: absolute;
+            left: 2px; right: 2px;
+            height: 14px;
+            background: #fff;
+            border: 1px solid #666;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    </style>
+</head>
+<body>
+<div class="minimoog">
+    <div class="top-bar">
+        <span class="brand">MOOG</span>
+        <span class="model">MINIMOOG MODEL D</span>
+    </div>
+
+    <div class="panel-sections">
+        <!-- OSC 1 -->
+        <div class="panel-group">
+            <span class="panel-group-label">OSC 1</span>
+            <div class="panel-row">
+                <div class="ctrl-group">
+                    <span class="ctrl-label">RANGE</span>
+                    <div class="knob-wrap"><div class="knob" data-param="osc1range" data-value="0.5"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">LEVEL</span>
+                    <div class="knob-wrap"><div class="knob" data-param="osc1level" data-value="0.8"><div class="knob-indicator"></div></div></div>
+                </div>
+            </div>
+            <div class="wave-row" data-osc="1">
+                <div class="wave-btn" data-wave="sawtooth" data-osc="1">SAW</div>
+                <div class="wave-btn active" data-wave="square" data-osc="1">SQR</div>
+                <div class="wave-btn" data-wave="triangle" data-osc="1">TRI</div>
+            </div>
+        </div>
+
+        <!-- OSC 2 -->
+        <div class="panel-group">
+            <span class="panel-group-label">OSC 2</span>
+            <div class="panel-row">
+                <div class="ctrl-group">
+                    <span class="ctrl-label">RANGE</span>
+                    <div class="knob-wrap"><div class="knob" data-param="osc2range" data-value="0.5"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">DETUNE</span>
+                    <div class="knob-wrap"><div class="knob" data-param="osc2detune" data-value="0.52"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">LEVEL</span>
+                    <div class="knob-wrap"><div class="knob" data-param="osc2level" data-value="0.7"><div class="knob-indicator"></div></div></div>
+                </div>
+            </div>
+            <div class="wave-row" data-osc="2">
+                <div class="wave-btn active" data-wave="sawtooth" data-osc="2">SAW</div>
+                <div class="wave-btn" data-wave="square" data-osc="2">SQR</div>
+                <div class="wave-btn" data-wave="triangle" data-osc="2">TRI</div>
+            </div>
+        </div>
+
+        <!-- OSC 3 -->
+        <div class="panel-group">
+            <span class="panel-group-label">OSC 3</span>
+            <div class="panel-row">
+                <div class="ctrl-group">
+                    <span class="ctrl-label">RANGE</span>
+                    <div class="knob-wrap"><div class="knob" data-param="osc3range" data-value="0.5"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">DETUNE</span>
+                    <div class="knob-wrap"><div class="knob" data-param="osc3detune" data-value="0.48"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">LEVEL</span>
+                    <div class="knob-wrap"><div class="knob" data-param="osc3level" data-value="0.0"><div class="knob-indicator"></div></div></div>
+                </div>
+            </div>
+            <div class="wave-row" data-osc="3">
+                <div class="wave-btn active" data-wave="sawtooth" data-osc="3">SAW</div>
+                <div class="wave-btn" data-wave="square" data-osc="3">SQR</div>
+                <div class="wave-btn" data-wave="triangle" data-osc="3">TRI</div>
+            </div>
+        </div>
+
+        <!-- FILTER -->
+        <div class="panel-group">
+            <span class="panel-group-label">FILTER</span>
+            <div class="panel-row">
+                <div class="ctrl-group">
+                    <span class="ctrl-label">CUTOFF</span>
+                    <div class="knob-wrap"><div class="knob" data-param="cutoff" data-value="0.6"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">RES</span>
+                    <div class="knob-wrap"><div class="knob" data-param="resonance" data-value="0.3"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">ENV AMT</span>
+                    <div class="knob-wrap"><div class="knob" data-param="filterenv" data-value="0.4"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">KBD</span>
+                    <div class="knob-wrap"><div class="knob" data-param="keytrack" data-value="0.5"><div class="knob-indicator"></div></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ENVELOPE -->
+        <div class="panel-group">
+            <span class="panel-group-label">ENVELOPE</span>
+            <div class="panel-row">
+                <div class="ctrl-group">
+                    <span class="ctrl-label">ATK</span>
+                    <div class="knob-wrap"><div class="knob" data-param="attack" data-value="0.01"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">DEC</span>
+                    <div class="knob-wrap"><div class="knob" data-param="decay" data-value="0.3"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">SUS</span>
+                    <div class="knob-wrap"><div class="knob" data-param="sustain" data-value="0.7"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">REL</span>
+                    <div class="knob-wrap"><div class="knob" data-param="release" data-value="0.15"><div class="knob-indicator"></div></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MASTER -->
+        <div class="panel-group">
+            <span class="panel-group-label">MASTER</span>
+            <div class="panel-row">
+                <div class="ctrl-group">
+                    <span class="ctrl-label">VOLUME</span>
+                    <div class="knob-wrap"><div class="knob" data-param="volume" data-value="0.7"><div class="knob-indicator"></div></div></div>
+                </div>
+                <div class="ctrl-group">
+                    <span class="ctrl-label">GLIDE</span>
+                    <div class="knob-wrap"><div class="knob" data-param="glide" data-value="0.0"><div class="knob-indicator"></div></div></div>
+                </div>
+            </div>
+            <div class="toggle-row">
+                <div class="toggle-btn" id="btnNoise" data-param="noise">NOISE</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="keyboard-area">
+        <div class="keyboard" id="keyboard"></div>
+    </div>
+</div>
+
+<script src="pedal-fx.js"></script>
+<script>
+(function() {
+    var actx = null, masterGain = null, mixerGain = null, pedalFX = null, mixerSends = null;
+    var p = {
+        osc1range: 0.5, osc1level: 0.8,
+        osc2range: 0.5, osc2detune: 0.52, osc2level: 0.7,
+        osc3range: 0.5, osc3detune: 0.48, osc3level: 0.0,
+        cutoff: 0.6, resonance: 0.3, filterenv: 0.4, keytrack: 0.5,
+        attack: 0.01, decay: 0.3, sustain: 0.7, release: 0.15,
+        volume: 0.7, glide: 0.0, noise: false
+    };
+    var oscWaves = { 1: 'square', 2: 'sawtooth', 3: 'sawtooth' };
+    var muted = false;
+
+    // Mono synth state
+    var voice = null;
+    var currentNote = -1;
+    var noteStack = []; // for note priority (last note)
+
+    function ensureAudio() {
+        if (actx) return;
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        if (window.loadAirwindowsWorklet) loadAirwindowsWorklet(actx);
+        masterGain = actx.createGain();
+        masterGain.gain.value = p.volume;
+        mixerGain = actx.createGain();
+        mixerGain.gain.value = 1.0;
+        window._masterOut = actx.createGain();
+        window._masterOut.connect(actx.destination);
+        window._captureNode = actx.createMediaStreamDestination();
+        window._masterOut.connect(window._captureNode);
+        mixerSends = new MixerSends(actx, window._masterOut);
+        pedalFX = new PedalFXChain(actx);
+        masterGain.connect(pedalFX.getInput());
+        pedalFX.getOutput().connect(mixerSends.getInput());
+        mixerSends.getOutput().connect(mixerGain);
+        mixerGain.connect(window._masterOut);
+        createVoice();
+    }
+
+    function getRangeOctave(rangeVal) {
+        // 0=32' (-2), 0.25=16' (-1), 0.5=8' (0), 0.75=4' (+1), 1.0=2' (+2)
+        return Math.round((rangeVal - 0.5) * 4);
+    }
+
+    function getFilterFreq(midi) {
+        var base = 80 + Math.pow(p.cutoff, 2.5) * 16000;
+        // Keyboard tracking
+        var track = (midi - 60) * p.keytrack * 60;
+        return Math.min(18000, Math.max(20, base + track));
+    }
+
+    function getFilterQ() {
+        // Moog ladder resonance: can self-oscillate
+        return 0.5 + p.resonance * 28;
+    }
+
+    function createVoice() {
+        if (voice) return;
+        var v = {};
+
+        // 3 oscillators
+        v.osc1 = actx.createOscillator(); v.osc1.type = oscWaves[1];
+        v.osc2 = actx.createOscillator(); v.osc2.type = oscWaves[2];
+        v.osc3 = actx.createOscillator(); v.osc3.type = oscWaves[3];
+        v.osc1gain = actx.createGain(); v.osc1gain.gain.value = p.osc1level;
+        v.osc2gain = actx.createGain(); v.osc2gain.gain.value = p.osc2level;
+        v.osc3gain = actx.createGain(); v.osc3gain.gain.value = p.osc3level;
+        v.osc1.connect(v.osc1gain);
+        v.osc2.connect(v.osc2gain);
+        v.osc3.connect(v.osc3gain);
+
+        // Noise generator
+        var noiseLen = actx.sampleRate * 2;
+        var noiseBuf = actx.createBuffer(1, noiseLen, actx.sampleRate);
+        var nd = noiseBuf.getChannelData(0);
+        for (var i = 0; i < noiseLen; i++) nd[i] = Math.random() * 2 - 1;
+        v.noise = actx.createBufferSource();
+        v.noise.buffer = noiseBuf;
+        v.noise.loop = true;
+        v.noiseGain = actx.createGain();
+        v.noiseGain.gain.value = 0;
+        v.noise.connect(v.noiseGain);
+
+        // Mixer → Filter (two cascaded lowpass for -24dB/oct Moog ladder)
+        v.mixer = actx.createGain();
+        v.mixer.gain.value = 1;
+        v.osc1gain.connect(v.mixer);
+        v.osc2gain.connect(v.mixer);
+        v.osc3gain.connect(v.mixer);
+        v.noiseGain.connect(v.mixer);
+
+        v.filter1 = actx.createBiquadFilter();
+        v.filter1.type = 'lowpass';
+        v.filter1.frequency.value = getFilterFreq(60);
+        v.filter1.Q.value = getFilterQ();
+
+        v.filter2 = actx.createBiquadFilter();
+        v.filter2.type = 'lowpass';
+        v.filter2.frequency.value = getFilterFreq(60);
+        v.filter2.Q.value = getFilterQ() * 0.7;
+
+        v.mixer.connect(v.filter1);
+        v.filter1.connect(v.filter2);
+
+        // VCA
+        v.vca = actx.createGain();
+        v.vca.gain.value = 0;
+        v.filter2.connect(v.vca);
+        v.vca.connect(masterGain);
+
+        v.osc1.start(); v.osc2.start(); v.osc3.start(); v.noise.start();
+        v.osc1.frequency.value = 0.001;
+        v.osc2.frequency.value = 0.001;
+        v.osc3.frequency.value = 0.001;
+
+        voice = v;
+    }
+
+    function setOscFreqs(midi, glideTime) {
+        if (!voice) return;
+        var freq = 440 * Math.pow(2, (midi - 69) / 12);
+        var now = actx.currentTime;
+
+        var f1 = freq * Math.pow(2, getRangeOctave(p.osc1range));
+        var f2 = freq * Math.pow(2, getRangeOctave(p.osc2range)) * Math.pow(2, (p.osc2detune - 0.5) * 0.1);
+        var f3 = freq * Math.pow(2, getRangeOctave(p.osc3range)) * Math.pow(2, (p.osc3detune - 0.5) * 0.1);
+
+        if (glideTime > 0.001) {
+            voice.osc1.frequency.cancelScheduledValues(now);
+            voice.osc1.frequency.setValueAtTime(voice.osc1.frequency.value, now);
+            voice.osc1.frequency.linearRampToValueAtTime(f1, now + glideTime);
+            voice.osc2.frequency.cancelScheduledValues(now);
+            voice.osc2.frequency.setValueAtTime(voice.osc2.frequency.value, now);
+            voice.osc2.frequency.linearRampToValueAtTime(f2, now + glideTime);
+            voice.osc3.frequency.cancelScheduledValues(now);
+            voice.osc3.frequency.setValueAtTime(voice.osc3.frequency.value, now);
+            voice.osc3.frequency.linearRampToValueAtTime(f3, now + glideTime);
+        } else {
+            voice.osc1.frequency.setValueAtTime(f1, now);
+            voice.osc2.frequency.setValueAtTime(f2, now);
+            voice.osc3.frequency.setValueAtTime(f3, now);
+        }
+    }
+
+    function triggerEnvelope(midi) {
+        if (!voice) return;
+        var now = actx.currentTime;
+        var atk = 0.003 + p.attack * 3;
+        var dec = 0.01 + p.decay * 2;
+        var sus = p.sustain;
+
+        // VCA envelope
+        voice.vca.gain.cancelScheduledValues(now);
+        voice.vca.gain.setValueAtTime(0, now);
+        voice.vca.gain.linearRampToValueAtTime(0.5, now + atk);
+        voice.vca.gain.linearRampToValueAtTime(sus * 0.5, now + atk + dec);
+
+        // Filter envelope
+        var baseFreq = getFilterFreq(midi);
+        var envAmt = p.filterenv * 12000;
+        var peakFreq = Math.min(18000, baseFreq + envAmt);
+
+        voice.filter1.Q.value = getFilterQ();
+        voice.filter2.Q.value = getFilterQ() * 0.7;
+        voice.filter1.frequency.cancelScheduledValues(now);
+        voice.filter1.frequency.setValueAtTime(peakFreq, now);
+        voice.filter1.frequency.exponentialRampToValueAtTime(Math.max(20, baseFreq), now + atk + dec);
+        voice.filter2.frequency.cancelScheduledValues(now);
+        voice.filter2.frequency.setValueAtTime(peakFreq, now);
+        voice.filter2.frequency.exponentialRampToValueAtTime(Math.max(20, baseFreq), now + atk + dec);
+    }
+
+    function releaseEnvelope(midi) {
+        if (!voice) return;
+        var now = actx.currentTime;
+        var rel = 0.01 + p.release * 3;
+        voice.vca.gain.cancelScheduledValues(now);
+        voice.vca.gain.setValueAtTime(voice.vca.gain.value, now);
+        voice.vca.gain.linearRampToValueAtTime(0, now + rel);
+    }
+
+    function noteOn(midi, vel) {
+        if (!actx) ensureAudio();
+        if (actx.state === 'suspended') actx.resume();
+
+        var isNewNote = currentNote < 0;
+        noteStack.push(midi);
+
+        if (currentNote >= 0) highlightKey(currentNote, false);
+
+        var glideTime = currentNote >= 0 ? p.glide * 0.5 : 0;
+        setOscFreqs(midi, glideTime);
+        voice.osc1gain.gain.value = p.osc1level;
+        voice.osc2gain.gain.value = p.osc2level;
+        voice.osc3gain.gain.value = p.osc3level;
+        voice.noiseGain.gain.value = p.noise ? 0.15 : 0;
+
+        if (isNewNote) triggerEnvelope(midi);
+        else {
+            // Legato: retrigger filter env only
+            var now = actx.currentTime;
+            var baseFreq = getFilterFreq(midi);
+            var envAmt = p.filterenv * 12000;
+            var peakFreq = Math.min(18000, baseFreq + envAmt);
+            var dec = 0.01 + p.decay * 2;
+            voice.filter1.frequency.cancelScheduledValues(now);
+            voice.filter1.frequency.setValueAtTime(peakFreq, now);
+            voice.filter1.frequency.exponentialRampToValueAtTime(Math.max(20, baseFreq), now + dec);
+            voice.filter2.frequency.cancelScheduledValues(now);
+            voice.filter2.frequency.setValueAtTime(peakFreq, now);
+            voice.filter2.frequency.exponentialRampToValueAtTime(Math.max(20, baseFreq), now + dec);
+        }
+
+        currentNote = midi;
+        highlightKey(midi, true);
+    }
+
+    function noteOff(midi) {
+        var idx = noteStack.lastIndexOf(midi);
+        if (idx >= 0) noteStack.splice(idx, 1);
+
+        if (midi !== currentNote) return;
+
+        highlightKey(midi, false);
+
+        if (noteStack.length > 0) {
+            // Return to previous note in stack
+            var prev = noteStack[noteStack.length - 1];
+            var glideTime = p.glide * 0.5;
+            setOscFreqs(prev, glideTime);
+            currentNote = prev;
+            highlightKey(prev, true);
+        } else {
+            releaseEnvelope(midi);
+            currentNote = -1;
+        }
+    }
+
+    // KEYBOARD
+    var FIRST_MIDI = 36, LAST_MIDI = 84;
+    var BLACK_INDICES = [1, 3, 6, 8, 10];
+    var keyElements = {};
+    var mouseNoteDown = null;
+
+    function isBlack(m) { return BLACK_INDICES.indexOf(m % 12) >= 0; }
+
+    function buildKeyboard() {
+        var kb = document.getElementById('keyboard');
+        kb.innerHTML = '';
+        var whites = [];
+        for (var m = FIRST_MIDI; m <= LAST_MIDI; m++) { if (!isBlack(m)) whites.push(m); }
+        var w = 24;
+        kb.style.width = (whites.length * w) + 'px';
+        whites.forEach(function(m, i) {
+            var el = document.createElement('div');
+            el.className = 'white-key';
+            el.dataset.midi = m;
+            el.style.left = (i * w) + 'px';
+            el.style.width = w + 'px';
+            kb.appendChild(el);
+            keyElements[m] = el;
+            el.addEventListener('mousedown', function(e) { e.preventDefault(); ensureAudio(); noteOn(m, 100); mouseNoteDown = m; });
+            el.addEventListener('mouseenter', function(e) { if (mouseNoteDown !== null && e.buttons === 1) { noteOn(m, 80); mouseNoteDown = m; } });
+        });
+        for (var m = FIRST_MIDI; m <= LAST_MIDI; m++) {
+            if (!isBlack(m)) continue;
+            var prevIdx = whites.indexOf(m - 1);
+            if (prevIdx < 0) continue;
+            var el = document.createElement('div');
+            el.className = 'black-key';
+            el.dataset.midi = m;
+            el.style.left = ((prevIdx + 1) * w - 7) + 'px';
+            el.style.width = '15px';
+            kb.appendChild(el);
+            keyElements[m] = el;
+            el.addEventListener('mousedown', (function(mm) { return function(e) { e.preventDefault(); ensureAudio(); noteOn(mm, 100); mouseNoteDown = mm; }; })(m));
+            el.addEventListener('mouseenter', (function(mm) { return function(e) { if (mouseNoteDown !== null && e.buttons === 1) { noteOn(mm, 80); mouseNoteDown = mm; } }; })(m));
+        }
+    }
+    document.addEventListener('mouseup', function() {
+        if (mouseNoteDown !== null) { noteOff(mouseNoteDown); mouseNoteDown = null; }
+    });
+    function highlightKey(midi, on) { var el = keyElements[midi]; if (el) { if (on) el.classList.add('active'); else el.classList.remove('active'); } }
+
+    // KNOBS
+    document.querySelectorAll('.knob').forEach(function(knob) {
+        var param = knob.dataset.param;
+        var val = parseFloat(knob.dataset.value);
+        var ind = knob.querySelector('.knob-indicator');
+        function setRot(v) { ind.style.transform = 'translateX(-50%) rotate(' + (-135 + v * 270) + 'deg)'; }
+        setRot(val);
+        knob.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            var startY = e.clientY, startVal = parseFloat(knob.dataset.value);
+            function onMove(e2) {
+                var nv = Math.max(0, Math.min(1, startVal + (startY - e2.clientY) / 150));
+                knob.dataset.value = nv;
+                setRot(nv);
+                p[param] = nv;
+                if (param === 'volume' && masterGain) masterGain.gain.value = nv;
+                if (param === 'osc1level' && voice) voice.osc1gain.gain.value = nv;
+                if (param === 'osc2level' && voice) voice.osc2gain.gain.value = nv;
+                if (param === 'osc3level' && voice) voice.osc3gain.gain.value = nv;
+                if ((param === 'cutoff' || param === 'resonance' || param === 'keytrack') && voice) {
+                    var f = getFilterFreq(currentNote >= 0 ? currentNote : 60);
+                    voice.filter1.frequency.value = f;
+                    voice.filter2.frequency.value = f;
+                    voice.filter1.Q.value = getFilterQ();
+                    voice.filter2.Q.value = getFilterQ() * 0.7;
+                }
+                if (param === 'osc2detune' && voice && currentNote >= 0) setOscFreqs(currentNote, 0);
+                if (param === 'osc3detune' && voice && currentNote >= 0) setOscFreqs(currentNote, 0);
+            }
+            function onUp() { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+        });
+    });
+
+    // WAVE BUTTONS
+    document.querySelectorAll('.wave-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var oscNum = btn.dataset.osc;
+            btn.parentElement.querySelectorAll('.wave-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            oscWaves[oscNum] = btn.dataset.wave;
+            if (voice) {
+                if (oscNum === '1') voice.osc1.type = oscWaves[1];
+                if (oscNum === '2') voice.osc2.type = oscWaves[2];
+                if (oscNum === '3') voice.osc3.type = oscWaves[3];
+            }
+        });
+    });
+
+    // NOISE TOGGLE
+    document.getElementById('btnNoise').addEventListener('click', function() {
+        p.noise = !p.noise;
+        this.classList.toggle('active', p.noise);
+        if (voice) voice.noiseGain.gain.value = p.noise ? 0.15 : 0;
+    });
+
+    // KEYBOARD INPUT
+    window.__kbEnabled = false;
+    var kbOctave = 3;
+    var KEY_MAP = { 'a':0,'w':1,'s':2,'e':3,'d':4,'f':5,'t':6,'g':7,'y':8,'h':9,'u':10,'j':11,'k':12,'o':13,'l':14 };
+    var kbNotesDown = {};
+    document.addEventListener('keydown', function(e) {
+        if (!window.__kbEnabled) return;
+        if (e.repeat) return;
+        var k = e.key.toLowerCase();
+        if (k === 'z') { kbOctave = Math.max(1, kbOctave - 1); return; }
+        if (k === 'x') { kbOctave = Math.min(6, kbOctave + 1); return; }
+        var semi = KEY_MAP[k]; if (semi === undefined) return;
+        var m = (kbOctave + 1) * 12 + semi;
+        if (m >= 0 && !kbNotesDown[k]) { ensureAudio(); kbNotesDown[k] = m; noteOn(m, 100); }
+    }, true);
+    document.addEventListener('keyup', function(e) {
+        if (!window.__kbEnabled) return;
+        var k = e.key.toLowerCase();
+        if (kbNotesDown[k]) { noteOff(kbNotesDown[k]); delete kbNotesDown[k]; }
+    }, true);
+
+    // MESSAGE BRIDGE
+    window.addEventListener('message', function(e) {
+        var d = e.data; if (!d) return;
+        if (d.type === 'midi') { ensureAudio(); var data = d.data || d; var cmd = data[0] & 0xF0; if (cmd === 0x90 && data[2] > 0) noteOn(data[1], data[2]); else if (cmd === 0x80 || (cmd === 0x90 && data[2] === 0)) noteOff(data[1]); }
+        if (d.type === 'keyboard-focus') window.__kbEnabled = d.enabled;
+        if (d.type === 'mixer') {
+            ensureAudio();
+            if (d.param === 'volume' && mixerGain) mixerGain.gain.value = d.value;
+            else if (d.param === 'mute') { muted = d.value > 0; if (mixerGain) mixerGain.gain.value = muted ? 0 : 1; }
+            else if (mixerSends) mixerSends.setParam(d.param, d.value);
+        }
+        if (d.type === 'mixer-fx' && mixerSends) {
+            ensureAudio();
+            if (d.fx === 'reverb') mixerSends.updateReverb(d.param, d.value);
+            if (d.fx === 'delay') mixerSends.updateDelay(d.param, d.value);
+        }
+        if (d.type === 'pedals' && pedalFX) pedalFX.update(d.pedals);
+        if (d.type === 'get-session') {
+            window.parent.postMessage({ type: 'session-data', source: 'minimoog', data: { params: p, oscWaves: oscWaves, kbOctave: kbOctave } }, '*');
+        }
+        if (d.type === 'load-session' && d.data) {
+            if (d.data.params) { for (var k in d.data.params) p[k] = d.data.params[k]; if (masterGain) masterGain.gain.value = p.volume; }
+            if (d.data.oscWaves) {
+                for (var k in d.data.oscWaves) oscWaves[k] = d.data.oscWaves[k];
+                if (voice) { voice.osc1.type = oscWaves[1]; voice.osc2.type = oscWaves[2]; voice.osc3.type = oscWaves[3]; }
+                document.querySelectorAll('.wave-btn').forEach(function(b) { b.classList.toggle('active', oscWaves[b.dataset.osc] === b.dataset.wave); });
+            }
+            if (d.data.kbOctave !== undefined) kbOctave = d.data.kbOctave;
+        }
+    });
+
+    buildKeyboard();
+    window.parent.postMessage({ type: 'instrument-ready', name: 'minimoog' }, '*');
+})();
+</script>
+</body>
+</html>
