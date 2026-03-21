@@ -518,8 +518,10 @@ const masterGain = actx.createGain();
 masterGain.gain.value = 0.6;
 const mixerGain = actx.createGain();
 mixerGain.connect(actx.destination);
+const mpcMixerSends = new MixerSends(actx);
 const mpcPedalFX = new PedalFXChain(actx);
-mpcPedalFX.getOutput().connect(mixerGain);
+mpcPedalFX.getOutput().connect(mpcMixerSends.getInput());
+mpcMixerSends.getOutput().connect(mixerGain);
 const comp = actx.createDynamicsCompressor();
 comp.threshold.value = -10; comp.ratio.value = 4;
 comp.attack.value = 0.002; comp.release.value = 0.08;
@@ -1406,7 +1408,13 @@ if (window !== window.parent) {
     if (d && d.type === 'mixer') {
       if (actx.state === 'suspended') actx.resume();
       if (d.param === 'volume') mixerGain.gain.value = d.value;
-      if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+      else if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+      else if (mpcMixerSends) mpcMixerSends.setParam(d.param, d.value);
+    }
+    if (d && d.type === 'mixer-fx' && mpcMixerSends) {
+      if (actx.state === 'suspended') actx.resume();
+      if (d.fx === 'reverb') mpcMixerSends.updateReverb(d.param, d.value);
+      if (d.fx === 'delay') mpcMixerSends.updateDelay(d.param, d.value);
     }
     if (d && d.type === 'pedals' && mpcPedalFX) {
       mpcPedalFX.update(d.pedals);

@@ -460,4 +460,115 @@ BUILDERS.delay = function(ctx, p) {
 
 window.PedalFXChain = PedalFXChain;
 
+// ============================================
+// MixerSends — full mixer channel strip: EQ, comp, pan, reverb/delay sends
+// Usage: connect pedalFX.getOutput() to mixerSends.getInput()
+//        connect mixerSends.getOutput() to mixerGain (replaces direct connection)
+//        Reverb/delay sends output directly to ctx.destination
+// ============================================
+function MixerSends(ctx) {
+    this.ctx = ctx;
+    this.input = ctx.createGain();
+
+    // ---- 3-BAND EQ ----
+    this.eqHi = ctx.createBiquadFilter();
+    this.eqHi.type = 'highshelf'; this.eqHi.frequency.value = 3000; this.eqHi.gain.value = 0;
+    this.eqMid = ctx.createBiquadFilter();
+    this.eqMid.type = 'peaking'; this.eqMid.frequency.value = 1000; this.eqMid.Q.value = 1; this.eqMid.gain.value = 0;
+    this.eqLo = ctx.createBiquadFilter();
+    this.eqLo.type = 'lowshelf'; this.eqLo.frequency.value = 300; this.eqLo.gain.value = 0;
+
+    // ---- COMPRESSOR ----
+    this.comp = ctx.createDynamicsCompressor();
+    this.comp.threshold.value = -24;
+    this.comp.ratio.value = 4;
+    this.comp.attack.value = 0.003;
+    this.comp.release.value = 0.25;
+
+    // ---- PAN (stereo panner) ----
+    this.panner = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain();
+    if (this.panner.pan) this.panner.pan.value = 0;
+
+    // ---- DRY OUTPUT (EQ → comp → pan → output) ----
+    this.output = ctx.createGain();
+    this.input.connect(this.eqHi);
+    this.eqHi.connect(this.eqMid);
+    this.eqMid.connect(this.eqLo);
+    this.eqLo.connect(this.comp);
+    this.comp.connect(this.panner);
+    this.panner.connect(this.output);
+
+    // ---- REVERB SEND (post-EQ/comp) ----
+    this.revSend = ctx.createGain();
+    this.revSend.gain.value = 0;
+    this.revReturn = ctx.createGain();
+    this.revReturn.gain.value = 1;
+    this.convolver = ctx.createConvolver();
+    this._revDecay = 2;
+    this.convolver.buffer = createReverbIR(ctx, 2, 3);
+    this.revDamp = ctx.createBiquadFilter();
+    this.revDamp.type = 'lowpass';
+    this.revDamp.frequency.value = 8000;
+
+    this.comp.connect(this.revSend);
+    this.revSend.connect(this.convolver);
+    this.convolver.connect(this.revDamp);
+    this.revDamp.connect(this.revReturn);
+    this.revReturn.connect(ctx.destination);
+
+    // ---- DELAY SEND (post-EQ/comp) ----
+    this.dlySend = ctx.createGain();
+    this.dlySend.gain.value = 0;
+    this.dlyReturn = ctx.createGain();
+    this.dlyReturn.gain.value = 1;
+    this.dlyNode = ctx.createDelay(2.0);
+    this.dlyNode.delayTime.value = 0.5;
+    this.dlyFeedback = ctx.createGain();
+    this.dlyFeedback.gain.value = 0.3;
+    this.dlyFilter = ctx.createBiquadFilter();
+    this.dlyFilter.type = 'lowpass';
+    this.dlyFilter.frequency.value = 8000;
+
+    this.comp.connect(this.dlySend);
+    this.dlySend.connect(this.dlyNode);
+    this.dlyNode.connect(this.dlyFilter);
+    this.dlyFilter.connect(this.dlyFeedback);
+    this.dlyFeedback.connect(this.dlyNode);
+    this.dlyFilter.connect(this.dlyReturn);
+    this.dlyReturn.connect(ctx.destination);
+}
+
+MixerSends.prototype.getInput = function() { return this.input; };
+MixerSends.prototype.getOutput = function() { return this.output; };
+
+// Handle any mixer param
+MixerSends.prototype.setParam = function(param, value) {
+    if (param === 'eqHi') this.eqHi.gain.value = value;
+    else if (param === 'eqMid') this.eqMid.gain.value = value;
+    else if (param === 'eqLo') this.eqLo.gain.value = value;
+    else if (param === 'compThresh') this.comp.threshold.value = value;
+    else if (param === 'compRatio') this.comp.ratio.value = Math.max(1, value);
+    else if (param === 'pan' && this.panner.pan) this.panner.pan.value = Math.max(-1, Math.min(1, value / 50));
+    else if (param === 'sendRev') this.revSend.gain.value = Math.max(0, Math.min(1, (value || 0) / 100));
+    else if (param === 'sendDly') this.dlySend.gain.value = Math.max(0, Math.min(1, (value || 0) / 100));
+};
+
+MixerSends.prototype.updateReverb = function(param, value) {
+    if (param === 'decay') {
+        this._revDecay = value;
+        try { this.convolver.buffer = createReverbIR(this.ctx, value, Math.max(1, value * 0.8)); } catch(e) {}
+    }
+    if (param === 'damp') this.revDamp.frequency.value = 500 + (1 - value) * 15000;
+    if (param === 'volume') this.revReturn.gain.value = value;
+};
+
+MixerSends.prototype.updateDelay = function(param, value) {
+    if (param === 'dlyTime') this.dlyNode.delayTime.value = Math.max(0.001, value / 1000);
+    if (param === 'dlyFeedback') this.dlyFeedback.gain.value = Math.min(0.95, value / 100);
+    if (param === 'dlyFilter') this.dlyFilter.frequency.value = 200 + value * 150;
+    if (param === 'volume') this.dlyReturn.gain.value = value;
+};
+
+window.MixerSends = MixerSends;
+
 })();

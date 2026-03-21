@@ -656,6 +656,11 @@ window.addEventListener('message', (e) => {
         const target = d.channel;
         if (target === 'master') {
             allInstIds.forEach(id => { if (id !== 'mixer') sendToInst(id, {type: 'mixer', param: d.param, value: d.value, bus: 'master'}); });
+        } else if (target === 'reverb' || target === 'delay') {
+            // Broadcast return channel params to all instruments
+            Object.keys(INSTRUMENTS).forEach(id => {
+                sendToInst(id, {type: 'mixer-fx', fx: target, param: d.param, value: d.value});
+            });
         } else {
             const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78'};
             const instId = idMap[target] || target;

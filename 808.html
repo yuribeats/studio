@@ -658,8 +658,10 @@ const masterGain = actx.createGain();
 masterGain.gain.value = 0.8;
 const mixerGain = actx.createGain();
 mixerGain.connect(actx.destination);
+const drumMixerSends = new MixerSends(actx);
 const drumPedalFX = new PedalFXChain(actx);
-drumPedalFX.getOutput().connect(mixerGain);
+drumPedalFX.getOutput().connect(drumMixerSends.getInput());
+drumMixerSends.getOutput().connect(mixerGain);
 masterGain.connect(drumPedalFX.getInput());
 
 const buffers = {};
@@ -1312,7 +1314,13 @@ if (window !== window.parent) {
         if (d && d.type === 'mixer') {
             if (actx.state === 'suspended') actx.resume();
             if (d.param === 'volume') mixerGain.gain.value = d.value;
-            if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+            else if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
+            else if (drumMixerSends) drumMixerSends.setParam(d.param, d.value);
+        }
+        if (d && d.type === 'mixer-fx' && drumMixerSends) {
+            if (actx.state === 'suspended') actx.resume();
+            if (d.fx === 'reverb') drumMixerSends.updateReverb(d.param, d.value);
+            if (d.fx === 'delay') drumMixerSends.updateDelay(d.param, d.value);
         }
         if (d && d.type === 'pedals' && drumPedalFX) {
             drumPedalFX.update(d.pedals);
