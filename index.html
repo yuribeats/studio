@@ -164,10 +164,6 @@
                     <span class="panel-tile-name">DRUMS</span>
                     <span class="panel-tile-sub">DRUM MACHINE</span>
                 </div>
-                <div class="panel-tile" data-open="strudel">
-                    <span class="panel-tile-name">CODE</span>
-                    <span class="panel-tile-sub">LIVE CODER</span>
-                </div>
             </div>
 
             <!-- INSTRUMENT FRAME -->
@@ -203,7 +199,6 @@ const INSTRUMENTS = {
     mpc:     { label: 'MPC',        file: 'mpc.html',        windowName: 'mpc4000' },
     cr78:    { label: 'DRUMS',      file: '808.html',        windowName: 'cr78win' },
     rhodes:  { label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
-    strudel: { label: 'CODE',       file: 'strudel.html',    windowName: 'strudelwin' },
 };
 
 // Bottom-bar utilities (always loaded, not in panel)
@@ -391,7 +386,7 @@ function openInstrument(instId) {
     instFrameId = instId;
     setKeyboardTarget(instId);
     // Sync piano roll to show this instrument's channel
-    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', strudel:'strudel'};
+    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes'};
     const prCh = prChannelMap[instId];
     if (prCh) sendToInst('pianoroll', {type: 'set-channel', channel: prCh});
 }
@@ -668,7 +663,9 @@ window.addEventListener('message', (e) => {
             });
         } else {
             const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78'};
-            const instId = idMap[target] || target;
+            // Route 808-* extra kit channels to the cr78 instrument
+            let instId = idMap[target] || target;
+            if (target.startsWith('808-')) instId = 'cr78';
             sendToInst(instId, {type: 'mixer', param: d.param, value: d.value});
         }
     }

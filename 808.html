@@ -490,6 +490,19 @@
 <script src="pedal-fx.js"></script>
 <script>
 // ============================================
+// POPOUT / IFRAME BRIDGE
+// ============================================
+const _isIframe = window !== window.parent;
+const _isPopout = !!window.opener && !_isIframe;
+function _msgToParent(msg) {
+    if (_isIframe) {
+        window.parent.postMessage(msg, '*');
+    } else if (_isPopout && window._sendToParent) {
+        window._sendToParent(msg);
+    }
+}
+
+// ============================================
 // KITS
 // ============================================
 const SAMPLE_BASE = 'samples/';
@@ -615,11 +628,11 @@ function notifyActiveKits() {
     const report = JSON.stringify(active);
     if (report === lastKitReport) return;
     lastKitReport = report;
-    window.parent.postMessage({type: 'active-808-kits', kits: active}, '*');
+    _msgToParent({type: 'active-808-kits', kits: active});
 }
 
 function syncPatternsToPianoRoll() {
-    if (window === window.parent) return;
+    if (!_isIframe && !_isPopout) return;
     // Send all pattern data for all kits to parent -> piano roll
     const data = {};
     for (const kitId of Object.keys(KITS)) {
@@ -636,7 +649,7 @@ function syncPatternsToPianoRoll() {
         data[kitId] = kitData;
     }
     const swing = parseInt(document.getElementById('swingSlider').value) || 0;
-    window.parent.postMessage({
+    _msgToParent({
         type: '808-pattern-sync',
         allPatterns: data,
         currentPattern: currentPattern,
@@ -645,7 +658,7 @@ function syncPatternsToPianoRoll() {
         swing: swing,
         trackOffsets: Array.from(trackOffsets),
         trackOffsetModes: Array.from(trackOffsetModes)
-    }, '*');
+    });
 }
 
 let trackVolumes = TRACKS.map(() => 0.8);
@@ -1336,10 +1349,10 @@ if (window !== window.parent) {
                     pat.map(track => Array.from(track))
                 );
             }
-            window.parent.postMessage({
+            _msgToParent({
                 type: 'session-data', source: 'cr78',
                 data: { patterns: data, currentKit, currentPattern, bpm }
-            }, '*');
+            });
         }
         if (d && d.type === 'load-session' && d.data) {
             const sd = d.data;
@@ -1367,15 +1380,19 @@ if (window !== window.parent) {
             syncPatternsToPianoRoll();
         }
     });
-    window.__kbEnabled = false;
-    document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT') return;
-        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
-    }, true);
-    document.addEventListener('keyup', (e) => {
-        if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
-    }, true);
-    window.parent.postMessage({type: 'instrument-ready', name: 'cr78'}, '*');
+    window.__kbEnabled = _isPopout;
+    if (_isIframe) {
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+        }, true);
+        document.addEventListener('keyup', (e) => {
+            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+        }, true);
+        window.parent.postMessage({type: 'instrument-ready', name: 'cr78'}, '*');
+    } else if (_isPopout) {
+        window.dispatchEvent(new MessageEvent('message', {data: {type: 'instrument-ready', name: 'cr78'}}));
+    }
 }
 </script>
 
