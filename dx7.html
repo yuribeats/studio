@@ -11,7 +11,7 @@
 <style>
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
-    background: #111;
+    background: #000;
     height: 100%;
     overflow: hidden;
     font-family: Arial, Helvetica, sans-serif;
@@ -21,132 +21,138 @@ html, body {
     user-select: none;
     -webkit-user-select: none;
 }
-body { display: flex; justify-content: center; align-items: center; }
-.scale-wrap { transform-origin: center center; }
-
-.machine {
-    width: 960px;
-    background: linear-gradient(180deg, #1a1a1a 0%, #111 100%);
-    border: 2px solid #333;
-}
+body { display: flex; flex-direction: column; }
 
 /* HEADER */
 .machine-hdr {
-    background: #1e1e1e;
-    border-bottom: 1px solid #2a2a2a;
+    background: #000;
+    border-bottom: 1px solid #333;
     padding: 8px 16px;
     display: flex;
     align-items: center;
     gap: 16px;
+    flex-shrink: 0;
 }
-.hdr-brand { font-size: 11px; color: #666; letter-spacing: 3px; }
-.hdr-model { font-size: 14px; color: #fff; letter-spacing: 2px; }
+.hdr-brand { font-size: 11px; color: #fff; letter-spacing: 3px; }
+.hdr-model { font-size: 16px; color: #228B22; letter-spacing: 3px; }
 .hdr-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
-.hdr-bpm { font-size: 12px; color: #666; letter-spacing: 1px; }
+.hdr-bpm { font-size: 12px; color: #fff; letter-spacing: 1px; }
 
 /* LCD DISPLAY */
 .lcd {
-    background: #0a0a0a;
-    border: 1px solid #2a2a2a;
-    padding: 12px 20px;
-    text-align: center;
+    background: #000;
+    border-bottom: 1px solid #333;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
 }
 .lcd-patch {
-    font-size: 22px;
+    font-size: 24px;
     letter-spacing: 3px;
     color: #228B22;
-    margin-bottom: 4px;
+    flex: 1;
 }
-.lcd-info {
-    font-size: 10px;
-    color: #555;
-    letter-spacing: 2px;
+.lcd-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    letter-spacing: 1px;
 }
-.lcd-info .val { color: #888; }
+.lcd-meta span { color: #fff; }
+.lcd-meta .lbl { color: #228B22; font-size: 10px; margin-right: 4px; }
 
 /* BANK BAR */
 .bank-bar {
     display: flex;
-    border-bottom: 1px solid #222;
-    background: #151515;
+    border-bottom: 1px solid #333;
+    background: #000;
     overflow-x: auto;
-    gap: 0;
+    flex-shrink: 0;
 }
 .bank-btn {
-    padding: 6px 14px;
-    font-size: 10px;
-    color: #555;
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: #fff;
     letter-spacing: 1px;
+    text-align: center;
     white-space: nowrap;
-    border-right: 1px solid #1e1e1e;
+    border-right: 1px solid #222;
     font-family: Arial, Helvetica, sans-serif;
     font-weight: 700;
     text-transform: uppercase;
 }
-.bank-btn:hover { color: #ccc; background: #1a1a1a; }
-.bank-btn.active { color: #228B22; background: #1a1a1a; }
+.bank-btn.active { color: #228B22; background: #0a1a0a; border-bottom: 2px solid #228B22; }
 
 /* PATCH GRID */
 .patch-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1px;
-    background: #0d0d0d;
-    padding: 8px;
-    border-bottom: 1px solid #222;
-    max-height: 340px;
+    background: #000;
+    padding: 6px;
+    flex: 1;
     overflow-y: auto;
+    align-content: start;
 }
 .patch-cell {
-    padding: 6px 10px;
-    font-size: 11px;
-    color: #777;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #fff;
     letter-spacing: 0.5px;
-    background: #151515;
-    border: 1px solid #1a1a1a;
+    background: #111;
+    border: 1px solid #222;
     display: flex;
     align-items: center;
     gap: 8px;
 }
-.patch-cell:hover { background: #1e1e1e; color: #fff; }
+.patch-cell:hover { background: #1a1a1a; border-color: #444; }
 .patch-cell.active { color: #228B22; border-color: #228B22; background: #0a1a0a; }
-.patch-num { font-size: 9px; color: #444; min-width: 18px; }
+.patch-num { font-size: 10px; color: #666; min-width: 20px; }
+.patch-cell.active .patch-num { color: #228B22; }
 .patch-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* NAV BAR */
 .nav-bar {
     display: flex;
     align-items: center;
-    padding: 6px 16px;
+    padding: 8px 16px;
     gap: 8px;
-    background: #151515;
-    border-bottom: 1px solid #222;
+    background: #000;
+    border-top: 1px solid #333;
+    flex-shrink: 0;
 }
 .nav-btn {
-    padding: 5px 14px;
-    font-size: 11px;
-    color: #aaa;
+    padding: 6px 16px;
+    font-size: 12px;
+    color: #fff;
     letter-spacing: 2px;
     border: 1px solid #333;
-    background: #1a1a1a;
+    background: #111;
     font-family: Arial, Helvetica, sans-serif;
     font-weight: 700;
     text-transform: uppercase;
 }
-.nav-btn:hover { border-color: #555; color: #fff; }
+.nav-btn:hover { border-color: #228B22; color: #228B22; }
 .nav-info {
-    font-size: 10px;
-    color: #555;
+    font-size: 11px;
+    color: #fff;
     letter-spacing: 1px;
-    margin-left: auto;
 }
-.nav-info .val { color: #888; }
+.vol-wrap {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.vol-label { font-size: 10px; color: #fff; letter-spacing: 1px; }
 .vol-track {
-    width: 100px;
+    width: 120px;
     height: 6px;
     background: #222;
     position: relative;
-    margin-left: 8px;
 }
 .vol-fill {
     position: absolute;
@@ -155,14 +161,14 @@ body { display: flex; justify-content: center; align-items: center; }
     width: 80%;
     pointer-events: none;
 }
-.vol-label { font-size: 9px; color: #555; letter-spacing: 1px; }
 
 /* SCOPE */
 .scope-bar {
     height: 3px;
-    background: #0a0a0a;
+    background: #000;
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
 }
 .scope-fill {
     position: absolute;
@@ -171,26 +177,17 @@ body { display: flex; justify-content: center; align-items: center; }
     background: #228B22;
 }
 
-/* FOOTER */
-.machine-ftr {
-    display: flex;
-    justify-content: space-between;
-    padding: 5px 16px;
-    background: #0d0d0d;
-}
-.ftr-text { font-size: 8px; color: #333; letter-spacing: 2px; }
-
 /* LOADING OVERLAY */
 .loading {
-    position: absolute;
+    position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
+    background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 100;
     font-size: 14px;
-    color: #555;
+    color: #fff;
     letter-spacing: 3px;
 }
 .loading.hidden { display: none; }
@@ -198,53 +195,41 @@ body { display: flex; justify-content: center; align-items: center; }
 </head>
 <body>
 
-<div class="scale-wrap" id="scaleWrap">
-<div class="machine" style="position:relative">
-    <div class="loading" id="loadingOverlay">LOADING DX7 ENGINE...</div>
+<div class="loading" id="loadingOverlay">LOADING DX7 ENGINE...</div>
 
-    <div class="machine-hdr">
-        <span class="hdr-brand">YAMAHA</span>
-        <span class="hdr-model">DX7</span>
-        <div class="hdr-right">
-            <span class="hdr-bpm" id="bpmDisplay">120 BPM</span>
-        </div>
-    </div>
-
-    <div class="lcd">
-        <div class="lcd-patch" id="lcdPatch">---</div>
-        <div class="lcd-info">
-            BANK <span class="val" id="lcdBank">---</span>
-            &nbsp;&nbsp;
-            PATCH <span class="val" id="lcdNum">--</span>
-            &nbsp;&nbsp;
-            ALG <span class="val" id="lcdAlg">--</span>
-        </div>
-    </div>
-
-    <div class="bank-bar" id="bankBar"></div>
-
-    <div class="patch-grid" id="patchGrid"></div>
-
-    <div class="nav-bar">
-        <div class="nav-btn" id="btnPrev">PREV</div>
-        <div class="nav-btn" id="btnNext">NEXT</div>
-        <div class="nav-info">
-            <span class="val" id="navCounter">0 / 32</span>
-        </div>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
-            <span class="vol-label">VOLUME</span>
-            <div class="vol-track" id="volTrack">
-                <div class="vol-fill" id="volFill"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="scope-bar"><div class="scope-fill" id="scopeFill"></div></div>
-    <div class="machine-ftr">
-        <span class="ftr-text">FM SYNTHESIS ENGINE</span>
-        <span class="ftr-text">WEBDX7 / WEBAUDIOMODULES</span>
+<div class="machine-hdr">
+    <span class="hdr-brand">YAMAHA</span>
+    <span class="hdr-model">DX7</span>
+    <div class="hdr-right">
+        <span class="hdr-bpm" id="bpmDisplay">120 BPM</span>
     </div>
 </div>
+
+<div class="lcd">
+    <div class="lcd-patch" id="lcdPatch">---</div>
+    <div class="lcd-meta">
+        <span><span class="lbl">BANK</span> <span id="lcdBank">---</span></span>
+        <span><span class="lbl">PATCH</span> <span id="lcdNum">--</span></span>
+        <span><span class="lbl">ALG</span> <span id="lcdAlg">--</span></span>
+    </div>
+</div>
+
+<div class="bank-bar" id="bankBar"></div>
+
+<div class="patch-grid" id="patchGrid"></div>
+
+<div class="scope-bar"><div class="scope-fill" id="scopeFill"></div></div>
+
+<div class="nav-bar">
+    <div class="nav-btn" id="btnPrev">PREV</div>
+    <div class="nav-btn" id="btnNext">NEXT</div>
+    <div class="nav-info" id="navCounter">0 / 32</div>
+    <div class="vol-wrap">
+        <span class="vol-label">VOLUME</span>
+        <div class="vol-track" id="volTrack">
+            <div class="vol-fill" id="volFill"></div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -314,7 +299,6 @@ async function initDX7() {
         await AWPF.polyfill(actx, controllerScripts);
         overlay.textContent = 'LOADING WASM ENGINE...';
 
-        // Load AudioWorklet modules one at a time with error handling
         var base = location.origin + "/";
         var modules = [
             "dx7/wasm/dx7.wasm.js",
@@ -425,22 +409,17 @@ function buildPatchGrid(names) {
 }
 
 function updatePatchUI() {
-    // Highlight active patch
     document.querySelectorAll('.patch-cell').forEach(function(c) {
         c.classList.toggle('active', parseInt(c.dataset.idx) === currentPatchIdx);
     });
-    // Scroll active into view
     var active = document.querySelector('.patch-cell.active');
     if (active) active.scrollIntoView({ block: 'nearest' });
 
-    // LCD
     var name = lib.patches[currentPatchIdx] || '---';
     document.getElementById('lcdPatch').textContent = name.trim();
     document.getElementById('lcdBank').textContent = banklabels[currentBankIdx];
     document.getElementById('lcdNum').textContent = String(currentPatchIdx + 1).padStart(2, '0') + ' / 32';
 
-    // Algorithm: byte 118+6=124? Actually packed voice byte 110 is algorithm
-    // In packed format: offset 110 is algorithm (0-31)
     var voice = lib.bank[currentPatchIdx];
     if (voice) {
         var alg = (voice[110] & 31) + 1;
@@ -487,19 +466,6 @@ function escHtml(s) {
 // ============================================
 document.getElementById('btnPrev').addEventListener('mousedown', prevPatch);
 document.getElementById('btnNext').addEventListener('mousedown', nextPatch);
-
-// ============================================
-// SCALE TO FIT
-// ============================================
-function scaleToFit() {
-    var wrap = document.getElementById('scaleWrap');
-    wrap.style.transform = 'none';
-    var w = wrap.scrollWidth;
-    var h = wrap.scrollHeight;
-    var scale = Math.min(window.innerWidth / w, window.innerHeight / h, 1) * 0.96;
-    wrap.style.transform = 'scale(' + scale + ')';
-}
-window.addEventListener('resize', scaleToFit);
 
 // ============================================
 // MIDI ACTIVITY SCOPE
@@ -583,9 +549,8 @@ window.addEventListener('message', function(e) {
 // INIT
 // ============================================
 buildBankBar();
-requestAnimationFrame(scaleToFit);
 
-// Start loading engine immediately — AudioContext starts suspended, resumed on click
+// Start loading engine immediately
 initDX7();
 
 document.addEventListener('mousedown', function firstClick() {
