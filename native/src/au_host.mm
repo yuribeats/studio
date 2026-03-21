@@ -1,5 +1,6 @@
 #import "au_host.h"
 #import <AudioUnit/AUCocoaUIView.h>
+#import <CoreAudioKit/CoreAudioKit.h>
 #import <objc/runtime.h>
 
 OSType fourCharToOSType(const std::string &s) {
@@ -18,11 +19,22 @@ AUPluginInstance* auHostCreateInstance(const std::string &typeStr,
     desc.componentFlags = 0;
     desc.componentFlagsMask = 0;
 
+    NSLog(@"[AU_HOST] Looking for component: type=0x%08X sub=0x%08X mfg=0x%08X",
+          (unsigned)desc.componentType, (unsigned)desc.componentSubType,
+          (unsigned)desc.componentManufacturer);
+
     AudioComponent comp = AudioComponentFindNext(NULL, &desc);
     if (!comp) {
         NSLog(@"[AU_HOST] Component not found: %s/%s/%s",
               typeStr.c_str(), subtypeStr.c_str(), mfgStr.c_str());
         return nullptr;
+    }
+
+    CFStringRef compName = NULL;
+    AudioComponentCopyName(comp, &compName);
+    if (compName) {
+        NSLog(@"[AU_HOST] Found component: %@", (__bridge NSString *)compName);
+        CFRelease(compName);
     }
 
     AudioComponentInstance auInst = nullptr;
@@ -55,6 +67,12 @@ AUPluginInstance* auHostCreateInstance(const std::string &typeStr,
                          kAudioUnitScope_Output, 0,
                          &streamFmt, sizeof(streamFmt));
 
+    // Set max frames per slice (some AUs require this)
+    UInt32 maxFrames = 8192;
+    AudioUnitSetProperty(auInst, kAudioUnitProperty_MaximumFramesPerSlice,
+                         kAudioUnitScope_Global, 0,
+                         &maxFrames, sizeof(maxFrames));
+
     err = AudioUnitInitialize(auInst);
     if (err != noErr) {
         NSLog(@"[AU_HOST] AudioUnitInitialize failed: %d", (int)err);
@@ -67,7 +85,7 @@ AUPluginInstance* auHostCreateInstance(const std::string &typeStr,
     inst->component = comp;
     inst->initialized = true;
 
-    NSLog(@"[AU_HOST] Created instance: %s/%s/%s",
+    NSLog(@"[AU_HOST] Created instance: %s/%s/%s (initialized OK)",
           typeStr.c_str(), subtypeStr.c_str(), mfgStr.c_str());
 
     return inst;
@@ -76,7 +94,9 @@ AUPluginInstance* auHostCreateInstance(const std::string &typeStr,
 NSView* auHostGetEditorView(AUPluginInstance *inst) {
     if (!inst || !inst->auInstance) return nil;
 
-    // Query for Cocoa UI
+    NSView *view = nil;
+
+    // Try CocoaUI first
     UInt32 dataSize = 0;
     Boolean writable = false;
     OSStatus err = AudioUnitGetPropertyInfo(
@@ -85,78 +105,56 @@ NSView* auHostGetEditorView(AUPluginInstance *inst) {
         kAudioUnitScope_Global, 0,
         &dataSize, &writable);
 
-    if (err != noErr || dataSize == 0) {
-        NSLog(@"[AU_HOST] No CocoaUI property for this AU");
-        return nil;
-    }
+    if (err == noErr && dataSize > 0) {
+        AudioUnitCocoaViewInfo *viewInfo =
+            (AudioUnitCocoaViewInfo *)calloc(1, dataSize);
 
-    // Allocate buffer for the CocoaUI info
-    AudioUnitCocoaViewInfo *viewInfo =
-        (AudioUnitCocoaViewInfo *)malloc(dataSize);
+        err = AudioUnitGetProperty(
+            inst->auInstance,
+            kAudioUnitProperty_CocoaUI,
+            kAudioUnitScope_Global, 0,
+            viewInfo, &dataSize);
 
-    err = AudioUnitGetProperty(
-        inst->auInstance,
-        kAudioUnitProperty_CocoaUI,
-        kAudioUnitScope_Global, 0,
-        viewInfo, &dataSize);
+        if (err == noErr && viewInfo->mCocoaAUViewBundleLocation) {
+            NSBundle *viewBundle = [NSBundle bundleWithURL:
+                (__bridge NSURL *)viewInfo->mCocoaAUViewBundleLocation];
 
-    if (err != noErr) {
-        NSLog(@"[AU_HOST] Failed to get CocoaUI: %d", (int)err);
+            if (viewBundle) {
+                Class factoryClass = [viewBundle classNamed:
+                    (__bridge NSString *)viewInfo->mCocoaAUViewClass[0]];
+
+                if (factoryClass &&
+                    [factoryClass conformsToProtocol:@protocol(AUCocoaUIBase)]) {
+                    id<AUCocoaUIBase> factory = [[factoryClass alloc] init];
+                    view = [factory uiViewForAudioUnit:inst->auInstance
+                                              withSize:NSMakeSize(800, 500)];
+                    NSLog(@"[AU_HOST] Got CocoaUI view: %@", view);
+                }
+            }
+
+            // Release CF objects
+            CFRelease(viewInfo->mCocoaAUViewBundleLocation);
+            for (UInt32 i = 0; i < (dataSize - sizeof(CFURLRef)) / sizeof(CFStringRef); i++) {
+                if (viewInfo->mCocoaAUViewClass[i]) {
+                    CFRelease(viewInfo->mCocoaAUViewClass[i]);
+                }
+            }
+        }
         free(viewInfo);
-        return nil;
+    } else {
+        NSLog(@"[AU_HOST] No CocoaUI property (err=%d, size=%u)", (int)err, (unsigned)dataSize);
     }
 
-    // Load the view factory bundle
-    CFURLRef bundleURL = viewInfo->mCocoaAUViewBundleLocation;
-    NSString *factoryClassName =
-        (__bridge NSString *)viewInfo->mCocoaAUViewClass[0];
-
-    NSBundle *viewBundle = [NSBundle bundleWithURL:(__bridge NSURL *)bundleURL];
-    if (!viewBundle) {
-        NSLog(@"[AU_HOST] Failed to load view bundle");
-        // Release CF objects
-        CFRelease(bundleURL);
-        CFRelease(viewInfo->mCocoaAUViewClass[0]);
-        free(viewInfo);
-        return nil;
+    // Fallback: AUGenericView (from CoreAudioKit)
+    if (!view) {
+        NSLog(@"[AU_HOST] Using AUGenericView fallback");
+        view = [[AUGenericView alloc] initWithAudioUnit:inst->auInstance];
     }
-
-    [viewBundle load];
-
-    Class factoryClass = [viewBundle classNamed:factoryClassName];
-    if (!factoryClass) {
-        NSLog(@"[AU_HOST] View factory class not found: %@", factoryClassName);
-        CFRelease(bundleURL);
-        CFRelease(viewInfo->mCocoaAUViewClass[0]);
-        free(viewInfo);
-        return nil;
-    }
-
-    // Instantiate the factory and get the view
-    id factory = [[factoryClass alloc] init];
-    if (!factory ||
-        ![(NSObject *)factory respondsToSelector:@selector(uiViewForAudioUnit:withSize:)]) {
-        NSLog(@"[AU_HOST] Factory doesn't respond to uiViewForAudioUnit:withSize:");
-        CFRelease(bundleURL);
-        CFRelease(viewInfo->mCocoaAUViewClass[0]);
-        free(viewInfo);
-        return nil;
-    }
-
-    NSView *view = [(id<AUCocoaUIBase>)factory uiViewForAudioUnit:inst->auInstance
-                                                          withSize:NSMakeSize(600, 400)];
-
-    // Release CF objects
-    CFRelease(bundleURL);
-    CFRelease(viewInfo->mCocoaAUViewClass[0]);
-    free(viewInfo);
 
     if (!view) {
-        NSLog(@"[AU_HOST] uiViewForAudioUnit returned nil");
-        return nil;
+        NSLog(@"[AU_HOST] WARNING: Both CocoaUI and AUGenericView failed");
     }
 
-    NSLog(@"[AU_HOST] Got editor view: %@", view);
     return view;
 }
 

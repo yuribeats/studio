@@ -116,7 +116,7 @@ function scanAUPlugins() {
         name: p.name,
         manufacturer: p.manufacturer || p.auMfg || '',
         type: p.auType === 'aufx' || p.auType === 'aumf' ? 'effect' :
-              p.auType === 'aumu' ? 'instrument' : (p.type || 'effect'),
+              p.auType === 'aumu' ? 'instrument' : 'effect',
         arch: p.arch,
         path: p.path,
         auType: p.auType || '',

@@ -22,6 +22,7 @@ target_link_libraries(${PROJECT_NAME}
     "-framework AudioToolbox"
     "-framework AudioUnit"
     "-framework CoreAudio"
+    "-framework CoreAudioKit"
     "-framework CoreFoundation"
     "-framework Cocoa"
 )
