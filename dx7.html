@@ -300,31 +300,55 @@ function initAudio() {
 // DX7 ENGINE INIT
 // ============================================
 async function initDX7() {
-    initAudio();
+    var overlay = document.getElementById('loadingOverlay');
+    try {
+        initAudio();
+        overlay.textContent = 'LOADING SCRIPTS...';
 
-    var controllerScripts = [
-        "wamsdk/wam-controller.js",
-        "dx7/dx7-awn.js"
-    ];
+        var controllerScripts = [
+            "wamsdk/wam-controller.js",
+            "dx7/dx7-awn.js"
+        ];
 
-    await AWPF.polyfill(actx, controllerScripts);
-    await DX7.importScripts(actx);
+        await AWPF.polyfill(actx, controllerScripts);
+        overlay.textContent = 'LOADING WASM ENGINE...';
 
-    dx7 = new DX7(actx);
-    // DX7 is mono — connect through a gain node for proper routing
-    var dx7Out = actx.createGain();
-    dx7Out.gain.value = 0.8;
-    dx7.connect(dx7Out);
-    dx7Out.connect(dx7PedalFX.getInput());
+        // Load AudioWorklet modules one at a time with error handling
+        var base = location.origin + "/";
+        var modules = [
+            "dx7/wasm/dx7.wasm.js",
+            "dx7/wasm/dx7.js",
+            "wamsdk/wam-processor.js",
+            "dx7/dx7-awp.js"
+        ];
+        for (var i = 0; i < modules.length; i++) {
+            try {
+                await actx.audioWorklet.addModule(base + modules[i]);
+            } catch(modErr) {
+                console.error('Failed to load module: ' + modules[i], modErr);
+                overlay.textContent = 'ERROR: ' + modules[i].split('/').pop();
+                return;
+            }
+        }
 
-    lib = new DX7Library();
-    engineReady = true;
+        overlay.textContent = 'INITIALIZING SYNTH...';
+        dx7 = new DX7(actx);
+        var dx7Out = actx.createGain();
+        dx7Out.gain.value = 0.8;
+        dx7.connect(dx7Out);
+        dx7Out.connect(dx7PedalFX.getInput());
 
-    document.getElementById('loadingOverlay').classList.add('hidden');
+        lib = new DX7Library();
+        engineReady = true;
 
-    // Load first bank
-    await loadBank(0);
-    selectPatch(0);
+        overlay.classList.add('hidden');
+
+        await loadBank(0);
+        selectPatch(0);
+    } catch(err) {
+        console.error('DX7 init failed:', err);
+        overlay.textContent = 'INIT FAILED: ' + (err.message || err);
+    }
 }
 
 // ============================================
