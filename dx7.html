@@ -584,9 +584,11 @@ window.addEventListener('message', function(e) {
 buildBankBar();
 requestAnimationFrame(scaleToFit);
 
-// Init engine on first user interaction (AudioContext policy)
+// Start loading engine immediately — AudioContext starts suspended, resumed on click
+initDX7();
+
 document.addEventListener('mousedown', function firstClick() {
-    if (!engineReady) initDX7();
+    if (actx && actx.state === 'suspended') actx.resume();
     document.removeEventListener('mousedown', firstClick);
 }, { once: true });
 
