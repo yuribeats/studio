@@ -164,6 +164,10 @@
                     <span class="panel-tile-name">DRUMS</span>
                     <span class="panel-tile-sub">DRUM MACHINE</span>
                 </div>
+                <div class="panel-tile" data-open="strudel">
+                    <span class="panel-tile-name">CODE</span>
+                    <span class="panel-tile-sub">LIVE CODER</span>
+                </div>
             </div>
 
             <!-- INSTRUMENT FRAME -->
@@ -194,11 +198,12 @@
 // INSTRUMENT REGISTRY
 // ============================================
 const INSTRUMENTS = {
-    juno:  { label: 'JUNO',       file: 'kr106.html',      windowName: 'junowin' },
-    fm:    { label: 'FM',         file: 'fm.html',         windowName: 'fmwin' },
-    mpc:   { label: 'MPC',        file: 'mpc.html',        windowName: 'mpc4000' },
-    cr78:  { label: 'DRUMS',      file: '808.html',        windowName: 'cr78win' },
-    rhodes:{ label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
+    juno:    { label: 'JUNO',       file: 'kr106.html',      windowName: 'junowin' },
+    fm:      { label: 'FM',         file: 'fm.html',         windowName: 'fmwin' },
+    mpc:     { label: 'MPC',        file: 'mpc.html',        windowName: 'mpc4000' },
+    cr78:    { label: 'DRUMS',      file: '808.html',        windowName: 'cr78win' },
+    rhodes:  { label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
+    strudel: { label: 'CODE',       file: 'strudel.html',    windowName: 'strudelwin' },
 };
 
 // Bottom-bar utilities (always loaded, not in panel)
@@ -386,7 +391,7 @@ function openInstrument(instId) {
     instFrameId = instId;
     setKeyboardTarget(instId);
     // Sync piano roll to show this instrument's channel
-    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes'};
+    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', strudel:'strudel'};
     const prCh = prChannelMap[instId];
     if (prCh) sendToInst('pianoroll', {type: 'set-channel', channel: prCh});
 }
