@@ -421,7 +421,7 @@
         <div class="channels" id="channels"></div>
 
         <div class="ftr">
-            <span class="ftr-text">INPUT CHANNELS 1 - 3</span>
+            <span class="ftr-text">INPUT CHANNELS 1 - 9</span>
             <span class="ftr-text">RETURNS</span>
             <span class="ftr-text">MASTER</span>
         </div>
@@ -434,29 +434,23 @@
 // ============================================
 // CHANNEL DEFINITIONS
 // ============================================
-const KIT_LABELS = { cr78:'CR-78', lm2:'LM-2', mrk2:'MRK-2', tr505:'TR-505', tr909:'TR-909' };
-let active808Kits = [];
-
 function getChannels() {
-    const chs = [
+    return [
         { id: 'kr106',   name: 'JUNO',   num: '1', type: 'input' },
         { id: 'fm',      name: 'DX7',    num: '2', type: 'input' },
         { id: 'mpc',     name: 'MPC',    num: '3', type: 'input' },
-        { id: 'cr78',    name: 'DRUMS',  num: '4', type: 'input' },
-        { id: 'rhodes',  name: 'RHODES', num: '5', type: 'input' },
+        { id: 'cr78',    name: 'CR-78',  num: '4', type: 'input' },
+        { id: 'lm2',     name: 'LM-2',   num: '5', type: 'input' },
+        { id: 'mrk2',    name: 'MRK-2',  num: '6', type: 'input' },
+        { id: 'tr505',   name: 'TR-505', num: '7', type: 'input' },
+        { id: 'tr909',   name: 'TR-909', num: '8', type: 'input' },
+        { id: 'rhodes',  name: 'RHODES', num: '9', type: 'input' },
+        { id: '_sep1', type: 'sep' },
+        { id: 'reverb', name: 'REVERB', num: 'R', type: 'return' },
+        { id: 'delay',  name: 'DELAY',  num: 'D', type: 'return' },
+        { id: '_sep2', type: 'sep' },
+        { id: 'master', name: 'MASTER', num: 'M', type: 'master' },
     ];
-    // Add extra kit channels
-    active808Kits.forEach((kid, i) => {
-        if (kid !== 'cr78') { // cr78 is the default 808 channel
-            chs.push({ id: '808-' + kid, name: KIT_LABELS[kid] || kid.toUpperCase(), num: String(7 + i), type: 'input' });
-        }
-    });
-    chs.push({ id: '_sep1', type: 'sep' });
-    chs.push({ id: 'reverb', name: 'REVERB', num: 'R', type: 'return' });
-    chs.push({ id: 'delay',  name: 'DELAY',  num: 'D', type: 'return' });
-    chs.push({ id: '_sep2', type: 'sep' });
-    chs.push({ id: 'master', name: 'MASTER', num: 'M', type: 'master' });
-    return chs;
 }
 let CHANNELS = getChannels();
 
@@ -933,29 +927,6 @@ window.addEventListener('message', (e) => {
             buildChannels();
             initButtons();
             Object.keys(oldState).forEach(k => { if (state[k]) Object.assign(state[k], oldState[k]); });
-            requestAnimationFrame(() => {
-                document.querySelectorAll('.fader-track').forEach(track => {
-                    const chId = track.dataset.ch;
-                    if (chId && state[chId]) setFaderPosition(track, state[chId].volume);
-                });
-                scaleToFit();
-            });
-        }
-    }
-    if (d && d.type === 'active-808-kits') {
-        const newKits = (d.kits || []).sort();
-        const oldKits = active808Kits.sort();
-        if (JSON.stringify(newKits) !== JSON.stringify(oldKits)) {
-            active808Kits = d.kits || [];
-            CHANNELS = getChannels();
-            // Preserve existing state
-            const oldState = JSON.parse(JSON.stringify(state));
-            buildChannels();
-            initButtons();
-            // Restore state
-            Object.keys(oldState).forEach(k => {
-                if (state[k]) Object.assign(state[k], oldState[k]);
-            });
             requestAnimationFrame(() => {
                 document.querySelectorAll('.fader-track').forEach(track => {
                     const chId = track.dataset.ch;

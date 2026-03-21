@@ -647,7 +647,7 @@ window.addEventListener('message', (e) => {
             sendToInst(instId, msg);
         }
     }
-    if (d.type === 'active-808-kits') { sendToInst('mixer', d); sendToInst('pedals', d); }
+    if (d.type === 'active-808-kits') { sendToInst('pedals', d); }
     if (d.type === 'session-data') { sessionParts[d.source] = d.data; checkSaveReady(); }
     if (d.type === '808-pattern-sync' || d.type === 'mpc-recording-sync') sendToInst('pianoroll', d);
     if (d.type === 'transport') sendToInst('tape', d);
@@ -662,11 +662,14 @@ window.addEventListener('message', (e) => {
                 sendToInst(id, {type: 'mixer-fx', fx: target, param: d.param, value: d.value});
             });
         } else {
-            const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78'};
-            // Route 808-* extra kit channels to the cr78 instrument
-            let instId = idMap[target] || target;
-            if (target.startsWith('808-')) instId = 'cr78';
-            sendToInst(instId, {type: 'mixer', param: d.param, value: d.value});
+            const DRUM_KITS = ['cr78', 'lm2', 'mrk2', 'tr505', 'tr909'];
+            const idMap = {kr106: 'juno', mpc: 'mpc'};
+            if (DRUM_KITS.includes(target)) {
+                sendToInst('cr78', {type: 'mixer', kit: target, param: d.param, value: d.value});
+            } else {
+                let instId = idMap[target] || target;
+                sendToInst(instId, {type: 'mixer', param: d.param, value: d.value});
+            }
         }
     }
 });

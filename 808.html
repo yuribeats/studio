@@ -667,19 +667,28 @@ let trackOffsets = TRACKS.map(() => 0); // ms, range -50 to +50
 let trackOffsetModes = TRACKS.map(() => 'all'); // 'all', 'odd', 'even'
 
 const actx = new (window.AudioContext || window.webkitAudioContext)();
-const masterGain = actx.createGain();
-masterGain.gain.value = 0.8;
 window._masterOut = actx.createGain();
 window._masterOut.connect(actx.destination);
 window._captureNode = actx.createMediaStreamDestination();
 window._masterOut.connect(window._captureNode);
-const mixerGain = actx.createGain();
-mixerGain.connect(window._masterOut);
-const drumMixerSends = new MixerSends(actx, window._masterOut);
+
+// Shared pedal FX for all drum kits
 const drumPedalFX = new PedalFXChain(actx);
-drumPedalFX.getOutput().connect(drumMixerSends.getInput());
-drumMixerSends.getOutput().connect(mixerGain);
-masterGain.connect(drumPedalFX.getInput());
+drumPedalFX.getOutput().connect(window._masterOut);
+
+// Per-kit audio chains: inGain -> MixerSends -> mixerGain -> drumPedalFX
+const kitChains = {};
+for (const kitId of Object.keys(KITS)) {
+    const chain = {};
+    chain.inGain = actx.createGain();
+    chain.inGain.gain.value = 0.8;
+    chain.mixerSends = new MixerSends(actx, window._masterOut);
+    chain.mixerGain = actx.createGain();
+    chain.inGain.connect(chain.mixerSends.getInput());
+    chain.mixerSends.getOutput().connect(chain.mixerGain);
+    chain.mixerGain.connect(drumPedalFX.getInput());
+    kitChains[kitId] = chain;
+}
 
 const buffers = {};
 let trackGains = [];
@@ -710,12 +719,12 @@ async function switchKit(kitId) {
     trackMutes = TRACKS.map(() => false);
     trackOffsets = TRACKS.map(() => 0);
     trackOffsetModes = TRACKS.map(() => 'all');
-    // Rebuild gain nodes
+    // Rebuild gain nodes routed to this kit's chain
     trackGains.forEach(g => g.disconnect());
     trackGains = [];
     for (let t = 0; t < TRACKS.length; t++) {
         const g = actx.createGain(); g.gain.value = 0.8;
-        g.connect(masterGain); trackGains.push(g);
+        g.connect(kitChains[kitId].inGain); trackGains.push(g);
     }
     // Update branding
     document.getElementById('brandName').textContent = KITS[kitId].name;
@@ -1068,7 +1077,7 @@ document.getElementById('swingSlider').addEventListener('input', (e) => {
     document.getElementById('swingVal').textContent = swing + '%';
 });
 document.getElementById('masterVol').addEventListener('input', (e) => {
-    masterGain.gain.value = e.target.value / 100;
+    kitChains[currentKit].inGain.gain.value = e.target.value / 100;
 });
 
 // ============================================
@@ -1270,7 +1279,7 @@ window.addEventListener('resize', scaleToFit);
 for (let t = 0; t < TRACKS.length; t++) {
     const g = actx.createGain();
     g.gain.value = trackVolumes[t];
-    g.connect(masterGain);
+    g.connect(kitChains[currentKit].inGain);
     trackGains.push(g);
 }
 
@@ -1279,6 +1288,23 @@ loadSamples().then(() => {
     document.getElementById('stepDisplay').textContent = 'READY';
     setTimeout(scaleToFit, 50);
     setTimeout(() => { lastKitReport = ''; notifyActiveKits(); syncPatternsToPianoRoll(); }, 500);
+    // Preload all other kit samples in background
+    (async function() {
+        for (const kitId of Object.keys(KITS)) {
+            if (kitId === currentKit) continue;
+            const kit = KITS[kitId];
+            const url = SAMPLE_BASE + kit.path;
+            for (const track of kit.tracks) {
+                const key = kitId + '/' + track.file;
+                if (buffers[key]) continue;
+                try {
+                    const resp = await fetch(url + track.file);
+                    const ab = await resp.arrayBuffer();
+                    buffers[key] = await actx.decodeAudioData(ab);
+                } catch(e) {}
+            }
+        }
+    })();
 });
 
 // ==================== IFRAME MIDI/KB BRIDGE ====================
@@ -1291,16 +1317,17 @@ if (window !== window.parent) {
             if (cmd === 0x90 && vel > 0) {
                 if (actx.state === 'suspended') actx.resume();
                 if (d.kit && KITS[d.kit]) {
-                    // Multi-kit: play sample from specified kit
+                    // Multi-kit: play sample from specified kit through its audio chain
                     const kit = KITS[d.kit];
+                    const chain = kitChains[d.kit];
                     const trackIdx = note - 36;
-                    if (trackIdx >= 0 && trackIdx < kit.tracks.length) {
+                    if (trackIdx >= 0 && trackIdx < kit.tracks.length && chain) {
                         const track = kit.tracks[trackIdx];
                         const bufKey = d.kit + '/' + track.file;
                         if (buffers[bufKey]) {
                             const src = actx.createBufferSource();
                             src.buffer = buffers[bufKey];
-                            src.connect(actx.destination);
+                            src.connect(chain.inGain);
                             src.start(actx.currentTime);
                         } else {
                             // Load on demand
@@ -1309,7 +1336,7 @@ if (window !== window.parent) {
                                 buffers[bufKey] = buf;
                                 const src = actx.createBufferSource();
                                 src.buffer = buf;
-                                src.connect(actx.destination);
+                                src.connect(chain.inGain);
                                 src.start(actx.currentTime);
                             }).catch(() => {});
                         }
@@ -1330,14 +1357,22 @@ if (window !== window.parent) {
         }
         if (d && d.type === 'mixer') {
             if (actx.state === 'suspended') actx.resume();
-            if (d.param === 'volume') mixerGain.gain.value = d.value;
-            else if (d.param === 'mute') mixerGain.gain.value = d.value ? 0 : 1;
-            else if (drumMixerSends) drumMixerSends.setParam(d.param, d.value);
+            const kit = d.kit || currentKit;
+            const chain = kitChains[kit];
+            if (chain) {
+                if (d.param === 'volume') chain.mixerGain.gain.value = d.value;
+                else if (d.param === 'mute') chain.mixerGain.gain.value = d.value ? 0 : 1;
+                else chain.mixerSends.setParam(d.param, d.value);
+            }
         }
-        if (d && d.type === 'mixer-fx' && drumMixerSends) {
+        if (d && d.type === 'mixer-fx') {
             if (actx.state === 'suspended') actx.resume();
-            if (d.fx === 'reverb') drumMixerSends.updateReverb(d.param, d.value);
-            if (d.fx === 'delay') drumMixerSends.updateDelay(d.param, d.value);
+            // Apply return FX params to all kit chains
+            for (const kitId of Object.keys(kitChains)) {
+                const chain = kitChains[kitId];
+                if (d.fx === 'reverb') chain.mixerSends.updateReverb(d.param, d.value);
+                if (d.fx === 'delay') chain.mixerSends.updateDelay(d.param, d.value);
+            }
         }
         if (d && d.type === 'pedals' && drumPedalFX) {
             drumPedalFX.update(d.pedals);
