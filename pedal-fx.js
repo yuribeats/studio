@@ -466,8 +466,9 @@ window.PedalFXChain = PedalFXChain;
 //        connect mixerSends.getOutput() to mixerGain (replaces direct connection)
 //        Reverb/delay sends output directly to ctx.destination
 // ============================================
-function MixerSends(ctx) {
+function MixerSends(ctx, destNode) {
     this.ctx = ctx;
+    this._dest = destNode || ctx.destination;
     this.input = ctx.createGain();
 
     // ---- 3-BAND EQ ----
@@ -514,7 +515,7 @@ function MixerSends(ctx) {
     this.revSend.connect(this.convolver);
     this.convolver.connect(this.revDamp);
     this.revDamp.connect(this.revReturn);
-    this.revReturn.connect(ctx.destination);
+    this.revReturn.connect(this._dest);
 
     // ---- DELAY SEND (post-EQ/comp) ----
     this.dlySend = ctx.createGain();
@@ -535,7 +536,7 @@ function MixerSends(ctx) {
     this.dlyFilter.connect(this.dlyFeedback);
     this.dlyFeedback.connect(this.dlyNode);
     this.dlyFilter.connect(this.dlyReturn);
-    this.dlyReturn.connect(ctx.destination);
+    this.dlyReturn.connect(this._dest);
 }
 
 MixerSends.prototype.getInput = function() { return this.input; };

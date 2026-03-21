@@ -714,6 +714,8 @@ function getAudioCtx() {
     return audioCtx;
 }
 
+let connectedStreams = new Set();
+
 function initCapture() {
     const ctx = getAudioCtx();
     mediaStreamDest = ctx.createMediaStreamDestination();
@@ -725,17 +727,56 @@ function initCapture() {
     analyserL.fftSize = 256;
     analyserR.fftSize = 256;
 
-    // Connect destination output to analysers
-    // We capture from the main destination by connecting it
-    // through a MediaStreamSource
+    // Mix bus → analysers
+    const mixBus = ctx.createGain();
+    mixBus.connect(mediaStreamDest);
+    mixBus.connect(splitter);
+    splitter.connect(analyserL, 0);
+    splitter.connect(analyserR, 1);
+
+    window._tapeMixBus = mixBus;
+
+    // Collect audio streams from all instrument iframes
+    collectInstrumentStreams();
+}
+
+function collectInstrumentStreams() {
+    const ctx = getAudioCtx();
+    const mixBus = window._tapeMixBus;
+    if (!mixBus) return;
+
+    const parent = (window.parent !== window) ? window.parent : window.opener;
+    if (!parent) return;
+
+    // Check background instrument iframes
     try {
-        const destStream = ctx.createMediaStreamSource(mediaStreamDest.stream);
-        destStream.connect(splitter);
-        splitter.connect(analyserL, 0);
-        splitter.connect(analyserR, 1);
-    } catch(e) {
-        // Fallback: single channel
-    }
+        const bgFrames = parent.document.querySelectorAll('iframe[data-bframe]');
+        bgFrames.forEach(frame => {
+            try {
+                const win = frame.contentWindow;
+                if (win && win._captureNode && win._captureNode.stream && !connectedStreams.has(frame.dataset.bframe)) {
+                    const source = ctx.createMediaStreamSource(win._captureNode.stream);
+                    source.connect(mixBus);
+                    connectedStreams.add(frame.dataset.bframe);
+                }
+            } catch(e) {}
+        });
+    } catch(e) {}
+
+    // Also check utility iframes (pianoroll doesn't produce audio, but future-proof)
+    try {
+        const utilFrames = parent.document.querySelectorAll('iframe[id^="frame"]');
+        utilFrames.forEach(frame => {
+            try {
+                const win = frame.contentWindow;
+                if (win && win._captureNode && !connectedStreams.has(frame.id)) {
+                    const source = ctx.createMediaStreamSource(win._captureNode.stream);
+                    source.connect(mixBus);
+                    connectedStreams.add(frame.id);
+                }
+            } catch(e) {}
+        });
+    } catch(e) {}
 }
 
 // ============================================
@@ -744,6 +785,7 @@ function initCapture() {
 function startRecording() {
     const ctx = getAudioCtx();
     if (!mediaStreamDest) initCapture();
+    collectInstrumentStreams();
 
     recordedChunks = [];
     recording = true;

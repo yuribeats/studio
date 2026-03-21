@@ -380,14 +380,18 @@ function ensureAudio() {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   masterGain = audioCtx.createGain();
   masterGain.gain.value = 0.8;
+  window._masterOut = audioCtx.createGain();
+  window._masterOut.connect(audioCtx.destination);
+  window._captureNode = audioCtx.createMediaStreamDestination();
+  window._masterOut.connect(window._captureNode);
   mixerGain = audioCtx.createGain();
   mixerGain.gain.value = 1.0;
-  fmMixerSends = new MixerSends(audioCtx);
+  fmMixerSends = new MixerSends(audioCtx, window._masterOut);
   fmPedalFX = new PedalFXChain(audioCtx);
   masterGain.connect(fmPedalFX.getInput());
   fmPedalFX.getOutput().connect(fmMixerSends.getInput());
   fmMixerSends.getOutput().connect(mixerGain);
-  mixerGain.connect(audioCtx.destination);
+  mixerGain.connect(window._masterOut);
   window.fmPedalFX = fmPedalFX;
 }
 

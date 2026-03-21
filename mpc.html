@@ -516,9 +516,13 @@ function loadBankState() {
 const actx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = actx.createGain();
 masterGain.gain.value = 0.6;
+window._masterOut = actx.createGain();
+window._masterOut.connect(actx.destination);
+window._captureNode = actx.createMediaStreamDestination();
+window._masterOut.connect(window._captureNode);
 const mixerGain = actx.createGain();
-mixerGain.connect(actx.destination);
-const mpcMixerSends = new MixerSends(actx);
+mixerGain.connect(window._masterOut);
+const mpcMixerSends = new MixerSends(actx, window._masterOut);
 const mpcPedalFX = new PedalFXChain(actx);
 mpcPedalFX.getOutput().connect(mpcMixerSends.getInput());
 mpcMixerSends.getOutput().connect(mixerGain);

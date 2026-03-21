@@ -656,9 +656,13 @@ let trackOffsetModes = TRACKS.map(() => 'all'); // 'all', 'odd', 'even'
 const actx = new (window.AudioContext || window.webkitAudioContext)();
 const masterGain = actx.createGain();
 masterGain.gain.value = 0.8;
+window._masterOut = actx.createGain();
+window._masterOut.connect(actx.destination);
+window._captureNode = actx.createMediaStreamDestination();
+window._masterOut.connect(window._captureNode);
 const mixerGain = actx.createGain();
-mixerGain.connect(actx.destination);
-const drumMixerSends = new MixerSends(actx);
+mixerGain.connect(window._masterOut);
+const drumMixerSends = new MixerSends(actx, window._masterOut);
 const drumPedalFX = new PedalFXChain(actx);
 drumPedalFX.getOutput().connect(drumMixerSends.getInput());
 drumMixerSends.getOutput().connect(mixerGain);

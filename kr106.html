@@ -926,9 +926,13 @@ let pedalFX = null;
 let mixerSends = null;
 async function initAudio() {
   audioCtx = new AudioContext({ sampleRate: 44100 });
+  window._masterOut = audioCtx.createGain();
+  window._masterOut.connect(audioCtx.destination);
+  window._captureNode = audioCtx.createMediaStreamDestination();
+  window._masterOut.connect(window._captureNode);
   mixerGain = audioCtx.createGain();
-  mixerGain.connect(audioCtx.destination);
-  mixerSends = new MixerSends(audioCtx);
+  mixerGain.connect(window._masterOut);
+  mixerSends = new MixerSends(audioCtx, window._masterOut);
   pedalFX = new PedalFXChain(audioCtx);
   pedalFX.getOutput().connect(mixerSends.getInput());
   mixerSends.getOutput().connect(mixerGain);
