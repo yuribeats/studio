@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DX7</title>
+<script src="studio-bus.js"></script>
+<script src="pedal-fx.js"></script>
+<script src="audioworklet.js"></script>
+<script src="dx7/dx7-lib.js"></script>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+    background: #111;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #fff;
+    user-select: none;
+    -webkit-user-select: none;
+}
+body { display: flex; justify-content: center; align-items: center; }
+.scale-wrap { transform-origin: center center; }
+
+.machine {
+    width: 960px;
+    background: linear-gradient(180deg, #1a1a1a 0%, #111 100%);
+    border: 2px solid #333;
+}
+
+/* HEADER */
+.machine-hdr {
+    background: #1e1e1e;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.hdr-brand { font-size: 11px; color: #666; letter-spacing: 3px; }
+.hdr-model { font-size: 14px; color: #fff; letter-spacing: 2px; }
+.hdr-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+.hdr-bpm { font-size: 12px; color: #666; letter-spacing: 1px; }
+
+/* LCD DISPLAY */
+.lcd {
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    padding: 12px 20px;
+    text-align: center;
+}
+.lcd-patch {
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: #228B22;
+    margin-bottom: 4px;
+}
+.lcd-info {
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 2px;
+}
+.lcd-info .val { color: #888; }
+
+/* BANK BAR */
+.bank-bar {
+    display: flex;
+    border-bottom: 1px solid #222;
+    background: #151515;
+    overflow-x: auto;
+    gap: 0;
+}
+.bank-btn {
+    padding: 6px 14px;
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    border-right: 1px solid #1e1e1e;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.bank-btn:hover { color: #ccc; background: #1a1a1a; }
+.bank-btn.active { color: #228B22; background: #1a1a1a; }
+
+/* PATCH GRID */
+.patch-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: #0d0d0d;
+    padding: 8px;
+    border-bottom: 1px solid #222;
+    max-height: 340px;
+    overflow-y: auto;
+}
+.patch-cell {
+    padding: 6px 10px;
+    font-size: 11px;
+    color: #777;
+    letter-spacing: 0.5px;
+    background: #151515;
+    border: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.patch-cell:hover { background: #1e1e1e; color: #fff; }
+.patch-cell.active { color: #228B22; border-color: #228B22; background: #0a1a0a; }
+.patch-num { font-size: 9px; color: #444; min-width: 18px; }
+.patch-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* NAV BAR */
+.nav-bar {
+    display: flex;
+    align-items: center;
+    padding: 6px 16px;
+    gap: 8px;
+    background: #151515;
+    border-bottom: 1px solid #222;
+}
+.nav-btn {
+    padding: 5px 14px;
+    font-size: 11px;
+    color: #aaa;
+    letter-spacing: 2px;
+    border: 1px solid #333;
+    background: #1a1a1a;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.nav-btn:hover { border-color: #555; color: #fff; }
+.nav-info {
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 1px;
+    margin-left: auto;
+}
+.nav-info .val { color: #888; }
+.vol-track {
+    width: 100px;
+    height: 6px;
+    background: #222;
+    position: relative;
+    margin-left: 8px;
+}
+.vol-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: #228B22;
+    width: 80%;
+    pointer-events: none;
+}
+.vol-label { font-size: 9px; color: #555; letter-spacing: 1px; }
+
+/* SCOPE */
+.scope-bar {
+    height: 3px;
+    background: #0a0a0a;
+    position: relative;
+    overflow: hidden;
+}
+.scope-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: #228B22;
+}
+
+/* FOOTER */
+.machine-ftr {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 16px;
+    background: #0d0d0d;
+}
+.ftr-text { font-size: 8px; color: #333; letter-spacing: 2px; }
+
+/* LOADING OVERLAY */
+.loading {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    font-size: 14px;
+    color: #555;
+    letter-spacing: 3px;
+}
+.loading.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="scale-wrap" id="scaleWrap">
+<div class="machine" style="position:relative">
+    <div class="loading" id="loadingOverlay">LOADING DX7 ENGINE...</div>
+
+    <div class="machine-hdr">
+        <span class="hdr-brand">YAMAHA</span>
+        <span class="hdr-model">DX7</span>
+        <div class="hdr-right">
+            <span class="hdr-bpm" id="bpmDisplay">120 BPM</span>
+        </div>
+    </div>
+
+    <div class="lcd">
+        <div class="lcd-patch" id="lcdPatch">---</div>
+        <div class="lcd-info">
+            BANK <span class="val" id="lcdBank">---</span>
+            &nbsp;&nbsp;
+            PATCH <span class="val" id="lcdNum">--</span>
+            &nbsp;&nbsp;
+            ALG <span class="val" id="lcdAlg">--</span>
+        </div>
+    </div>
+
+    <div class="bank-bar" id="bankBar"></div>
+
+    <div class="patch-grid" id="patchGrid"></div>
+
+    <div class="nav-bar">
+        <div class="nav-btn" id="btnPrev">PREV</div>
+        <div class="nav-btn" id="btnNext">NEXT</div>
+        <div class="nav-info">
+            <span class="val" id="navCounter">0 / 32</span>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+            <span class="vol-label">VOLUME</span>
+            <div class="vol-track" id="volTrack">
+                <div class="vol-fill" id="volFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="scope-bar"><div class="scope-fill" id="scopeFill"></div></div>
+    <div class="machine-ftr">
+        <span class="ftr-text">FM SYNTHESIS ENGINE</span>
+        <span class="ftr-text">WEBDX7 / WEBAUDIOMODULES</span>
+    </div>
+</div>
+</div>
+
+<script>
+// ============================================
+// POPOUT / IFRAME BRIDGE
+// ============================================
+var _isIframe = window !== window.parent;
+var _isPopout = !!window.opener && !_isIframe;
+function _msgToParent(msg) {
+    if (_isIframe) window.parent.postMessage(msg, '*');
+    else if (_isPopout && window._sendToParent) window._sendToParent(msg);
+}
+
+// ============================================
+// STATE
+// ============================================
+var dx7 = null;
+var lib = null;
+var actx = null;
+var mixerGain = null;
+var dx7MixerSends = null;
+var dx7PedalFX = null;
+var currentBankIdx = 0;
+var currentPatchIdx = 0;
+var volume = 0.8;
+var __muted = false;
+var engineReady = false;
+var bpm = 120;
+
+// ============================================
+// AUDIO INIT
+// ============================================
+function initAudio() {
+    if (actx) return;
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+
+    window._masterOut = actx.createGain();
+    window._masterOut.connect(actx.destination);
+    window._captureNode = actx.createMediaStreamDestination();
+    window._masterOut.connect(window._captureNode);
+
+    mixerGain = actx.createGain();
+    mixerGain.gain.value = 1.0;
+
+    dx7MixerSends = new MixerSends(actx, window._masterOut);
+    dx7PedalFX = new PedalFXChain(actx);
+    dx7PedalFX.getOutput().connect(dx7MixerSends.getInput());
+    dx7MixerSends.getOutput().connect(mixerGain);
+    mixerGain.connect(window._masterOut);
+}
+
+// ============================================
+// DX7 ENGINE INIT
+// ============================================
+async function initDX7() {
+    initAudio();
+
+    var controllerScripts = [
+        "wamsdk/wam-controller.js",
+        "dx7/dx7-awn.js"
+    ];
+
+    await AWPF.polyfill(actx, controllerScripts);
+    await DX7.importScripts(actx);
+
+    dx7 = new DX7(actx);
+    // DX7 is mono — connect through a gain node for proper routing
+    var dx7Out = actx.createGain();
+    dx7Out.gain.value = 0.8;
+    dx7.connect(dx7Out);
+    dx7Out.connect(dx7PedalFX.getInput());
+
+    lib = new DX7Library();
+    engineReady = true;
+
+    document.getElementById('loadingOverlay').classList.add('hidden');
+
+    // Load first bank
+    await loadBank(0);
+    selectPatch(0);
+}
+
+// ============================================
+// BANK / PATCH MANAGEMENT
+// ============================================
+async function loadBank(idx) {
+    if (!lib) return;
+    currentBankIdx = idx;
+    var filename = banklist[idx];
+    var names = await lib.load(filename);
+    buildPatchGrid(names);
+    updateBankUI();
+}
+
+function selectPatch(idx) {
+    if (!lib || !lib.bank[idx]) return;
+    currentPatchIdx = idx;
+    dx7.setPatch(lib.bank[idx]);
+    updatePatchUI();
+}
+
+function prevPatch() {
+    if (currentPatchIdx > 0) selectPatch(currentPatchIdx - 1);
+    else if (currentBankIdx > 0) {
+        loadBank(currentBankIdx - 1).then(function() { selectPatch(31); });
+    }
+}
+
+function nextPatch() {
+    if (currentPatchIdx < 31) selectPatch(currentPatchIdx + 1);
+    else if (currentBankIdx < banklist.length - 1) {
+        loadBank(currentBankIdx + 1).then(function() { selectPatch(0); });
+    }
+}
+
+// ============================================
+// UI: BANKS
+// ============================================
+function buildBankBar() {
+    var bar = document.getElementById('bankBar');
+    bar.innerHTML = '';
+    banklabels.forEach(function(label, i) {
+        var btn = document.createElement('div');
+        btn.className = 'bank-btn';
+        btn.textContent = label;
+        btn.addEventListener('mousedown', function() {
+            loadBank(i).then(function() { selectPatch(0); });
+        });
+        bar.appendChild(btn);
+    });
+}
+
+function updateBankUI() {
+    document.querySelectorAll('.bank-btn').forEach(function(b, i) {
+        b.classList.toggle('active', i === currentBankIdx);
+    });
+}
+
+// ============================================
+// UI: PATCH GRID
+// ============================================
+function buildPatchGrid(names) {
+    var grid = document.getElementById('patchGrid');
+    grid.innerHTML = '';
+    names.forEach(function(name, i) {
+        var cell = document.createElement('div');
+        cell.className = 'patch-cell';
+        cell.dataset.idx = i;
+        cell.innerHTML = '<span class="patch-num">' + String(i + 1).padStart(2, '0') + '</span><span class="patch-name">' + escHtml(name.trim()) + '</span>';
+        cell.addEventListener('mousedown', function() { selectPatch(i); });
+        grid.appendChild(cell);
+    });
+}
+
+function updatePatchUI() {
+    // Highlight active patch
+    document.querySelectorAll('.patch-cell').forEach(function(c) {
+        c.classList.toggle('active', parseInt(c.dataset.idx) === currentPatchIdx);
+    });
+    // Scroll active into view
+    var active = document.querySelector('.patch-cell.active');
+    if (active) active.scrollIntoView({ block: 'nearest' });
+
+    // LCD
+    var name = lib.patches[currentPatchIdx] || '---';
+    document.getElementById('lcdPatch').textContent = name.trim();
+    document.getElementById('lcdBank').textContent = banklabels[currentBankIdx];
+    document.getElementById('lcdNum').textContent = String(currentPatchIdx + 1).padStart(2, '0') + ' / 32';
+
+    // Algorithm: byte 118+6=124? Actually packed voice byte 110 is algorithm
+    // In packed format: offset 110 is algorithm (0-31)
+    var voice = lib.bank[currentPatchIdx];
+    if (voice) {
+        var alg = (voice[110] & 31) + 1;
+        document.getElementById('lcdAlg').textContent = alg;
+    }
+
+    document.getElementById('navCounter').textContent = String(currentPatchIdx + 1) + ' / 32';
+}
+
+function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================
+// VOLUME SLIDER
+// ============================================
+(function() {
+    var track = document.getElementById('volTrack');
+    var fill = document.getElementById('volFill');
+
+    function update(e) {
+        var rect = track.getBoundingClientRect();
+        var ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        volume = ratio;
+        fill.style.width = (ratio * 100) + '%';
+        if (mixerGain && !__muted) mixerGain.gain.value = volume;
+    }
+
+    track.addEventListener('mousedown', function(e) {
+        update(e);
+        var onMove = function(e2) { update(e2); };
+        var onUp = function() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        e.preventDefault();
+    });
+})();
+
+// ============================================
+// NAV BUTTONS
+// ============================================
+document.getElementById('btnPrev').addEventListener('mousedown', prevPatch);
+document.getElementById('btnNext').addEventListener('mousedown', nextPatch);
+
+// ============================================
+// SCALE TO FIT
+// ============================================
+function scaleToFit() {
+    var wrap = document.getElementById('scaleWrap');
+    wrap.style.transform = 'none';
+    var w = wrap.scrollWidth;
+    var h = wrap.scrollHeight;
+    var scale = Math.min(window.innerWidth / w, window.innerHeight / h, 1) * 0.96;
+    wrap.style.transform = 'scale(' + scale + ')';
+}
+window.addEventListener('resize', scaleToFit);
+
+// ============================================
+// MIDI ACTIVITY SCOPE
+// ============================================
+var scopeTimeout = null;
+function flashScope() {
+    var fill = document.getElementById('scopeFill');
+    fill.style.width = '100%';
+    fill.style.transition = 'none';
+    clearTimeout(scopeTimeout);
+    scopeTimeout = setTimeout(function() {
+        fill.style.transition = 'width 0.3s ease-out';
+        fill.style.width = '0';
+    }, 80);
+}
+
+// ============================================
+// MESSAGE HANDLING
+// ============================================
+window.addEventListener('message', function(e) {
+    var d = e.data;
+    if (!d) return;
+
+    if (d.type === 'midi' && d.data && dx7) {
+        if (actx && actx.state === 'suspended') actx.resume();
+        dx7.onMidi(d.data);
+        flashScope();
+    }
+
+    if (d.type === 'keyboard-focus') {
+        window.__kbEnabled = d.enabled;
+    }
+
+    if (d.type === 'set-bpm' && d.bpm) {
+        bpm = d.bpm;
+        document.getElementById('bpmDisplay').textContent = bpm + ' BPM';
+    }
+
+    if (d.type === 'mixer') {
+        if (actx && actx.state === 'suspended') actx.resume();
+        if (d.param === 'volume' && mixerGain) {
+            volume = d.value;
+            mixerGain.gain.value = __muted ? 0 : volume;
+            document.getElementById('volFill').style.width = (volume * 100) + '%';
+        }
+        else if (d.param === 'mute') {
+            __muted = d.value > 0;
+            if (mixerGain) mixerGain.gain.value = __muted ? 0 : volume;
+        }
+        else if (dx7MixerSends) dx7MixerSends.setParam(d.param, d.value);
+    }
+
+    if (d.type === 'mixer-fx' && dx7MixerSends) {
+        if (actx && actx.state === 'suspended') actx.resume();
+        if (d.fx === 'reverb') dx7MixerSends.updateReverb(d.param, d.value);
+        if (d.fx === 'delay') dx7MixerSends.updateDelay(d.param, d.value);
+    }
+
+    if (d.type === 'pedals' && dx7PedalFX) {
+        dx7PedalFX.update(d.pedals);
+    }
+
+    if (d.type === 'get-session') {
+        _msgToParent({
+            type: 'session-data',
+            source: 'fm',
+            data: { bankIdx: currentBankIdx, patchIdx: currentPatchIdx }
+        });
+    }
+
+    if (d.type === 'load-session' && d.data) {
+        if (typeof d.data.bankIdx === 'number' && lib) {
+            loadBank(d.data.bankIdx).then(function() {
+                if (typeof d.data.patchIdx === 'number') selectPatch(d.data.patchIdx);
+            });
+        }
+    }
+});
+
+// ============================================
+// INIT
+// ============================================
+buildBankBar();
+requestAnimationFrame(scaleToFit);
+
+// Init engine on first user interaction (AudioContext policy)
+document.addEventListener('mousedown', function firstClick() {
+    if (!engineReady) initDX7();
+    document.removeEventListener('mousedown', firstClick);
+}, { once: true });
+
+// ==================== IFRAME / POPOUT BRIDGE ====================
+if (_isIframe || _isPopout) {
+    window.__kbEnabled = _isPopout;
+    if (_isIframe) {
+        document.addEventListener('keydown', function(e) {
+            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+        }, true);
+        document.addEventListener('keyup', function(e) {
+            if (!window.__kbEnabled) { e.stopImmediatePropagation(); e.preventDefault(); }
+        }, true);
+        window.parent.postMessage({type: 'instrument-ready', name: 'fm'}, '*');
+    } else if (_isPopout) {
+        window.dispatchEvent(new MessageEvent('message', {data: {type: 'instrument-ready', name: 'fm'}}));
+    }
+}
+</script>
+
+</body>
+</html>
