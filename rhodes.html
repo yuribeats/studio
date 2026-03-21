@@ -212,6 +212,7 @@
     function ensureAudio() {
         if (audioCtx) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (window.loadAirwindowsWorklet) loadAirwindowsWorklet(audioCtx);
         masterGain = audioCtx.createGain();
         masterGain.gain.value = 0.8;
         mixerGain = audioCtx.createGain();

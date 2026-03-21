@@ -280,6 +280,7 @@ var bpm = 120;
 function initAudio() {
     if (actx) return;
     actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (window.loadAirwindowsWorklet) loadAirwindowsWorklet(actx);
 
     window._masterOut = actx.createGain();
     window._masterOut.connect(actx.destination);

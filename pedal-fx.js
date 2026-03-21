@@ -458,6 +458,41 @@ BUILDERS.delay = function(ctx, p) {
     return BUILDERS.lofiecho(ctx, p);
 };
 
+// ============================================
+// AIRWINDOWS EFFECTS (AudioWorklet-based)
+// Each creates an AudioWorkletNode running ported Airwindows DSP
+// ============================================
+function awBuilder(effect) {
+    return function(ctx, p) {
+        if (!ctx._airwindowsLoaded) return null;
+        // Normalize all params from 0-100 UI range to 0-1 for Airwindows DSP
+        var normalized = {};
+        for (var k in p) { normalized[k] = (typeof p[k] === 'number') ? p[k] / 100 : p[k]; }
+        var node = new AudioWorkletNode(ctx, 'airwindows-processor', {
+            processorOptions: { effect: effect, params: normalized },
+            numberOfInputs: 1,
+            numberOfOutputs: 1,
+            outputChannelCount: [2]
+        });
+        return { input: node, output: node, dispose: function() { try { node.disconnect(); } catch(e) {} } };
+    };
+}
+
+BUILDERS['aw-drive'] = awBuilder('purestdrive');
+BUILDERS['aw-density'] = awBuilder('density');
+BUILDERS['aw-console'] = awBuilder('console7');
+BUILDERS['aw-pressure'] = awBuilder('pressure4');
+BUILDERS['aw-tilt'] = awBuilder('toneslant');
+BUILDERS['aw-chorus'] = awBuilder('chorus');
+
+// Load Airwindows worklet into an AudioContext
+window.loadAirwindowsWorklet = function(ctx) {
+    if (!ctx.audioWorklet) return Promise.resolve();
+    return ctx.audioWorklet.addModule('airwindows-worklet.js').then(function() {
+        ctx._airwindowsLoaded = true;
+    }).catch(function(e) { console.warn('Airwindows worklet load failed:', e); });
+};
+
 window.PedalFXChain = PedalFXChain;
 
 // ============================================

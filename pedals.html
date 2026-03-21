@@ -406,30 +406,75 @@ const PEDAL_TYPES = {
             { id: 'filter', label: 'FILTER', min: 0, max: 100, def: 40 },
             { id: 'mix', label: 'MIX', min: 0, max: 100, def: 40 }
         ]
+    },
+    'aw-drive': {
+        name: 'AW DRIVE',
+        color: '#cc5500',
+        params: [
+            { id: 'intensity', label: 'DRIVE', min: 0, max: 100, def: 50 }
+        ]
+    },
+    'aw-density': {
+        name: 'AW DENSITY',
+        color: '#aa4400',
+        params: [
+            { id: 'density', label: 'DENS', min: 0, max: 100, def: 50 },
+            { id: 'highpass', label: 'HPF', min: 0, max: 100, def: 0 },
+            { id: 'output', label: 'OUT', min: 0, max: 100, def: 100 },
+            { id: 'mix', label: 'MIX', min: 0, max: 100, def: 100 }
+        ]
+    },
+    'aw-console': {
+        name: 'AW CONSOLE',
+        color: '#886622',
+        params: [
+            { id: 'gain', label: 'GAIN', min: 0, max: 100, def: 77 }
+        ]
+    },
+    'aw-pressure': {
+        name: 'AW PRESSURE',
+        color: '#3355aa',
+        params: [
+            { id: 'threshold', label: 'THRESH', min: 0, max: 100, def: 50 },
+            { id: 'speed', label: 'SPEED', min: 0, max: 100, def: 50 },
+            { id: 'mu', label: 'MU', min: 0, max: 100, def: 50 },
+            { id: 'output', label: 'OUT', min: 0, max: 100, def: 100 }
+        ]
+    },
+    'aw-tilt': {
+        name: 'AW TILT EQ',
+        color: '#2266aa',
+        params: [
+            { id: 'voicing', label: 'VOICE', min: 0, max: 100, def: 50 },
+            { id: 'tilt', label: 'TILT', min: 0, max: 100, def: 50 }
+        ]
+    },
+    'aw-chorus': {
+        name: 'AW CHORUS',
+        color: '#226644',
+        params: [
+            { id: 'speed', label: 'SPEED', min: 0, max: 100, def: 50 },
+            { id: 'range', label: 'RANGE', min: 0, max: 100, def: 50 },
+            { id: 'mix', label: 'MIX', min: 0, max: 100, def: 50 }
+        ]
     }
 };
 
 // ============================================
 // CHANNELS
 // ============================================
-const KIT_LABELS = { cr78:'CR-78', lm2:'LM-2', mrk2:'MRK-2', tr505:'TR-505', tr909:'TR-909' };
-let active808Kits = [];
-
 function getChannelList() {
-    const chs = [
+    return [
         { id: 'juno', name: 'JUNO' },
-        { id: 'fm', name: 'FM' },
+        { id: 'fm', name: 'DX7' },
         { id: 'mpc', name: 'MPC' },
-        { id: '808', name: 'DRUMS' },
+        { id: '808', name: 'CR-78' },
+        { id: '808-lm2', name: 'LM-2' },
+        { id: '808-mrk2', name: 'MRK-2' },
+        { id: '808-tr505', name: 'TR-505' },
+        { id: '808-tr909', name: 'TR-909' },
+        { id: 'rhodes', name: 'RHODES' },
     ];
-    active808Kits.forEach(kid => {
-        if (kid !== 'cr78') {
-            chs.push({ id: '808-' + kid, name: KIT_LABELS[kid] || kid.toUpperCase() });
-        }
-    });
-    chs.push({ id: 'rhodes', name: 'RHODES' });
-    chs.push({ id: 'deck', name: 'DECK' });
-    return chs;
 }
 let CHANNEL_LIST = getChannelList();
 
@@ -716,26 +761,6 @@ window.addEventListener('message', (e) => {
     const d = e.data;
     if (d && d.type === 'keyboard-focus') {
         window.__kbEnabled = d.enabled;
-    }
-    if (d && d.type === 'active-808-kits') {
-        const newKits = (d.kits || []).sort();
-        const oldKits = active808Kits.slice().sort();
-        if (JSON.stringify(newKits) !== JSON.stringify(oldKits)) {
-            active808Kits = d.kits || [];
-            const oldChannelList = CHANNEL_LIST;
-            CHANNEL_LIST = getChannelList();
-            // Init chains for any new channels
-            CHANNEL_LIST.forEach(ch => {
-                if (!chains[ch.id]) chains[ch.id] = [];
-            });
-            // If active channel was removed, reset to first
-            if (!CHANNEL_LIST.find(ch => ch.id === activeChannel)) {
-                activeChannel = CHANNEL_LIST[0].id;
-            }
-            buildTabs();
-            renderBoard();
-            requestAnimationFrame(() => { scaleToFit(); });
-        }
     }
 });
 

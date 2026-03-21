@@ -667,6 +667,7 @@ let trackOffsets = TRACKS.map(() => 0); // ms, range -50 to +50
 let trackOffsetModes = TRACKS.map(() => 'all'); // 'all', 'odd', 'even'
 
 const actx = new (window.AudioContext || window.webkitAudioContext)();
+if (window.loadAirwindowsWorklet) loadAirwindowsWorklet(actx);
 window._masterOut = actx.createGain();
 window._masterOut.connect(actx.destination);
 window._captureNode = actx.createMediaStreamDestination();

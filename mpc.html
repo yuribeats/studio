@@ -514,6 +514,7 @@ function loadBankState() {
 }
 
 const actx = new (window.AudioContext || window.webkitAudioContext)();
+if (window.loadAirwindowsWorklet) loadAirwindowsWorklet(actx);
 const masterGain = actx.createGain();
 masterGain.gain.value = 0.6;
 window._masterOut = actx.createGain();

@@ -926,6 +926,7 @@ let pedalFX = null;
 let mixerSends = null;
 async function initAudio() {
   audioCtx = new AudioContext({ sampleRate: 44100 });
+  if (window.loadAirwindowsWorklet) loadAirwindowsWorklet(audioCtx);
   window._masterOut = audioCtx.createGain();
   window._masterOut.connect(audioCtx.destination);
   window._captureNode = audioCtx.createMediaStreamDestination();
