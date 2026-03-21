@@ -129,7 +129,7 @@
             <div class="kb-btn" data-target="cr78">DRUMS</div>
             <div class="kb-btn" data-target="rhodes">RHODES</div>
             <div class="kb-btn" data-target="solina">SOLINA</div>
-            <div class="kb-btn" data-target="mellotron">MTRON</div>
+
             <div class="kb-btn" data-target="tb303">303</div>
         </div>
     </div>
@@ -171,10 +171,7 @@
                     <span class="panel-tile-name">SOLINA</span>
                     <span class="panel-tile-sub">STRING ENSEMBLE</span>
                 </div>
-                <div class="panel-tile" data-open="mellotron">
-                    <span class="panel-tile-name">MELLOTRON</span>
-                    <span class="panel-tile-sub">TAPE REPLAY</span>
-                </div>
+
                 <div class="panel-tile" data-open="tb303">
                     <span class="panel-tile-name">TB-303</span>
                     <span class="panel-tile-sub">ACID BASS</span>
@@ -215,7 +212,7 @@ const INSTRUMENTS = {
     cr78:    { label: 'DRUMS',      file: '808.html',        windowName: 'cr78win' },
     rhodes:  { label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
     solina:  { label: 'SOLINA',     file: 'solina.html',     windowName: 'solinawin' },
-    mellotron: { label: 'MELLOTRON', file: 'mellotron.html', windowName: 'mellotronwin' },
+
     tb303:   { label: 'TB-303',     file: 'tb303.html',      windowName: 'tb303win' },
 };
 
@@ -404,7 +401,7 @@ function openInstrument(instId) {
     instFrameId = instId;
     setKeyboardTarget(instId);
     // Sync piano roll to show this instrument's channel
-    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', solina:'solina', mellotron:'mellotron', tb303:'tb303'};
+    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', solina:'solina', tb303:'tb303'};
     const prCh = prChannelMap[instId];
     if (prCh) sendToInst('pianoroll', {type: 'set-channel', channel: prCh});
 }
@@ -472,7 +469,7 @@ const ROUTE_OPTIONS = [
     {value: 'cr78', label: 'DRUMS'},
     {value: 'rhodes', label: 'RHODES'},
     {value: 'solina', label: 'SOLINA'},
-    {value: 'mellotron', label: 'MTRON'},
+
     {value: 'tb303', label: '303'},
     {value: 'all', label: 'ALL'},
     {value: 'none', label: 'NONE'},
@@ -652,14 +649,14 @@ window.addEventListener('message', (e) => {
     }
     if (d.type === 'request-kb-focus') setKeyboardTarget(d.target);
     if (d.type === 'pedal-control') {
-        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', mellotron: 'mellotron', tb303: 'tb303'};
+        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', tb303: 'tb303'};
         var ch = d.channel;
         if (ch && ch.startsWith('808-')) ch = '808';
         const instId = idMap[ch] || ch;
         if (INSTRUMENTS[instId]) sendToInst(instId, {type: 'pedals', pedals: d.pedals});
     }
     if (d.type === 'pianoroll-note') {
-        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', mellotron: 'mellotron', tb303: 'tb303'};
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', tb303: 'tb303'};
         const instId = idMap[d.channel] || d.channel;
         if (INSTRUMENTS[instId]) {
             const midiData = d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0];
@@ -684,7 +681,7 @@ window.addEventListener('message', (e) => {
             });
         } else {
             const DRUM_KITS = ['cr78', 'lm2', 'mrk2', 'tr505', 'tr909'];
-            const idMap = {kr106: 'juno', mpc: 'mpc', solina: 'solina', mellotron: 'mellotron', tb303: 'tb303'};
+            const idMap = {kr106: 'juno', mpc: 'mpc', solina: 'solina', tb303: 'tb303'};
             if (DRUM_KITS.includes(target)) {
                 sendToInst('cr78', {type: 'mixer', kit: target, param: d.param, value: d.value});
             } else {
@@ -700,7 +697,7 @@ window.addEventListener('message', (e) => {
 // ============================================
 let pendingSave = null;
 const sessionParts = {};
-const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'rhodes', 'solina', 'mellotron', 'tb303'];
+const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'rhodes', 'solina', 'tb303'];
 
 function requestSessionData() {
     SESSION_SOURCES.forEach(s => { sessionParts[s] = null; });
@@ -720,7 +717,7 @@ function checkSaveReady() {
             mpc: sessionParts.mpc,
             rhodes: sessionParts.rhodes,
             solina: sessionParts.solina,
-            mellotron: sessionParts.mellotron,
+
             tb303: sessionParts.tb303
         };
         const blob = new Blob([JSON.stringify(session, null, 2)], {type: 'application/json'});
@@ -739,7 +736,7 @@ function loadSession(session) {
     if (session.mpc) sendToInst('mpc', {type: 'load-session', data: session.mpc});
     if (session.rhodes) sendToInst('rhodes', {type: 'load-session', data: session.rhodes});
     if (session.solina) sendToInst('solina', {type: 'load-session', data: session.solina});
-    if (session.mellotron) sendToInst('mellotron', {type: 'load-session', data: session.mellotron});
+
     if (session.tb303) sendToInst('tb303', {type: 'load-session', data: session.tb303});
 }
 
