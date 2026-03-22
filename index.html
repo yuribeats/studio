@@ -16,93 +16,89 @@
             color: #fff;
             user-select: none;
         }
-        .studio {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
+        .studio { display: flex; flex-direction: column; height: 100vh; }
 
         /* TOP BAR */
         .top-bar {
-            background: #141414;
-            border-bottom: 1px solid #2a2a2a;
-            padding: 6px 16px;
+            background: #000;
+            border-bottom: 1px solid #333;
+            padding: 0 12px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0;
             flex-shrink: 0;
-            z-index: 10;
-            flex-wrap: wrap;
+            height: 32px;
+            z-index: 100;
         }
-        .top-title { font-size: 14px; letter-spacing: 4px; }
-        .bar-btn {
-            padding: 6px 10px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            font-size: 13px;
-            color: #fff;
+        .bar-item {
+            padding: 0 10px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
             letter-spacing: 1px;
+            color: #fff;
+            border-right: 1px solid #222;
+            white-space: nowrap;
+            position: relative;
+        }
+        .bar-item:first-child { padding-left: 0; }
+        .bar-item:hover { background: #111; }
+        .bar-item.active { color: #228B22; }
+        .bar-title { font-size: 13px; letter-spacing: 4px; color: #228B22; }
+        .bar-sep { width: 1px; height: 100%; background: #333; flex-shrink: 0; }
+
+        /* DROPDOWNS */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #111;
+            border: 1px solid #333;
+            border-top: none;
+            z-index: 200;
+            min-width: 140px;
+        }
+        .dropdown-menu.open { display: block; }
+        .dropdown-opt {
+            padding: 7px 14px;
+            font-size: 12px;
             font-family: Arial, sans-serif;
             font-weight: 700;
             text-transform: uppercase;
-            flex-shrink: 0;
+            letter-spacing: 1px;
+            color: #fff;
+            white-space: nowrap;
         }
-        .bar-btn:hover { border-color: #555; }
-        .bar-btn.active-tab { border-color: #228B22; color: #228B22; background: #0a1a0a; }
-        .bar-sep { width: 1px; height: 20px; background: #333; flex-shrink: 0; }
+        .dropdown-opt:hover { background: #1a1a1a; }
+        .dropdown-opt.active { color: #228B22; }
 
         /* MIDI */
-        .midi-devices { display: flex; gap: 8px; flex: 1; overflow-x: auto; align-items: center; min-width: 80px; }
-        .midi-device { background: #1a1a1a; border: 1px solid #333; padding: 6px 10px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .midi-device-name { font-size: 13px; letter-spacing: 1px; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .midi-device-led { width: 5px; height: 5px; background: #333; flex-shrink: 0; }
+        .midi-area { flex: 1; display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 0 8px; min-width: 0; border-right: 1px solid #222; }
+        .midi-device { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+        .midi-device-name { font-size: 11px; letter-spacing: 0.5px; color: #888; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .midi-device-led { width: 4px; height: 4px; background: #333; flex-shrink: 0; }
         .midi-device-led.active { background: #33ff33; box-shadow: 0 0 4px #33ff33; }
-        .no-midi { font-size: 13px; color: #555; letter-spacing: 1px; }
+        .no-midi { font-size: 11px; color: #444; letter-spacing: 0.5px; }
         .route-dropdown { position: relative; }
-        .route-selected { background: #111; border: 1px solid #444; color: #fff; font-family: Arial, sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; padding: 3px 6px; letter-spacing: 0.5px; min-width: 50px; text-align: center; }
-        .route-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #111; border: 1px solid #444; border-top: none; z-index: 100; }
+        .route-selected { background: #111; border: 1px solid #333; color: #fff; font-family: Arial, sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 2px 5px; letter-spacing: 0.5px; min-width: 40px; text-align: center; }
+        .route-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #111; border: 1px solid #333; border-top: none; z-index: 200; }
         .route-menu.open { display: block; }
-        .route-opt { padding: 3px 6px; font-size: 13px; font-weight: 700; font-family: Arial, sans-serif; text-transform: uppercase; color: #fff; letter-spacing: 0.5px; }
+        .route-opt { padding: 3px 5px; font-size: 11px; font-weight: 700; font-family: Arial, sans-serif; text-transform: uppercase; color: #fff; letter-spacing: 0.5px; }
         .route-opt:hover { background: #1a1a1a; }
         .route-opt.active-route { color: #228B22; }
 
-        /* KB ROUTING */
-        .kb-route { display: flex; align-items: center; gap: 4px; margin-left: auto; flex-shrink: 0; }
-        .kb-label { font-size: 13px; color: #fff; letter-spacing: 1px; }
-        .kb-btn { padding: 6px 10px; background: #1a1a1a; border: 1px solid #333; font-size: 13px; color: #fff; letter-spacing: 1px; font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase; }
-        .kb-btn.active { border-color: #228B22; color: #228B22; background: #0a1a0a; }
-
-        /* MAIN AREA: top (panel/instrument) + bottom (utilities) */
+        /* MAIN AREA */
         .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
-        /* TOP SECTION: panel or instrument */
-        .top-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
-
-        /* CONTROL PANEL */
-        .panel { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 2px; overflow-y: auto; background: #0a0a0a; }
-        .panel.hidden { display: none; }
-        .panel-tile { background: #141414; border: 1px solid #222; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 140px; transition: border-color 0.15s; }
-        .panel-tile:hover { border-color: #444; }
-        .panel-tile-name { font-size: 18px; letter-spacing: 4px; }
-        .panel-tile-sub { font-size: 11px; letter-spacing: 2px; color: #555; margin-top: 6px; }
-
-        /* BACK BAR */
-        .back-bar { display: none; background: #141414; border-bottom: 1px solid #2a2a2a; padding: 6px 16px; align-items: center; gap: 12px; flex-shrink: 0; }
-        .back-bar.visible { display: flex; }
-        .inst-title { font-size: 16px; letter-spacing: 3px; color: #228B22; }
-
-        /* INSTRUMENT FRAME */
-        .inst-area { flex: 1; display: none; overflow: hidden; }
-        .inst-area.visible { display: flex; }
+        /* TOP SECTION: instrument */
+        .top-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; position: relative; }
+        .inst-area { flex: 1; overflow: hidden; }
         .inst-area iframe { width: 100%; height: 100%; border: none; }
 
-        /* BOTTOM SECTION: persistent utilities */
-        .bottom-section { height: 45%; min-height: 200px; display: flex; flex-direction: column; border-top: 2px solid #228B22; flex-shrink: 0; }
-        .bottom-tabs { display: flex; background: #141414; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; }
-        .bottom-tab { padding: 6px 14px; font-size: 13px; color: #555; letter-spacing: 1px; font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase; border-right: 1px solid #2a2a2a; }
-        .bottom-tab.active { color: #228B22; background: #0a1a0a; }
-        .bottom-pop { padding: 6px 10px; font-size: 11px; color: #555; letter-spacing: 1px; font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase; margin-left: auto; border-left: 1px solid #2a2a2a; }
-        .bottom-pop.popped { color: #ff6600; }
+        /* BOTTOM SECTION */
+        .bottom-section { height: 45%; min-height: 200px; display: flex; flex-direction: column; border-top: 1px solid #228B22; flex-shrink: 0; }
         .bottom-frames { flex: 1; position: relative; overflow: hidden; }
         .bottom-frames iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; }
         .bottom-frames iframe.active { display: block; }
@@ -110,97 +106,54 @@
 </head>
 <body>
 <div class="studio">
-    <!-- TOP BAR -->
     <div class="top-bar">
-        <span class="top-title">STUDIO</span>
-        <div class="bar-sep"></div>
-        <div class="bar-btn" id="btnSave">SAVE</div>
-        <div class="bar-btn" id="btnLoad">LOAD</div>
-        <div class="bar-sep"></div>
-        <span style="font-size:13px;letter-spacing:1px;">MIDI</span>
-        <div class="midi-devices" id="midiDevices">
-            <span class="no-midi" id="noMidi">NO MIDI DEVICES</span>
+        <div class="bar-item" style="border-right:none;padding-right:6px;">
+            <span class="bar-title">STUDIO</span>
         </div>
-        <div class="kb-route">
-            <span class="kb-label">KB</span>
-            <div class="kb-btn active" data-target="juno">JUNO</div>
-            <div class="kb-btn" data-target="fm">FM</div>
-            <div class="kb-btn" data-target="mpc">MPC</div>
-            <div class="kb-btn" data-target="cr78">DRUMS</div>
-            <div class="kb-btn" data-target="rhodes">RHODES</div>
-            <div class="kb-btn" data-target="solina">SOLINA</div>
+        <div class="bar-sep"></div>
 
-            <div class="kb-btn" data-target="tb303">303</div>
-            <div class="kb-btn" data-target="hammond">B3</div>
-            <div class="kb-btn" data-target="minimoog">MOOG</div>
+        <!-- INSTRUMENT SELECT -->
+        <div class="bar-item active" id="instSelect">
+            <span id="instSelectLabel">JUNO</span>
+            <div class="dropdown-menu" id="instMenu"></div>
         </div>
+
+        <div class="bar-item" id="btnPopout">POPOUT</div>
+
+        <div class="bar-sep"></div>
+
+        <!-- KB ROUTING -->
+        <div class="bar-item" id="kbSelect">
+            KB: <span id="kbLabel" style="color:#228B22;margin-left:4px;">JUNO</span>
+            <div class="dropdown-menu" id="kbMenu"></div>
+        </div>
+
+        <div class="bar-sep"></div>
+
+        <!-- MIDI DEVICES -->
+        <div class="midi-area" id="midiDevices">
+            <span class="no-midi" id="noMidi">NO MIDI</span>
+        </div>
+
+        <!-- BOTTOM VIEW -->
+        <div class="bar-item" id="bottomSelect">
+            <span id="bottomLabel">PIANO ROLL</span>
+            <div class="dropdown-menu" id="bottomMenu"></div>
+        </div>
+
+        <div class="bar-item" id="bottomPopout">POP</div>
+
+        <div class="bar-sep"></div>
+        <div class="bar-item" id="btnSave">SAVE</div>
+        <div class="bar-item" id="btnLoad" style="border-right:none;">LOAD</div>
     </div>
 
     <div class="main-area">
-        <!-- TOP SECTION -->
         <div class="top-section">
-            <!-- BACK BAR -->
-            <div class="back-bar" id="backBar">
-                <div class="bar-btn" id="backToPanel">BACK</div>
-                <span class="inst-title" id="instTitle"></span>
-                <div style="flex:1;"></div>
-                <div class="bar-btn" id="popoutCurrent">POPOUT</div>
-            </div>
-
-            <!-- CONTROL PANEL -->
-            <div class="panel" id="panel">
-                <div class="panel-tile" data-open="juno">
-                    <span class="panel-tile-name">JUNO</span>
-                    <span class="panel-tile-sub">POLYSYNTH</span>
-                </div>
-                <div class="panel-tile" data-open="fm">
-                    <span class="panel-tile-name">DX7</span>
-                    <span class="panel-tile-sub">FM SYNTH</span>
-                </div>
-                <div class="panel-tile" data-open="rhodes">
-                    <span class="panel-tile-name">RHODES</span>
-                    <span class="panel-tile-sub">ELECTRIC PIANO</span>
-                </div>
-                <div class="panel-tile" data-open="mpc">
-                    <span class="panel-tile-name">MPC</span>
-                    <span class="panel-tile-sub">SAMPLER</span>
-                </div>
-                <div class="panel-tile" data-open="cr78">
-                    <span class="panel-tile-name">DRUMS</span>
-                    <span class="panel-tile-sub">DRUM MACHINE</span>
-                </div>
-                <div class="panel-tile" data-open="solina">
-                    <span class="panel-tile-name">SOLINA</span>
-                    <span class="panel-tile-sub">STRING ENSEMBLE</span>
-                </div>
-
-                <div class="panel-tile" data-open="tb303">
-                    <span class="panel-tile-name">TB-303</span>
-                    <span class="panel-tile-sub">ACID BASS</span>
-                </div>
-                <div class="panel-tile" data-open="hammond">
-                    <span class="panel-tile-name">HAMMOND</span>
-                    <span class="panel-tile-sub">TONEWHEEL ORGAN</span>
-                </div>
-                <div class="panel-tile" data-open="minimoog">
-                    <span class="panel-tile-name">MINIMOOG</span>
-                    <span class="panel-tile-sub">MONO SYNTH</span>
-                </div>
-            </div>
-
-            <!-- INSTRUMENT FRAME -->
             <div class="inst-area" id="instArea"></div>
         </div>
 
-        <!-- BOTTOM SECTION: always-on utilities -->
         <div class="bottom-section">
-            <div class="bottom-tabs">
-                <div class="bottom-tab active" data-btab="pianoroll">PIANO ROLL</div>
-                <div class="bottom-tab" data-btab="mixer">MIXER</div>
-                <div class="bottom-tab" data-btab="pedals">PEDALS</div>
-                <div class="bottom-tab" data-btab="tape">TAPE</div>
-                <div class="bottom-pop" id="bottomPopout">POPOUT</div>
-            </div>
             <div class="bottom-frames" id="bottomFrames">
                 <iframe id="framePianoroll" src="pianoroll.html" class="active" data-bframe="pianoroll"></iframe>
                 <iframe id="frameMixer" data-bframe="mixer" data-src="mixer.html"></iframe>
@@ -222,13 +175,11 @@ const INSTRUMENTS = {
     cr78:    { label: 'DRUMS',      file: '808.html',        windowName: 'cr78win' },
     rhodes:  { label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
     solina:  { label: 'SOLINA',     file: 'solina.html',     windowName: 'solinawin' },
-
     tb303:   { label: 'TB-303',     file: 'tb303.html',      windowName: 'tb303win' },
     hammond: { label: 'HAMMOND',    file: 'hammond.html',    windowName: 'hammondwin' },
     minimoog:{ label: 'MINIMOOG',   file: 'minimoog.html',   windowName: 'minimoogwin' },
 };
 
-// Bottom-bar utilities (always loaded, not in panel)
 const UTILITIES = {
     pianoroll: { label: 'PIANO ROLL', file: 'pianoroll.html', frame: 'framePianoroll', windowName: 'pianorollwin' },
     mixer:     { label: 'MIXER',      file: 'mixer.html',     frame: 'frameMixer',     windowName: 'mixerwin' },
@@ -244,13 +195,12 @@ const allInstIds = [...Object.keys(INSTRUMENTS), ...Object.keys(UTILITIES)];
 let midiAccess = null;
 const midiRouting = {};
 let keyboardTarget = 'juno';
-let currentView = 'panel';
+let currentInst = 'juno';
 const popoutWindows = {};
 const loadedFrames = {};
-
 let instFrameId = null;
 
-// Background iframes for instruments that need to stay alive
+// Background iframes
 const bgContainer = document.createElement('div');
 bgContainer.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;pointer-events:none;';
 document.body.appendChild(bgContainer);
@@ -271,17 +221,13 @@ function getOrCreateBgFrame(instId) {
     return iframe;
 }
 
-// Preload all instrument iframes so mixer/piano roll can always reach them
 Object.keys(INSTRUMENTS).forEach(id => getOrCreateBgFrame(id));
 
-// BroadcastChannel for popout window communication
 const studioBroadcast = new BroadcastChannel('studio-bus');
 studioBroadcast.onmessage = (e) => {
     const d = e.data;
     if (!d) return;
-    if (d._from) {
-        window.dispatchEvent(new MessageEvent('message', {data: d}));
-    }
+    if (d._from) window.dispatchEvent(new MessageEvent('message', {data: d}));
 };
 
 function sendToFrame(frame, msg) {
@@ -292,96 +238,153 @@ function sendToFrame(frame, msg) {
 
 function sendToInst(instId, msg) {
     const pop = popoutWindows[instId];
-    if (pop && !pop.closed) {
-        msg._target = instId;
-        studioBroadcast.postMessage(msg);
-        return;
-    }
-    // Check bottom utility frames
+    if (pop && !pop.closed) { msg._target = instId; studioBroadcast.postMessage(msg); return; }
     const util = UTILITIES[instId];
-    if (util) {
-        const frame = document.getElementById(util.frame);
-        if (frame && frame.src && frame.contentWindow) {
-            sendToFrame(frame, msg);
-        }
-        return;
-    }
-    // Check loaded instrument frames (active or background)
-    if (loadedFrames[instId]) {
-        sendToFrame(loadedFrames[instId], msg);
-        return;
-    }
-    // Not loaded — create bg frame for important messages
+    if (util) { const frame = document.getElementById(util.frame); if (frame && frame.src && frame.contentWindow) sendToFrame(frame, msg); return; }
+    if (loadedFrames[instId]) { sendToFrame(loadedFrames[instId], msg); return; }
     if (msg.type === 'midi' || msg.type === 'mixer' || msg.type === 'pedals' || msg.type === 'load-session') {
         const bgFrame = getOrCreateBgFrame(instId);
-        if (bgFrame) {
-            bgFrame.addEventListener('load', function once() {
-                bgFrame.removeEventListener('load', once);
-                sendToFrame(bgFrame, msg);
-            });
-        }
+        if (bgFrame) { bgFrame.addEventListener('load', function once() { bgFrame.removeEventListener('load', once); sendToFrame(bgFrame, msg); }); }
     }
 }
 
 // ============================================
-// BOTTOM TABS (always-on utilities)
+// DROPDOWN SYSTEM
 // ============================================
-let activeBottomTab = 'pianoroll';
+let openDropdown = null;
 
-document.querySelectorAll('.bottom-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        const id = tab.dataset.btab;
-        activeBottomTab = id;
-        document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        document.querySelectorAll('#bottomFrames iframe').forEach(f => f.classList.remove('active'));
-        const frame = document.querySelector(`iframe[data-bframe="${id}"]`);
-        if (frame) {
-            if (!frame.src && frame.dataset.src) frame.src = frame.dataset.src;
-            frame.classList.add('active');
-        }
-        // Update popout button state
-        const popBtn = document.getElementById('bottomPopout');
-        popBtn.classList.toggle('popped', !!(popoutWindows[id] && !popoutWindows[id].closed));
-    });
+function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.route-menu.open').forEach(m => m.classList.remove('open'));
+    openDropdown = null;
+}
+
+function toggleDropdown(menuEl) {
+    if (menuEl.classList.contains('open')) {
+        closeAllDropdowns();
+    } else {
+        closeAllDropdowns();
+        menuEl.classList.add('open');
+        openDropdown = menuEl;
+    }
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.bar-item') && !e.target.closest('.route-dropdown')) closeAllDropdowns();
 });
 
 // ============================================
-// UTILITY POPOUT
+// INSTRUMENT SELECT DROPDOWN
+// ============================================
+function buildInstMenu() {
+    const menu = document.getElementById('instMenu');
+    menu.innerHTML = '';
+    Object.keys(INSTRUMENTS).forEach(id => {
+        const opt = document.createElement('div');
+        opt.className = 'dropdown-opt' + (id === currentInst ? ' active' : '');
+        opt.textContent = INSTRUMENTS[id].label;
+        opt.addEventListener('click', (e) => { e.stopPropagation(); openInstrument(id); closeAllDropdowns(); });
+        menu.appendChild(opt);
+    });
+}
+
+document.getElementById('instSelect').addEventListener('click', (e) => {
+    if (e.target.closest('.dropdown-opt')) return;
+    toggleDropdown(document.getElementById('instMenu'));
+});
+
+// ============================================
+// KB ROUTING DROPDOWN
+// ============================================
+function buildKbMenu() {
+    const menu = document.getElementById('kbMenu');
+    menu.innerHTML = '';
+    Object.keys(INSTRUMENTS).forEach(id => {
+        const opt = document.createElement('div');
+        opt.className = 'dropdown-opt' + (id === keyboardTarget ? ' active' : '');
+        opt.textContent = INSTRUMENTS[id].label;
+        opt.addEventListener('click', (e) => { e.stopPropagation(); setKeyboardTarget(id); closeAllDropdowns(); });
+        menu.appendChild(opt);
+    });
+}
+
+document.getElementById('kbSelect').addEventListener('click', (e) => {
+    if (e.target.closest('.dropdown-opt')) return;
+    toggleDropdown(document.getElementById('kbMenu'));
+});
+
+// ============================================
+// BOTTOM VIEW DROPDOWN
+// ============================================
+let activeBottomTab = 'pianoroll';
+
+function buildBottomMenu() {
+    const menu = document.getElementById('bottomMenu');
+    menu.innerHTML = '';
+    Object.keys(UTILITIES).forEach(id => {
+        const opt = document.createElement('div');
+        opt.className = 'dropdown-opt' + (id === activeBottomTab ? ' active' : '');
+        opt.textContent = UTILITIES[id].label;
+        opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            switchBottomTab(id);
+            closeAllDropdowns();
+        });
+        menu.appendChild(opt);
+    });
+}
+
+document.getElementById('bottomSelect').addEventListener('click', (e) => {
+    if (e.target.closest('.dropdown-opt')) return;
+    toggleDropdown(document.getElementById('bottomMenu'));
+});
+
+function switchBottomTab(id) {
+    activeBottomTab = id;
+    document.getElementById('bottomLabel').textContent = UTILITIES[id].label;
+    document.querySelectorAll('#bottomFrames iframe').forEach(f => f.classList.remove('active'));
+    const frame = document.querySelector(`iframe[data-bframe="${id}"]`);
+    if (frame) {
+        if (!frame.src && frame.dataset.src) frame.src = frame.dataset.src;
+        frame.classList.add('active');
+    }
+    const popBtn = document.getElementById('bottomPopout');
+    popBtn.style.color = (popoutWindows[id] && !popoutWindows[id].closed) ? '#ff6600' : '#fff';
+    buildBottomMenu();
+}
+
+// ============================================
+// POPOUTS
 // ============================================
 document.getElementById('bottomPopout').addEventListener('click', () => {
     const id = activeBottomTab;
     const util = UTILITIES[id];
     if (!util) return;
-
-    if (popoutWindows[id] && !popoutWindows[id].closed) {
-        popoutWindows[id].focus();
-        return;
-    }
-
+    if (popoutWindows[id] && !popoutWindows[id].closed) { popoutWindows[id].focus(); return; }
     popoutWindows[id] = window.open(util.file, util.windowName, 'width=960,height=700');
-    document.getElementById('bottomPopout').classList.add('popped');
-
+    document.getElementById('bottomPopout').style.color = '#ff6600';
     const check = setInterval(() => {
         if (!popoutWindows[id] || popoutWindows[id].closed) {
             clearInterval(check);
             popoutWindows[id] = null;
-            if (activeBottomTab === id) document.getElementById('bottomPopout').classList.remove('popped');
+            if (activeBottomTab === id) document.getElementById('bottomPopout').style.color = '#fff';
         }
     }, 500);
 });
 
-// ============================================
-// PANEL / INSTRUMENT NAVIGATION
-// ============================================
-function showPanel() {
-    currentView = 'panel';
-    document.getElementById('panel').classList.remove('hidden');
-    document.getElementById('instArea').classList.remove('visible');
-    document.getElementById('backBar').classList.remove('visible');
-    if (instFrameId) hideInst(instFrameId);
-}
+document.getElementById('btnPopout').addEventListener('click', () => {
+    const inst = INSTRUMENTS[currentInst];
+    if (!inst) return;
+    if (popoutWindows[currentInst] && !popoutWindows[currentInst].closed) { popoutWindows[currentInst].focus(); return; }
+    popoutWindows[currentInst] = window.open(inst.file, inst.windowName, 'width=960,height=700');
+    const check = setInterval(() => {
+        if (popoutWindows[currentInst] && popoutWindows[currentInst].closed) { clearInterval(check); popoutWindows[currentInst] = null; }
+    }, 500);
+});
 
+// ============================================
+// INSTRUMENT NAVIGATION
+// ============================================
 function hideInst(instId) {
     if (loadedFrames[instId]) {
         loadedFrames[instId].style.cssText = 'width:1px;height:1px;border:none;position:absolute;pointer-events:none;';
@@ -390,32 +393,24 @@ function hideInst(instId) {
 }
 
 function openInstrument(instId) {
-    currentView = instId;
+    currentInst = instId;
     const inst = INSTRUMENTS[instId];
     if (!inst) return;
-    document.getElementById('panel').classList.add('hidden');
-    document.getElementById('instArea').classList.add('visible');
-    document.getElementById('backBar').classList.add('visible');
-    document.getElementById('instTitle').textContent = inst.label;
+    document.getElementById('instSelectLabel').textContent = inst.label;
     if (instFrameId && instFrameId !== instId) hideInst(instFrameId);
-    // Reuse existing bg frame or create one — never reload
     const frame = getOrCreateBgFrame(instId);
     if (frame) {
-        // Position over instArea without moving in DOM (moving reloads iframes)
         frame.style.cssText = 'position:fixed;border:none;z-index:50;pointer-events:auto;';
         positionInstFrame(frame);
-        // Trigger resize inside iframe so instruments can re-scale
         try { frame.contentWindow.dispatchEvent(new Event('resize')); } catch(e) {}
-        setTimeout(() => {
-            try { frame.contentWindow.dispatchEvent(new Event('resize')); } catch(e) {}
-        }, 200);
+        setTimeout(() => { try { frame.contentWindow.dispatchEvent(new Event('resize')); } catch(e) {} }, 200);
     }
     instFrameId = instId;
     setKeyboardTarget(instId);
-    // Sync piano roll to show this instrument's channel
     const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', solina:'solina', tb303:'tb303', hammond:'hammond', minimoog:'minimoog'};
     const prCh = prChannelMap[instId];
     if (prCh) sendToInst('pianoroll', {type: 'set-channel', channel: prCh});
+    buildInstMenu();
 }
 
 function positionInstFrame(frame) {
@@ -427,39 +422,12 @@ function positionInstFrame(frame) {
     frame.style.height = rect.height + 'px';
 }
 
-// Reposition active instrument iframe on resize
 window.addEventListener('resize', () => {
-    if (instFrameId && loadedFrames[instFrameId]) {
-        positionInstFrame(loadedFrames[instFrameId]);
-    }
-});
-
-document.querySelectorAll('.panel-tile[data-open]').forEach(tile => {
-    tile.addEventListener('click', () => openInstrument(tile.dataset.open));
-});
-document.getElementById('backToPanel').addEventListener('click', showPanel);
-
-document.getElementById('popoutCurrent').addEventListener('click', () => {
-    if (currentView === 'panel') return;
-    const instId = currentView;
-    const inst = INSTRUMENTS[instId];
-    if (!inst) return;
-    if (popoutWindows[instId] && !popoutWindows[instId].closed) {
-        popoutWindows[instId].focus();
-        return;
-    }
-    popoutWindows[instId] = window.open(inst.file, inst.windowName, 'width=960,height=700');
-    const check = setInterval(() => {
-        if (popoutWindows[instId] && popoutWindows[instId].closed) {
-            clearInterval(check);
-            popoutWindows[instId] = null;
-        }
-    }, 500);
-    showPanel();
+    if (instFrameId && loadedFrames[instFrameId]) positionInstFrame(loadedFrames[instFrameId]);
 });
 
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && currentView !== 'panel') showPanel();
+    if (e.key === 'Escape') closeAllDropdowns();
 });
 
 // ============================================
@@ -467,26 +435,14 @@ document.addEventListener('keydown', (e) => {
 // ============================================
 async function initMIDI() {
     if (!navigator.requestMIDIAccess) return;
-    try {
-        midiAccess = await navigator.requestMIDIAccess();
-        midiAccess.addEventListener('statechange', refreshMIDI);
-        refreshMIDI();
-    } catch(e) {}
+    try { midiAccess = await navigator.requestMIDIAccess(); midiAccess.addEventListener('statechange', refreshMIDI); refreshMIDI(); } catch(e) {}
 }
 
 const ROUTE_OPTIONS = [
-    {value: 'juno', label: 'JUNO'},
-    {value: 'fm', label: 'FM'},
-    {value: 'mpc', label: 'MPC'},
-    {value: 'cr78', label: 'DRUMS'},
-    {value: 'rhodes', label: 'RHODES'},
-    {value: 'solina', label: 'SOLINA'},
-
-    {value: 'tb303', label: '303'},
-    {value: 'hammond', label: 'B3'},
-    {value: 'minimoog', label: 'MOOG'},
-    {value: 'all', label: 'ALL'},
-    {value: 'none', label: 'NONE'},
+    {value: 'juno', label: 'JUNO'}, {value: 'fm', label: 'FM'}, {value: 'mpc', label: 'MPC'},
+    {value: 'cr78', label: 'DRUMS'}, {value: 'rhodes', label: 'RHODES'}, {value: 'solina', label: 'SOLINA'},
+    {value: 'tb303', label: '303'}, {value: 'hammond', label: 'B3'}, {value: 'minimoog', label: 'MOOG'},
+    {value: 'all', label: 'ALL'}, {value: 'none', label: 'NONE'},
 ];
 
 function refreshMIDI() {
@@ -540,11 +496,8 @@ function refreshMIDI() {
             const ledEl = document.getElementById('led-' + id);
             if (ledEl) { ledEl.classList.add('active'); setTimeout(() => ledEl.classList.remove('active'), 80); }
             const midiMsg = {type: 'midi', data: Array.from(msg.data)};
-            if (route === 'all') {
-                allInstIds.forEach(iid => sendToInst(iid, midiMsg));
-            } else if (route !== 'none') {
-                sendToInst(route, midiMsg);
-            }
+            if (route === 'all') { allInstIds.forEach(iid => sendToInst(iid, midiMsg)); }
+            else if (route !== 'none') { sendToInst(route, midiMsg); }
             sendToInst('pianoroll', midiMsg);
         };
     }
@@ -556,26 +509,15 @@ function routeLabel(route) {
     return opt ? opt.label : 'NONE';
 }
 
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.route-dropdown')) {
-        document.querySelectorAll('.route-menu.open').forEach(m => m.classList.remove('open'));
-    }
-});
-
 // ============================================
 // KEYBOARD ROUTING
 // ============================================
 function setKeyboardTarget(target) {
     keyboardTarget = target;
-    document.querySelectorAll('.kb-btn').forEach(b => b.classList.remove('active'));
-    const btn = document.querySelector(`.kb-btn[data-target="${target}"]`);
-    if (btn) btn.classList.add('active');
+    document.getElementById('kbLabel').textContent = INSTRUMENTS[target] ? INSTRUMENTS[target].label : target.toUpperCase();
     allInstIds.forEach(id => sendToInst(id, {type: 'keyboard-focus', enabled: id === target}));
+    buildKbMenu();
 }
-
-document.querySelectorAll('.kb-btn').forEach(btn => {
-    btn.addEventListener('click', () => setKeyboardTarget(btn.dataset.target));
-});
 
 // ============================================
 // QWERTY KEYBOARD → MIDI
@@ -627,7 +569,7 @@ window.addEventListener('message', (e) => {
             const k = d.key.toLowerCase();
             if (k === 'z') { qwertyOctave = Math.max(0, qwertyOctave - 1); return; }
             if (k === 'x') { qwertyOctave = Math.min(8, qwertyOctave + 1); return; }
-            if (k === 'escape' && currentView !== 'panel') { showPanel(); return; }
+            if (k === 'escape') { closeAllDropdowns(); return; }
             const semi = QWERTY_MAP[k];
             if (semi === undefined) return;
             const note = qwertyOctave * 12 + semi;
@@ -698,7 +640,6 @@ window.addEventListener('message', (e) => {
         if (target === 'master') {
             allInstIds.forEach(id => { if (id !== 'mixer') sendToInst(id, {type: 'mixer', param: d.param, value: d.value, bus: 'master'}); });
         } else if (target === 'reverb' || target === 'delay') {
-            // Broadcast return channel params to all instruments
             Object.keys(INSTRUMENTS).forEach(id => {
                 sendToInst(id, {type: 'mixer-fx', fx: target, param: d.param, value: d.value});
             });
@@ -725,9 +666,7 @@ const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'rhodes', 'solina', 'tb303'
 function requestSessionData() {
     SESSION_SOURCES.forEach(s => { sessionParts[s] = null; });
     pendingSave = true;
-    setTimeout(() => {
-        SESSION_SOURCES.forEach(s => sendToInst(s, {type: 'get-session'}));
-    }, 500);
+    setTimeout(() => { SESSION_SOURCES.forEach(s => sendToInst(s, {type: 'get-session'})); }, 500);
 }
 
 function checkSaveReady() {
@@ -737,13 +676,9 @@ function checkSaveReady() {
         const session = {
             version: 2, timestamp: new Date().toISOString(),
             pianoroll: sessionParts.pianoroll, drumMachine: sessionParts.cr78,
-            mpc: sessionParts.mpc,
-            rhodes: sessionParts.rhodes,
-            solina: sessionParts.solina,
-
-            tb303: sessionParts.tb303,
-            hammond: sessionParts.hammond,
-            minimoog: sessionParts.minimoog
+            mpc: sessionParts.mpc, rhodes: sessionParts.rhodes,
+            solina: sessionParts.solina, tb303: sessionParts.tb303,
+            hammond: sessionParts.hammond, minimoog: sessionParts.minimoog
         };
         const blob = new Blob([JSON.stringify(session, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
@@ -761,7 +696,6 @@ function loadSession(session) {
     if (session.mpc) sendToInst('mpc', {type: 'load-session', data: session.mpc});
     if (session.rhodes) sendToInst('rhodes', {type: 'load-session', data: session.rhodes});
     if (session.solina) sendToInst('solina', {type: 'load-session', data: session.solina});
-
     if (session.tb303) sendToInst('tb303', {type: 'load-session', data: session.tb303});
     if (session.hammond) sendToInst('hammond', {type: 'load-session', data: session.hammond});
     if (session.minimoog) sendToInst('minimoog', {type: 'load-session', data: session.minimoog});
@@ -781,6 +715,10 @@ document.getElementById('btnLoad').addEventListener('click', () => {
 // ============================================
 // INIT
 // ============================================
+buildInstMenu();
+buildKbMenu();
+buildBottomMenu();
+openInstrument('juno');
 initMIDI();
 </script>
 </body>
