@@ -1614,17 +1614,19 @@
             }
         }
 
-        // Draw velocity bars for current channel
+        // Draw velocity bars for current channel — aligned to notes above
         const activeColor = chColor(activeChannel);
         const channelNotes = notes[getStorageChannel()] || [];
         channelNotes.forEach(n => {
             const x = beatToX(n.start);
-            const noteW = Math.max(4, beatToX(n.duration) - 1);
+            const noteW = Math.max(4, beatToX(n.duration));
             const barH = (n.velocity / 127) * (h - 4);
             const isSelected = selectedNotes.has(n);
 
             velocityCtx.fillStyle = isSelected ? '#33ff33' : activeColor;
-            velocityCtx.fillRect(x + 1, h - barH - 2, Math.min(noteW, 8), barH);
+            velocityCtx.globalAlpha = 0.5 + (n.velocity / 127) * 0.5;
+            velocityCtx.fillRect(x, h - barH - 2, noteW, barH);
+            velocityCtx.globalAlpha = 1;
         });
     }
 
