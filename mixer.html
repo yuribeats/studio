@@ -379,6 +379,52 @@
         }
         .sync-btn.active { background: #1a2a1a; border-color: #228B22; color: #33ff33; }
 
+        /* TRACKS VISIBILITY */
+        .hdr-tracks {
+            font-size: 13px;
+            color: #fff;
+            letter-spacing: 1px;
+            position: relative;
+            padding: 2px 10px;
+            background: #252525;
+            border: 1px solid #333;
+        }
+        .hdr-tracks:hover { border-color: #555; }
+        .tracks-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            z-index: 300;
+            min-width: 120px;
+            margin-top: 4px;
+        }
+        .tracks-menu.open { display: block; }
+        .tracks-item {
+            padding: 5px 10px;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .tracks-item:hover { background: #252525; }
+        .tracks-item.is-hidden { color: #555; }
+        .tracks-dot {
+            width: 6px;
+            height: 6px;
+            background: #228B22;
+            flex-shrink: 0;
+        }
+        .tracks-item.is-hidden .tracks-dot { background: #333; }
+
         /* SUBDIVISION SELECTOR */
         .subdiv-row {
             display: flex;
@@ -412,6 +458,10 @@
         <div class="hdr">
             <span class="hdr-brand">STUDIO</span>
             <span class="hdr-model">MIXING CONSOLE</span>
+            <div class="hdr-tracks" id="tracksToggle">
+                TRACKS
+                <div class="tracks-menu" id="tracksMenu"></div>
+            </div>
             <div class="hdr-group">
                 <span class="hdr-label">BPM</span>
                 <input class="hdr-input" id="bpmInput" type="number" min="40" max="300" value="120" />
@@ -474,6 +524,7 @@ const state = {};
 const knobs = [];
 const faders = [];
 let meterRAF = null;
+const hiddenChannels = new Set();
 
 function initState(chId, type) {
     state[chId] = {
@@ -912,13 +963,14 @@ window.addEventListener('message', (e) => {
             const oldState = JSON.parse(JSON.stringify(state));
             buildChannels();
             initButtons();
+            buildTracksMenu();
             Object.keys(oldState).forEach(k => { if (state[k]) Object.assign(state[k], oldState[k]); });
             requestAnimationFrame(() => {
                 document.querySelectorAll('.fader-track').forEach(track => {
                     const chId = track.dataset.ch;
                     if (chId && state[chId]) setFaderPosition(track, state[chId].volume);
                 });
-                scaleToFit();
+                applyHiddenChannels();
             });
         }
     }
@@ -927,16 +979,18 @@ window.addEventListener('message', (e) => {
         if (idx >= 0) {
             CHANNELS.splice(idx, 1);
             delete state[d.id];
+            hiddenChannels.delete(d.id);
             const oldState = JSON.parse(JSON.stringify(state));
             buildChannels();
             initButtons();
+            buildTracksMenu();
             Object.keys(oldState).forEach(k => { if (state[k]) Object.assign(state[k], oldState[k]); });
             requestAnimationFrame(() => {
                 document.querySelectorAll('.fader-track').forEach(track => {
                     const chId = track.dataset.ch;
                     if (chId && state[chId]) setFaderPosition(track, state[chId].volume);
                 });
-                scaleToFit();
+                applyHiddenChannels();
             });
         }
     }
@@ -962,10 +1016,52 @@ function scaleToFit() {
 window.addEventListener('resize', scaleToFit);
 
 // ============================================
+// TRACKS VISIBILITY
+// ============================================
+function buildTracksMenu() {
+    const menu = document.getElementById('tracksMenu');
+    menu.innerHTML = '';
+    CHANNELS.forEach(ch => {
+        if (ch.type === 'sep') return;
+        const item = document.createElement('div');
+        item.className = 'tracks-item' + (hiddenChannels.has(ch.id) ? ' is-hidden' : '');
+        item.innerHTML = `<div class="tracks-dot"></div>${ch.name}`;
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (hiddenChannels.has(ch.id)) hiddenChannels.delete(ch.id);
+            else hiddenChannels.add(ch.id);
+            applyHiddenChannels();
+            buildTracksMenu();
+        });
+        menu.appendChild(item);
+    });
+}
+
+function applyHiddenChannels() {
+    document.querySelectorAll('.ch[data-ch]').forEach(el => {
+        el.style.display = hiddenChannels.has(el.dataset.ch) ? 'none' : '';
+    });
+    scaleToFit();
+}
+
+document.getElementById('tracksToggle').addEventListener('click', (e) => {
+    if (e.target.closest('.tracks-item')) return;
+    const menu = document.getElementById('tracksMenu');
+    menu.classList.toggle('open');
+});
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.hdr-tracks')) {
+        document.getElementById('tracksMenu').classList.remove('open');
+    }
+});
+
+// ============================================
 // INIT
 // ============================================
 buildChannels();
 initButtons();
+buildTracksMenu();
 
 // Set initial fader positions after layout
 requestAnimationFrame(() => {
