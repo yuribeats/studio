@@ -40,27 +40,52 @@
             margin-right: auto;
         }
 
-        /* CHANNEL TABS */
-        .ch-tabs {
-            display: flex;
-            gap: 4px;
+        /* CHANNEL SELECT DROPDOWN */
+        .ch-select {
+            position: relative;
         }
-        .ch-tab {
-            padding: 7px 16px;
+        .ch-select-btn {
+            padding: 5px 12px;
             font-size: 14px;
             font-family: Arial, sans-serif;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            color: #fff;
+            color: #228B22;
+            background: #111;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ch-select-btn:hover { border-color: #555; }
+        .ch-select-arrow { font-size: 9px; color: #666; }
+        .ch-select-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
             background: #1a1a1a;
             border: 1px solid #333;
+            border-top: none;
+            z-index: 200;
+            min-width: 120px;
+            max-height: 70vh;
+            overflow-y: auto;
         }
-        .ch-tab.active {
+        .ch-select-menu.open { display: block; }
+        .ch-select-opt {
+            padding: 7px 14px;
+            font-size: 13px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             color: #fff;
-            background: #228B22;
-            border-color: #228B22;
+            white-space: nowrap;
         }
+        .ch-select-opt:hover { background: #252525; }
+        .ch-select-opt.active { color: #228B22; }
 
         /* BOARD AREA */
         .board-wrap {
@@ -297,7 +322,12 @@
     <div class="top-bar">
         <span class="bar-title">STUDIO</span>
         <span class="bar-model">PEDALBOARD</span>
-        <div class="ch-tabs" id="chTabs"></div>
+        <div class="ch-select" id="chSelect">
+            <div class="ch-select-btn" id="chSelectBtn">
+                <span id="chSelectLabel">JUNO</span><span class="ch-select-arrow">&#9662;</span>
+            </div>
+            <div class="ch-select-menu" id="chSelectMenu"></div>
+        </div>
     </div>
     <div class="board-wrap">
         <div class="board" id="board"></div>
@@ -557,20 +587,35 @@ function updateKnobVisual(knobEl, value) {
 // BUILD UI
 // ============================================
 function buildTabs() {
-    const container = document.getElementById('chTabs');
-    container.innerHTML = '';
+    const label = document.getElementById('chSelectLabel');
+    const active = CHANNEL_LIST.find(c => c.id === activeChannel);
+    label.textContent = active ? active.name : activeChannel.toUpperCase();
+
+    const menu = document.getElementById('chSelectMenu');
+    menu.innerHTML = '';
     CHANNEL_LIST.forEach(ch => {
-        const tab = document.createElement('div');
-        tab.className = 'ch-tab' + (ch.id === activeChannel ? ' active' : '');
-        tab.textContent = ch.name;
-        tab.addEventListener('click', () => {
+        const opt = document.createElement('div');
+        opt.className = 'ch-select-opt' + (ch.id === activeChannel ? ' active' : '');
+        opt.textContent = ch.name;
+        opt.addEventListener('click', (e) => {
+            e.stopPropagation();
             activeChannel = ch.id;
             buildTabs();
             renderBoard();
+            menu.classList.remove('open');
         });
-        container.appendChild(tab);
+        menu.appendChild(opt);
     });
 }
+
+document.getElementById('chSelectBtn').addEventListener('click', () => {
+    document.getElementById('chSelectMenu').classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.ch-select')) {
+        document.getElementById('chSelectMenu').classList.remove('open');
+    }
+});
 
 function renderBoard() {
     const board = document.getElementById('board');
