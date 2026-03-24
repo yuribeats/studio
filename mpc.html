@@ -1467,28 +1467,29 @@ if (window !== window.parent) {
       if (btn) btn.classList.add('active-bank');
     }
     if (d && d.type === 'deck-export-mpc' && d.loops) {
-      // Save current bank, load loops into bank D, then switch to D
+      // Save current bank, load loops into target bank (default A)
       saveBankState();
-      const bankD = banks['D'];
-      bankD.audioBuffer = null;
-      bankD.slices = [];
-      bankD.padBuffers = {};
-      bankD.padLabels = [];
+      const targetBank = d.bank || 'A';
+      const bank = banks[targetBank];
+      bank.audioBuffer = null;
+      bank.slices = [];
+      bank.padBuffers = {};
+      bank.padLabels = [];
       d.loops.forEach((loop, i) => {
         if (i >= 16 || !loop.data || !loop.length) return;
         const buf = actx.createBuffer(1, loop.length, loop.sampleRate);
         buf.getChannelData(0).set(new Float32Array(loop.data));
-        bankD.padBuffers[i] = buf;
-        bankD.padLabels[i] = loop.name;
+        bank.padBuffers[i] = buf;
+        bank.padLabels[i] = loop.name;
       });
-      bankD.loadedFileName = 'DECK EXPORT';
-      // Switch to bank D
-      currentBank = 'D';
+      bank.loadedFileName = 'DECK EXPORT';
+      // Switch to target bank
+      currentBank = targetBank;
       loadBankState();
       document.querySelectorAll('.pad-bank-btn').forEach(b => b.classList.remove('active-bank'));
-      const dBtn = document.querySelector('.pad-bank-btn[data-bank="D"]');
-      if (dBtn) dBtn.classList.add('active-bank');
-      document.getElementById('lcd-status').textContent = d.loops.length + ' LOOPS IN BANK D';
+      const btn = document.querySelector('.pad-bank-btn[data-bank="' + targetBank + '"]');
+      if (btn) btn.classList.add('active-bank');
+      document.getElementById('lcd-status').textContent = d.loops.length + ' LOOPS IN BANK ' + targetBank;
     }
   });
   window.__kbEnabled = false;
