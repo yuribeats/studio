@@ -1427,6 +1427,49 @@ window.addEventListener('message', (e) => {
   }
 });
 
+// ==================== AUTO-LOAD BREAKS INTO BANK C & D ====================
+(async function loadBreaks() {
+  try {
+    const base = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
+      ? '' : '';
+    const res = await fetch(base + '/breaks-manifest.json');
+    if (!res.ok) return;
+    const allFiles = await res.json();
+    if (!allFiles || !allFiles.length) return;
+
+    // Shuffle and split into C (first 16) and D (next 16)
+    const shuffled = allFiles.slice().sort(() => Math.random() - 0.5);
+    const bankCFiles = shuffled.slice(0, 16);
+    const bankDFiles = shuffled.slice(16, 32);
+
+    async function loadBank(bankId, files) {
+      const bank = banks[bankId];
+      if (Object.keys(bank.padBuffers).length > 0) return; // already has data
+      bank.audioBuffer = null;
+      bank.slices = [];
+      bank.padBuffers = {};
+      bank.padLabels = [];
+      bank.loadedFileName = 'ALL THE BREAKS';
+
+      await Promise.all(files.map(async (file, i) => {
+        try {
+          const r = await fetch('/breaks/' + encodeURIComponent(file));
+          if (!r.ok) return;
+          const ab = await r.arrayBuffer();
+          const buf = await actx.decodeAudioData(ab);
+          bank.padBuffers[i] = buf;
+          bank.padLabels[i] = file.replace('.mp3', '').toUpperCase();
+        } catch (e) { /* skip failed files */ }
+      }));
+
+      // If we're currently viewing this bank, refresh UI
+      if (currentBank === bankId) loadBankState();
+    }
+
+    await Promise.all([loadBank('C', bankCFiles), loadBank('D', bankDFiles)]);
+  } catch (e) { /* manifest not available, skip */ }
+})();
+
 // ==================== IFRAME MIDI BRIDGE ====================
 if (window !== window.parent) {
   window.addEventListener('message', (e) => {
