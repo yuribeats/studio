@@ -170,6 +170,148 @@
         .bottom-frames { flex: 1; position: relative; overflow: hidden; }
         .bottom-frames iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; }
         .bottom-frames iframe.active { display: block; }
+
+        /* MENU */
+        .menu-group { margin-left: auto; position: relative; }
+        .menu-btn {
+            padding: 0 14px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #555;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .menu-btn:hover { background: #f5f5f5; }
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            z-index: 300;
+            min-width: 200px;
+        }
+        .menu-dropdown.open { display: block; }
+        .menu-opt {
+            padding: 10px 16px;
+            font-size: 11px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #555;
+            white-space: nowrap;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .menu-opt:last-child { border-bottom: none; }
+        .menu-opt:hover { background: #f5f5f5; }
+        .menu-sep {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 0;
+        }
+
+        /* OVERLAY */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+            overflow-y: auto;
+        }
+        .overlay.open {
+            display: flex;
+        }
+        .overlay-box {
+            background: #fff;
+            width: 100%;
+            max-width: 680px;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+        .overlay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 2;
+        }
+        .overlay-title {
+            font-size: 14px;
+            letter-spacing: 3px;
+            color: #228B22;
+        }
+        .overlay-close {
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: #999;
+            padding: 4px 8px;
+        }
+        .overlay-close:hover { color: #1a1a1a; }
+        .overlay-body {
+            padding: 20px;
+        }
+        .overlay-body h2 {
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: #228B22;
+            margin: 24px 0 10px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .overlay-body h2:first-child { margin-top: 0; }
+        .overlay-body p {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            color: #555;
+            line-height: 1.7;
+            margin: 8px 0;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .overlay-body ul {
+            list-style: none;
+            margin: 8px 0;
+        }
+        .overlay-body li {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            color: #555;
+            line-height: 1.7;
+            padding: 2px 0;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .overlay-body li::before {
+            content: '\2014\00a0';
+            color: #ccc;
+        }
+        .overlay-body .kbd {
+            display: inline-block;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 1px 6px;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            color: #333;
+            margin: 0 2px;
+        }
     </style>
 </head>
 <body>
@@ -211,6 +353,21 @@
             <div class="bar-item secondary" id="btnSave">SAVE</div>
             <div class="bar-item secondary" id="btnLoad">LOAD</div>
         </div>
+
+        <div class="menu-group">
+            <div class="menu-btn" id="menuBtn">MENU<span class="dd-arrow">&#9662;</span></div>
+            <div class="menu-dropdown" id="menuDropdown">
+                <div class="menu-opt" id="menuManual">MANUAL</div>
+                <div class="menu-opt" id="menuSave">SAVE SESSION</div>
+                <div class="menu-opt" id="menuLoad">LOAD SESSION</div>
+                <div class="menu-sep"></div>
+                <a class="menu-opt" href="https://slowedandreverbed.com" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;">SLOWED AND REVERBED</a>
+                <a class="menu-opt" href="https://everysong.site" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;">EVERY SONG</a>
+                <div class="menu-sep"></div>
+                <div class="menu-opt" id="menuTerms">TERMS</div>
+                <div class="menu-opt" id="menuPrivacy">PRIVACY</div>
+            </div>
+        </div>
     </div>
 
     <div class="main-area">
@@ -225,6 +382,129 @@
                 <iframe id="framePedals" data-bframe="pedals" data-src="pedals.html"></iframe>
                 <iframe id="frameTape" data-bframe="tape" data-src="tape.html"></iframe>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- MANUAL OVERLAY -->
+<div class="overlay" id="manualOverlay">
+    <div class="overlay-box">
+        <div class="overlay-header">
+            <span class="overlay-title">MANUAL</span>
+            <span class="overlay-close" id="manualClose">CLOSE</span>
+        </div>
+        <div class="overlay-body">
+            <h2>OVERVIEW</h2>
+            <p>STUDIO IS A WEB-BASED MUSIC PRODUCTION ENVIRONMENT. ALL AUDIO IS PROCESSED LOCALLY IN YOUR BROWSER USING THE WEB AUDIO API. NO AUDIO DATA LEAVES YOUR MACHINE.</p>
+
+            <h2>INSTRUMENTS</h2>
+            <ul>
+                <li>JUNO &mdash; ROLAND JUNO-106 POLYPHONIC SYNTHESIZER</li>
+                <li>DX7 &mdash; YAMAHA DX7 FM SYNTHESIZER</li>
+                <li>MPC &mdash; AKAI MPC 4000 SAMPLER / BREAK SLICER</li>
+                <li>DRUMS &mdash; CR-78 RHYTHM PROGRAMMER WITH MULTIPLE DRUM KITS</li>
+                <li>RHODES &mdash; FENDER RHODES ELECTRIC PIANO</li>
+                <li>SOLINA &mdash; ARP SOLINA STRING ENSEMBLE</li>
+                <li>TB-303 &mdash; ROLAND TB-303 BASS LINE</li>
+                <li>HAMMOND &mdash; HAMMOND B3 ORGAN</li>
+                <li>MINIMOOG &mdash; MOOG MINIMOOG SYNTHESIZER</li>
+            </ul>
+
+            <h2>MPC</h2>
+            <p>16 VELOCITY-SENSITIVE PADS ACROSS 4 BANKS (A, B, C, D). LOAD ANY AUDIO FILE, AND THE MPC AUTO-SLICES IT INTO PAD HITS USING TRANSIENT DETECTION.</p>
+            <ul>
+                <li>BANKS C AND D AUTO-LOAD WITH RANDOM BREAKS FROM THE BUILT-IN LIBRARY ON STARTUP</li>
+                <li>FILE BROWSER FOR LOADING BREAKS FROM THE COLLECTION</li>
+                <li>ADJUSTABLE SENSITIVITY FOR SLICE DETECTION</li>
+                <li>RE-SLICE TO ADJUST SLICING IN REAL TIME</li>
+                <li>RECORD PAD SEQUENCES WITH QUANTIZE AND LOOP</li>
+                <li>EXPORT SEQUENCES AS JSON</li>
+                <li>DECK EXPORT SENDS LOOPS DIRECTLY TO MPC PADS</li>
+                <li>PAD KEYS: <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span><span class="kbd">4</span> (TOP ROW), <span class="kbd">Q</span><span class="kbd">W</span><span class="kbd">E</span><span class="kbd">R</span>, <span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span><span class="kbd">F</span>, <span class="kbd">Z</span><span class="kbd">X</span><span class="kbd">C</span><span class="kbd">V</span> (BOTTOM ROW)</li>
+            </ul>
+
+            <h2>PIANO ROLL</h2>
+            <p>MIDI SEQUENCER FOR COMPOSING AND EDITING NOTE DATA ACROSS ALL INSTRUMENT CHANNELS.</p>
+            <ul>
+                <li>CLICK TO PLACE NOTES, DRAG TO RESIZE</li>
+                <li>PER-CHANNEL NOTE EDITING WITH CHANNEL SELECTOR</li>
+                <li>VELOCITY LANE FOR PER-NOTE VELOCITY CONTROL</li>
+                <li>ADJUSTABLE BPM AND TIME SIGNATURE</li>
+                <li>SNAP TO GRID WITH MULTIPLE QUANTIZE VALUES</li>
+                <li>REAL-TIME RECORDING FROM QWERTY KEYBOARD OR MIDI CONTROLLER</li>
+            </ul>
+
+            <h2>MIXER</h2>
+            <p>MIXING CONSOLE WITH PER-CHANNEL VOLUME FADERS, PAN, MUTE, SOLO, AND MASTER BUS CONTROLS. INCLUDES SEND EFFECTS (REVERB AND DELAY) WITH ADJUSTABLE LEVELS PER CHANNEL.</p>
+
+            <h2>PEDALS</h2>
+            <p>PER-CHANNEL PEDALBOARD WITH DRAG-AND-DROP EFFECTS CHAIN. AVAILABLE PEDALS:</p>
+            <ul>
+                <li>OVERDRIVE, EQ, COMPRESSOR</li>
+                <li>CHORUS, PHASER, BITCRUSHER</li>
+                <li>VINYL (NOISE / WOW / FLUTTER / WEAR)</li>
+                <li>SP-303 LOFI, LOFI ECHO, LOFI REVERB</li>
+                <li>AW DRIVE</li>
+            </ul>
+
+            <h2>TAPE</h2>
+            <p>TAPE MACHINE FOR RECORDING THE MASTER OUTPUT. ARM THE TRANSPORT, HIT RECORD, AND CAPTURE YOUR SESSION AS AN AUDIO FILE.</p>
+
+            <h2>KEYBOARD SHORTCUTS</h2>
+            <ul>
+                <li><span class="kbd">A</span>-<span class="kbd">L</span> QWERTY KEYS &mdash; PLAY NOTES ON THE FOCUSED INSTRUMENT (CHROMATIC MAPPING)</li>
+                <li><span class="kbd">Z</span> / <span class="kbd">X</span> &mdash; OCTAVE DOWN / UP</li>
+                <li><span class="kbd">SPACE</span> &mdash; PLAY / STOP (PIANO ROLL AND MPC)</li>
+                <li><span class="kbd">R</span> &mdash; START RECORDING (PIANO ROLL)</li>
+                <li><span class="kbd">ESC</span> &mdash; STOP / CLOSE MENUS</li>
+                <li><span class="kbd">DELETE</span> / <span class="kbd">BACKSPACE</span> &mdash; DELETE SELECTED NOTES (PIANO ROLL)</li>
+                <li><span class="kbd">CTRL+A</span> &mdash; SELECT ALL NOTES (PIANO ROLL)</li>
+                <li><span class="kbd">CTRL+D</span> &mdash; DUPLICATE SELECTED NOTES (PIANO ROLL)</li>
+            </ul>
+
+            <h2>MIDI</h2>
+            <p>CONNECT A MIDI CONTROLLER AND IT APPEARS IN THE TOP BAR. ROUTE EACH MIDI DEVICE TO ANY INSTRUMENT OR ALL INSTRUMENTS USING THE DEVICE DROPDOWN. THE KB SELECTOR ROUTES THE QWERTY KEYBOARD TO A SPECIFIC INSTRUMENT.</p>
+
+            <h2>POPOUT</h2>
+            <p>ANY INSTRUMENT OR UTILITY CAN BE POPPED OUT INTO ITS OWN WINDOW USING THE ARROW BUTTON IN THE TOP BAR. POPOUT WINDOWS STAY IN SYNC WITH THE MAIN SESSION.</p>
+
+            <h2>SAVE / LOAD</h2>
+            <p>SAVE SESSION EXPORTS A JSON FILE CONTAINING ALL INSTRUMENT STATES, PIANO ROLL DATA, DRUM PATTERNS, AND MPC BANK CONFIGURATIONS. LOAD SESSION RESTORES A PREVIOUSLY SAVED FILE. ALL DATA IS STORED LOCALLY IN YOUR BROWSER.</p>
+        </div>
+    </div>
+</div>
+
+<!-- TERMS OVERLAY -->
+<div class="overlay" id="termsOverlay">
+    <div class="overlay-box">
+        <div class="overlay-header">
+            <span class="overlay-title">TERMS OF USE</span>
+            <span class="overlay-close" id="termsClose">CLOSE</span>
+        </div>
+        <div class="overlay-body">
+            <p>STUDIO IS PROVIDED FREE OF CHARGE, AS-IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.</p>
+            <p>YOU MAY USE STUDIO FOR PERSONAL, EDUCATIONAL, OR COMMERCIAL MUSIC PRODUCTION. ANY AUDIO CONTENT YOU CREATE IS YOURS.</p>
+            <p>ALL AUDIO PROCESSING OCCURS LOCALLY IN YOUR BROWSER. NO AUDIO FILES ARE UPLOADED TO ANY SERVER.</p>
+            <p>YOU ARE SOLELY RESPONSIBLE FOR ANY CONTENT YOU CREATE, RECORD, OR DISTRIBUTE USING THIS TOOL.</p>
+            <p>THE AUTHORS ARE NOT LIABLE FOR ANY DAMAGES ARISING FROM THE USE OF THIS SOFTWARE.</p>
+            <p>THESE TERMS MAY BE UPDATED AT ANY TIME. CONTINUED USE CONSTITUTES ACCEPTANCE OF ANY CHANGES.</p>
+        </div>
+    </div>
+</div>
+
+<!-- PRIVACY OVERLAY -->
+<div class="overlay" id="privacyOverlay">
+    <div class="overlay-box">
+        <div class="overlay-header">
+            <span class="overlay-title">PRIVACY</span>
+            <span class="overlay-close" id="privacyClose">CLOSE</span>
+        </div>
+        <div class="overlay-body">
+            <p>STUDIO DOES NOT COLLECT ANY PERSONAL DATA.</p>
+            <p>ALL AUDIO IS PROCESSED ENTIRELY WITHIN YOUR BROWSER USING THE WEB AUDIO API. NO AUDIO DATA IS TRANSMITTED TO ANY SERVER.</p>
+            <p>NO COOKIES ARE USED FOR TRACKING OR ANALYTICS.</p>
+            <p>SESSION DATA (INSTRUMENT SETTINGS, PATTERNS, SEQUENCES) IS STORED LOCALLY ON YOUR DEVICE WHEN YOU SAVE. NO SESSION DATA IS SENT TO ANY EXTERNAL SERVICE.</p>
+            <p>MIDI DEVICE ACCESS IS REQUESTED SOLELY FOR INSTRUMENT CONTROL AND IS NOT LOGGED OR TRANSMITTED.</p>
         </div>
     </div>
 </div>
@@ -783,6 +1063,58 @@ document.getElementById('btnLoad').addEventListener('click', () => {
         try { const t = await input.files[0].text(); loadSession(JSON.parse(t)); } catch(e) {}
     });
     input.click();
+});
+
+// ============================================
+// MENU & OVERLAYS
+// ============================================
+document.getElementById('menuBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const dd = document.getElementById('menuDropdown');
+    closeAllDropdowns();
+    dd.classList.toggle('open');
+});
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.menu-group')) {
+        document.getElementById('menuDropdown').classList.remove('open');
+    }
+});
+
+function openOverlay(id) {
+    document.getElementById('menuDropdown').classList.remove('open');
+    document.getElementById(id).classList.add('open');
+}
+function closeOverlay(id) {
+    document.getElementById(id).classList.remove('open');
+}
+
+document.getElementById('menuManual').addEventListener('click', () => openOverlay('manualOverlay'));
+document.getElementById('manualClose').addEventListener('click', () => closeOverlay('manualOverlay'));
+
+document.getElementById('menuTerms').addEventListener('click', () => openOverlay('termsOverlay'));
+document.getElementById('termsClose').addEventListener('click', () => closeOverlay('termsOverlay'));
+
+document.getElementById('menuPrivacy').addEventListener('click', () => openOverlay('privacyOverlay'));
+document.getElementById('privacyClose').addEventListener('click', () => closeOverlay('privacyOverlay'));
+
+document.getElementById('menuSave').addEventListener('click', () => {
+    document.getElementById('menuDropdown').classList.remove('open');
+    requestSessionData();
+});
+document.getElementById('menuLoad').addEventListener('click', () => {
+    document.getElementById('menuDropdown').classList.remove('open');
+    document.getElementById('btnLoad').click();
+});
+
+document.querySelectorAll('.overlay').forEach(ov => {
+    ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('open'); });
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.overlay.open').forEach(ov => ov.classList.remove('open'));
+    }
 });
 
 // ============================================
