@@ -721,6 +721,14 @@ window.addEventListener('message', (e) => {
     }
 });
 
+// Forward deck-export-mpc from external windows to MPC iframe
+window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (d && d.type === 'deck-export-mpc' && d.loops) {
+        sendToInst('mpc', d);
+    }
+});
+
 // ============================================
 // SESSION SAVE / LOAD
 // ============================================

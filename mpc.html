@@ -1399,6 +1399,34 @@ function handleMIDI(e) {
 // Only init MIDI directly if NOT in an iframe
 if (window === window.parent) initMIDI();
 
+// ==================== EXTERNAL DECK EXPORT (works in any context) ====================
+window.addEventListener('message', (e) => {
+  const d = e.data;
+  if (d && d.type === 'deck-export-mpc' && d.loops) {
+    saveBankState();
+    const targetBank = d.bank || 'A';
+    const bank = banks[targetBank];
+    bank.audioBuffer = null;
+    bank.slices = [];
+    bank.padBuffers = {};
+    bank.padLabels = [];
+    d.loops.forEach((loop, i) => {
+      if (i >= 16 || !loop.data || !loop.length) return;
+      const buf = actx.createBuffer(1, loop.length, loop.sampleRate);
+      buf.getChannelData(0).set(new Float32Array(loop.data));
+      bank.padBuffers[i] = buf;
+      bank.padLabels[i] = loop.name;
+    });
+    bank.loadedFileName = 'DECK EXPORT';
+    currentBank = targetBank;
+    loadBankState();
+    document.querySelectorAll('.pad-bank-btn').forEach(b => b.classList.remove('active-bank'));
+    const btn = document.querySelector('.pad-bank-btn[data-bank="' + targetBank + '"]');
+    if (btn) btn.classList.add('active-bank');
+    document.getElementById('lcd-status').textContent = d.loops.length + ' LOOPS IN BANK ' + targetBank;
+  }
+});
+
 // ==================== IFRAME MIDI BRIDGE ====================
 if (window !== window.parent) {
   window.addEventListener('message', (e) => {
@@ -1466,31 +1494,7 @@ if (window !== window.parent) {
       const btn = document.querySelector(`.pad-bank-btn[data-bank="${currentBank}"]`);
       if (btn) btn.classList.add('active-bank');
     }
-    if (d && d.type === 'deck-export-mpc' && d.loops) {
-      // Save current bank, load loops into target bank (default A)
-      saveBankState();
-      const targetBank = d.bank || 'A';
-      const bank = banks[targetBank];
-      bank.audioBuffer = null;
-      bank.slices = [];
-      bank.padBuffers = {};
-      bank.padLabels = [];
-      d.loops.forEach((loop, i) => {
-        if (i >= 16 || !loop.data || !loop.length) return;
-        const buf = actx.createBuffer(1, loop.length, loop.sampleRate);
-        buf.getChannelData(0).set(new Float32Array(loop.data));
-        bank.padBuffers[i] = buf;
-        bank.padLabels[i] = loop.name;
-      });
-      bank.loadedFileName = 'DECK EXPORT';
-      // Switch to target bank
-      currentBank = targetBank;
-      loadBankState();
-      document.querySelectorAll('.pad-bank-btn').forEach(b => b.classList.remove('active-bank'));
-      const btn = document.querySelector('.pad-bank-btn[data-bank="' + targetBank + '"]');
-      if (btn) btn.classList.add('active-bank');
-      document.getElementById('lcd-status').textContent = d.loops.length + ' LOOPS IN BANK ' + targetBank;
-    }
+    // deck-export-mpc handled by top-level listener
   });
   window.__kbEnabled = false;
   document.addEventListener('keydown', (e) => {
