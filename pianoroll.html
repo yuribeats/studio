@@ -522,9 +522,9 @@
 <script>
 (function() {
     // ==================== CONSTANTS ====================
-    const BASE_CHANNELS = ['juno', 'fm', 'mpc', 'rhodes', 'solina', 'tb303', 'hammond', 'minimoog'];
-    const CHANNELS = ['juno', 'fm', 'mpc', '808', 'rhodes', 'solina', 'tb303', 'hammond', 'minimoog'];
-    const CHANNEL_LABELS = { juno: 'JUNO', fm: 'DX7', mpc: 'MPC', '808': 'DRUMS', rhodes: 'RHODES', solina: 'SOLINA', tb303: '303', hammond: 'B3', minimoog: 'MOOG' };
+    const BASE_CHANNELS = ['juno', 'fm', 'mpc'];
+    const CHANNELS = ['juno', 'fm', 'mpc', '808'];
+    const CHANNEL_LABELS = { juno: 'JUNO', fm: 'SOUND BANK', mpc: 'MPC', '808': 'DRUMS' };
     const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
     const BLACK_KEYS = [1,3,6,8,10]; // semitone indices that are black keys
     const BEATS_PER_BAR = 4;
@@ -601,7 +601,7 @@
     // ==================== CHANNEL COLORS ====================
     const CH_COLORS = {
         juno: '#228B22', fm: '#4488ff', mpc: '#ff8800',
-        '808': '#ff3344', rhodes: '#aa44ff'
+        '808': '#ff3344'
     };
     function chColor(ch) {
         if (ch.startsWith('808-')) return CH_COLORS['808'];

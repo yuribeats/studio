@@ -399,15 +399,10 @@
 
             <h2>INSTRUMENTS</h2>
             <ul>
-                <li>JUNO &mdash; ROLAND JUNO-106 POLYPHONIC SYNTHESIZER</li>
-                <li>DX7 &mdash; YAMAHA DX7 FM SYNTHESIZER</li>
-                <li>MPC &mdash; AKAI MPC 4000 SAMPLER / BREAK SLICER</li>
-                <li>DRUMS &mdash; CR-78 RHYTHM PROGRAMMER WITH MULTIPLE DRUM KITS</li>
-                <li>RHODES &mdash; FENDER RHODES ELECTRIC PIANO</li>
-                <li>SOLINA &mdash; ARP SOLINA STRING ENSEMBLE</li>
-                <li>TB-303 &mdash; ROLAND TB-303 BASS LINE</li>
-                <li>HAMMOND &mdash; HAMMOND B3 ORGAN</li>
-                <li>MINIMOOG &mdash; MOOG MINIMOOG SYNTHESIZER</li>
+                <li>JUNO &mdash; POLYPHONIC SYNTHESIZER</li>
+                <li>SOUND BANK &mdash; FM SYNTHESIZER</li>
+                <li>MPC &mdash; SAMPLER / BREAK SLICER</li>
+                <li>DRUMS &mdash; RHYTHM PROGRAMMER WITH MULTIPLE DRUM KITS</li>
             </ul>
 
             <h2>MPC</h2>
@@ -515,14 +510,9 @@
 // ============================================
 const INSTRUMENTS = {
     juno:    { label: 'JUNO',       file: 'kr106.html',      windowName: 'junowin' },
-    fm:      { label: 'DX7',        file: 'dx7.html',        windowName: 'fmwin' },
-    mpc:     { label: 'MPC',        file: 'mpc.html',        windowName: 'mpc4000' },
+    fm:      { label: 'SOUND BANK',  file: 'dx7.html',        windowName: 'fmwin' },
+    mpc:     { label: 'MPC',        file: 'mpc.html',        windowName: 'mpcwin' },
     cr78:    { label: 'DRUMS',      file: '808.html',        windowName: 'cr78win' },
-    rhodes:  { label: 'RHODES',     file: 'rhodes.html',     windowName: 'rhodeswin' },
-    solina:  { label: 'SOLINA',     file: 'solina.html',     windowName: 'solinawin' },
-    tb303:   { label: 'TB-303',     file: 'tb303.html',      windowName: 'tb303win' },
-    hammond: { label: 'HAMMOND',    file: 'hammond.html',    windowName: 'hammondwin' },
-    minimoog:{ label: 'MINIMOOG',   file: 'minimoog.html',   windowName: 'minimoogwin' },
 };
 
 const UTILITIES = {
@@ -752,7 +742,7 @@ function openInstrument(instId) {
     }
     instFrameId = instId;
     setKeyboardTarget(instId);
-    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808', rhodes:'rhodes', solina:'solina', tb303:'tb303', hammond:'hammond', minimoog:'minimoog'};
+    const prChannelMap = {juno:'juno', fm:'fm', mpc:'mpc', cr78:'808'};
     const prCh = prChannelMap[instId];
     if (prCh) sendToInst('pianoroll', {type: 'set-channel', channel: prCh});
     buildInstMenu();
@@ -784,9 +774,8 @@ async function initMIDI() {
 }
 
 const ROUTE_OPTIONS = [
-    {value: 'juno', label: 'JUNO'}, {value: 'fm', label: 'FM'}, {value: 'mpc', label: 'MPC'},
-    {value: 'cr78', label: 'DRUMS'}, {value: 'rhodes', label: 'RHODES'}, {value: 'solina', label: 'SOLINA'},
-    {value: 'tb303', label: '303'}, {value: 'hammond', label: 'B3'}, {value: 'minimoog', label: 'MOOG'},
+    {value: 'juno', label: 'JUNO'}, {value: 'fm', label: 'SOUND BANK'}, {value: 'mpc', label: 'MPC'},
+    {value: 'cr78', label: 'DRUMS'},
     {value: 'all', label: 'ALL'}, {value: 'none', label: 'NONE'},
 ];
 
@@ -958,14 +947,14 @@ window.addEventListener('message', (e) => {
     }
     if (d.type === 'request-kb-focus') setKeyboardTarget(d.target);
     if (d.type === 'pedal-control') {
-        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', tb303: 'tb303', hammond: 'hammond', minimoog: 'minimoog'};
+        const idMap = {kr106: 'juno', mpc: 'mpc', cr78: 'cr78', juno: 'juno', '808': 'cr78', fm: 'fm'};
         var ch = d.channel;
         if (ch && ch.startsWith('808-')) ch = '808';
         const instId = idMap[ch] || ch;
         if (INSTRUMENTS[instId]) sendToInst(instId, {type: 'pedals', pedals: d.pedals});
     }
     if (d.type === 'pianoroll-note') {
-        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', fm: 'fm', rhodes: 'rhodes', solina: 'solina', tb303: 'tb303', hammond: 'hammond', minimoog: 'minimoog'};
+        const idMap = {kr106: 'juno', juno: 'juno', mpc: 'mpc', cr78: 'cr78', '808': 'cr78', fm: 'fm'};
         const instId = idMap[d.channel] || d.channel;
         if (INSTRUMENTS[instId]) {
             const midiData = d.on ? [0x90, d.note, d.velocity || 100] : [0x80, d.note, 0];
@@ -990,7 +979,7 @@ window.addEventListener('message', (e) => {
             });
         } else {
             const DRUM_KITS = ['cr78', 'lm2', 'mrk2', 'tr505', 'tr909'];
-            const idMap = {kr106: 'juno', mpc: 'mpc', solina: 'solina', tb303: 'tb303', hammond: 'hammond', minimoog: 'minimoog'};
+            const idMap = {kr106: 'juno', mpc: 'mpc'};
             if (DRUM_KITS.includes(target)) {
                 sendToInst('cr78', {type: 'mixer', kit: target, param: d.param, value: d.value});
             } else {
@@ -1014,7 +1003,7 @@ window.addEventListener('message', (e) => {
 // ============================================
 let pendingSave = null;
 const sessionParts = {};
-const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc', 'rhodes', 'solina', 'tb303', 'hammond', 'minimoog'];
+const SESSION_SOURCES = ['pianoroll', 'cr78', 'mpc'];
 
 function requestSessionData() {
     SESSION_SOURCES.forEach(s => { sessionParts[s] = null; });
@@ -1029,9 +1018,7 @@ function checkSaveReady() {
         const session = {
             version: 2, timestamp: new Date().toISOString(),
             pianoroll: sessionParts.pianoroll, drumMachine: sessionParts.cr78,
-            mpc: sessionParts.mpc, rhodes: sessionParts.rhodes,
-            solina: sessionParts.solina, tb303: sessionParts.tb303,
-            hammond: sessionParts.hammond, minimoog: sessionParts.minimoog
+            mpc: sessionParts.mpc
         };
         const blob = new Blob([JSON.stringify(session, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
@@ -1047,11 +1034,6 @@ function loadSession(session) {
     if (session.pianoroll) sendToInst('pianoroll', {type: 'load-session', data: session.pianoroll});
     if (session.drumMachine) sendToInst('cr78', {type: 'load-session', data: session.drumMachine});
     if (session.mpc) sendToInst('mpc', {type: 'load-session', data: session.mpc});
-    if (session.rhodes) sendToInst('rhodes', {type: 'load-session', data: session.rhodes});
-    if (session.solina) sendToInst('solina', {type: 'load-session', data: session.solina});
-    if (session.tb303) sendToInst('tb303', {type: 'load-session', data: session.tb303});
-    if (session.hammond) sendToInst('hammond', {type: 'load-session', data: session.hammond});
-    if (session.minimoog) sendToInst('minimoog', {type: 'load-session', data: session.minimoog});
 }
 
 document.getElementById('btnSave').addEventListener('click', requestSessionData);
