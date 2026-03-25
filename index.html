@@ -53,6 +53,8 @@
         }
         .bar-item:hover { background: #f5f5f5; }
         .bar-item.active { color: #228B22; }
+        .inst-tab { border-right: 1px solid #eee; }
+        .inst-tab.active { color: #228B22; border-bottom: 2px solid #228B22; }
         .bar-title {
             font-size: 12px;
             letter-spacing: 4px;
@@ -324,11 +326,8 @@
             <span class="bar-title">STUDIO</span>
         </div>
 
+        <div class="bar-group" id="instTabs"></div>
         <div class="bar-group">
-            <div class="bar-item active" id="instSelect">
-                <span id="instSelectLabel">JUNO</span><span class="dd-arrow">&#9662;</span>
-                <div class="dropdown-menu" id="instMenu"></div>
-            </div>
             <div class="bar-item popout" id="btnPopout" title="POPOUT INSTRUMENT">&#8599;</div>
         </div>
 
@@ -612,24 +611,20 @@ document.addEventListener('click', (e) => {
 });
 
 // ============================================
-// INSTRUMENT SELECT DROPDOWN
+// INSTRUMENT TABS
 // ============================================
 function buildInstMenu() {
-    const menu = document.getElementById('instMenu');
-    menu.innerHTML = '';
+    const container = document.getElementById('instTabs');
+    container.innerHTML = '';
     Object.keys(INSTRUMENTS).forEach(id => {
-        const opt = document.createElement('div');
-        opt.className = 'dropdown-opt' + (id === currentInst ? ' active' : '');
-        opt.textContent = INSTRUMENTS[id].label;
-        opt.addEventListener('click', (e) => { e.stopPropagation(); openInstrument(id); closeAllDropdowns(); });
-        menu.appendChild(opt);
+        const tab = document.createElement('div');
+        tab.className = 'bar-item inst-tab' + (id === currentInst ? ' active' : '');
+        tab.id = 'inst-tab-' + id;
+        tab.textContent = INSTRUMENTS[id].label;
+        tab.addEventListener('click', () => openInstrument(id));
+        container.appendChild(tab);
     });
 }
-
-document.getElementById('instSelect').addEventListener('click', (e) => {
-    if (e.target.closest('.dropdown-opt')) return;
-    toggleDropdown(document.getElementById('instMenu'));
-});
 
 // ============================================
 // KB ROUTING DROPDOWN
@@ -734,7 +729,6 @@ function openInstrument(instId) {
     currentInst = instId;
     const inst = INSTRUMENTS[instId];
     if (!inst) return;
-    document.getElementById('instSelectLabel').textContent = inst.label;
     if (instFrameId && instFrameId !== instId) hideInst(instFrameId);
     const frame = getOrCreateBgFrame(instId);
     if (frame) {
