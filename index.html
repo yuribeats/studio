@@ -352,6 +352,7 @@
         </div>
 
         <div class="bar-group">
+            <div class="bar-item secondary" id="btnMidi">MIDI</div>
             <div class="bar-item secondary" id="btnSave">SAVE</div>
             <div class="bar-item secondary" id="btnLoad">LOAD</div>
         </div>
@@ -1094,6 +1095,74 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         document.querySelectorAll('.overlay.open').forEach(ov => ov.classList.remove('open'));
     }
+});
+
+// ============================================
+// MIDI FILE IMPORT
+// ============================================
+function parseMidiFile(buffer) {
+    const view = new DataView(buffer);
+    let pos = 0;
+    function u32() { const v = view.getUint32(pos); pos += 4; return v; }
+    function u16() { const v = view.getUint16(pos); pos += 2; return v; }
+    function u8() { return view.getUint8(pos++); }
+    function vlq() {
+        let val = 0, b;
+        do { b = u8(); val = (val << 7) | (b & 0x7f); } while (b & 0x80);
+        return val;
+    }
+    pos = 4; u32(); // skip "MThd" + length
+    const format = u16();
+    const numTracks = u16();
+    const tpb = u16(); // ticks per beat
+    const allEvents = [];
+    for (let t = 0; t < numTracks; t++) {
+        pos += 4; // skip "MTrk"
+        const end = pos + u32();
+        let abs = 0, rs = 0;
+        while (pos < end) {
+            abs += vlq();
+            let s = view.getUint8(pos);
+            if (s & 0x80) { rs = s; pos++; } else { s = rs; }
+            const type = s & 0xf0, ch = s & 0x0f;
+            if (type === 0x90 || type === 0x80) {
+                const note = u8(), vel = u8();
+                allEvents.push({ t: abs, on: type === 0x90 && vel > 0, note, vel, ch });
+            } else if (type === 0xa0 || type === 0xb0 || type === 0xe0) { pos += 2; }
+            else if (type === 0xc0 || type === 0xd0) { pos++; }
+            else if (s === 0xff) { pos++; pos += vlq(); }
+            else if (s === 0xf0 || s === 0xf7) { pos += vlq(); }
+            else { pos++; }
+        }
+        pos = end;
+    }
+    allEvents.sort((a, b) => a.t - b.t);
+    const active = {};
+    const notes = [];
+    for (const e of allEvents) {
+        const key = e.note + '_' + e.ch;
+        if (e.on) { active[key] = { t: e.t, vel: e.vel }; }
+        else if (active[key]) {
+            notes.push({ pitch: e.note, start: active[key].t / tpb, duration: Math.max((e.t - active[key].t) / tpb, 0.0625), velocity: active[key].vel });
+            delete active[key];
+        }
+    }
+    return notes;
+}
+
+document.getElementById('btnMidi').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.mid,.midi';
+    input.addEventListener('change', async () => {
+        if (!input.files[0]) return;
+        try {
+            const buf = await input.files[0].arrayBuffer();
+            const notes = parseMidiFile(buf);
+            const ch = { juno: 'juno', fm: 'fm', mpc: 'mpc', cr78: '808' }[currentInst] || 'juno';
+            sendToInst('pianoroll', { type: 'import-midi', channel: ch, notes });
+        } catch(e) { console.error('MIDI parse error', e); }
+    });
+    input.click();
 });
 
 // ============================================

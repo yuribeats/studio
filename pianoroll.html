@@ -2254,6 +2254,15 @@
                 });
             }
             // Session load: restore note data
+            if (d && d.type === 'import-midi' && d.channel && d.notes) {
+                const ch = d.channel;
+                if (!notes[ch]) notes[ch] = [];
+                notes[ch] = d.notes.map(n => ({
+                    pitch: n.pitch, start: n.start, duration: n.duration,
+                    velocity: n.velocity
+                }));
+                fullRender();
+            }
             if (d && d.type === 'load-session' && d.data) {
                 const sd = d.data;
                 if (sd.bpm) { bpm = sd.bpm; document.getElementById('bpmInput').value = bpm; }
