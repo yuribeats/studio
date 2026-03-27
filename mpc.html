@@ -369,6 +369,12 @@
             <input class="cs-input" id="barsInput" type="number" min="1" max="64" value="4" style="width:35px" />
         </div>
         <div class="cs-sep"></div>
+        <div class="cs-group">
+            <span class="cs-label">PITCH</span>
+            <input class="cs-slider" id="pitchInput" type="range" min="-24" max="24" value="0" style="width:60px" />
+            <span class="cs-value" id="pitchVal" style="min-width:28px">+0</span>
+        </div>
+        <div class="cs-sep"></div>
         <div class="cs-btn" id="clickToggle">CLICK</div>
         <div class="cs-btn" id="quantizeToggle">QUANTIZE</div>
         <div class="cs-sep"></div>
@@ -438,7 +444,7 @@
 let currentBank = 'A';
 const banks = {};
 function newBankData() {
-    return { audioBuffer: null, slices: [], padBuffers: {}, padLabels: [], recording: [], loadedFileName: '', sensitivity: 0.5, detectedBpm: 0 };
+    return { audioBuffer: null, slices: [], padBuffers: {}, padLabels: [], recording: [], loadedFileName: '', sensitivity: 0.5, detectedBpm: 0, bankPitch: 0 };
 }
 ['A','B','C','D'].forEach(b => banks[b] = newBankData());
 function getBank() { return banks[currentBank]; }
@@ -461,6 +467,8 @@ let totalBars = 4;
 let fileList = [];
 let loadedFileName = '';
 let loopEnabled = false;
+let bankPitch = 0;
+let pitchShifterNode = null;
 
 function saveBankState() {
     const b = banks[currentBank];
@@ -470,6 +478,7 @@ function saveBankState() {
     b.loadedFileName = loadedFileName;
     b.sensitivity = sensitivity;
     b.detectedBpm = detectedBpm;
+    b.bankPitch = bankPitch;
     // Save pad labels
     for (let i = 0; i < 16; i++) {
         const lbl = padElements[i] ? padElements[i].querySelector('.pad-label') : null;
@@ -486,6 +495,9 @@ function loadBankState() {
     sensitivity = b.sensitivity;
     detectedBpm = b.detectedBpm;
     window._padBuffers = b.padBuffers;
+    bankPitch = b.bankPitch || 0;
+    const pitchEl = document.getElementById('pitchInput');
+    if (pitchEl) { pitchEl.value = bankPitch; applyBankPitch(bankPitch); }
     // Restore pad labels
     for (let i = 0; i < 16; i++) {
         const lbl = padElements[i] ? padElements[i].querySelector('.pad-label') : null;
@@ -532,6 +544,24 @@ comp.attack.value = 0.002; comp.release.value = 0.08;
 comp.connect(masterGain);
 masterGain.connect(mpcPedalFX.getInput());
 window._padBuffers = banks['A'].padBuffers;
+
+(async function initPitchWorklet() {
+    try {
+        await actx.audioWorklet.addModule('pitch-shifter-processor.js');
+        pitchShifterNode = new AudioWorkletNode(actx, 'pitch-shifter-processor');
+        pitchShifterNode.connect(comp);
+    } catch(e) {
+        console.warn('[pitch] worklet init failed:', e);
+    }
+})();
+
+function applyBankPitch(semitones) {
+    bankPitch = semitones;
+    const val = document.getElementById('pitchVal');
+    if (val) val.textContent = (semitones >= 0 ? '+' : '') + semitones;
+    if (!pitchShifterNode) return;
+    pitchShifterNode.port.postMessage({ pitchFactor: Math.pow(2, semitones / 12) });
+}
 
 // ============================================
 // PAD SETUP
@@ -799,7 +829,7 @@ function playSlice(index) {
         if (activeSource) { try { activeSource.stop(); } catch(e) {} }
         const source = actx.createBufferSource();
         source.buffer = window._padBuffers[index];
-        source.connect(comp);
+        source.connect(pitchShifterNode || comp);
         source.start(0);
         activeSource = source;
         source.onended = () => { if (activeSource === source) activeSource = null; };
@@ -811,7 +841,7 @@ function playSlice(index) {
     const slice = slices[index];
     const source = actx.createBufferSource();
     source.buffer = audioBuffer;
-    source.connect(comp);
+    source.connect(pitchShifterNode || comp);
     source.start(0, slice.start / audioBuffer.sampleRate, (slice.end - slice.start) / audioBuffer.sampleRate);
     activeSource = source;
     source.onended = () => { if (activeSource === source) activeSource = null; };
@@ -1280,6 +1310,9 @@ document.getElementById('fExport').addEventListener('click', () => {
 });
 
 document.getElementById('sensSlider').addEventListener('input', doSlice);
+document.getElementById('pitchInput').addEventListener('input', function() {
+    applyBankPitch(parseInt(this.value));
+});
 document.getElementById('clickToggle').addEventListener('click', function() {
     clickEnabled = !clickEnabled; this.classList.toggle('on', clickEnabled);
 });
@@ -1417,6 +1450,7 @@ window.addEventListener('message', (e) => {
       bank.padLabels[i] = loop.name;
     });
     bank.loadedFileName = 'DECK EXPORT';
+    if (d.bpm) { bpm = Math.round(d.bpm); document.getElementById('bpmInput').value = bpm; }
     currentBank = targetBank;
     loadBankState();
     document.querySelectorAll('.pad-bank-btn').forEach(b => b.classList.remove('active-bank'));
