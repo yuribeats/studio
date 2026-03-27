@@ -547,8 +547,8 @@ window._padBuffers = banks['A'].padBuffers;
 
 (async function initPitchWorklet() {
     try {
-        await actx.audioWorklet.addModule('pitch-shifter-processor.js');
-        pitchShifterNode = new AudioWorkletNode(actx, 'pitch-shifter-processor');
+        await actx.audioWorklet.addModule('rubberband-processor.js');
+        pitchShifterNode = new AudioWorkletNode(actx, 'rubberband-processor');
         pitchShifterNode.connect(comp);
     } catch(e) {
         console.warn('[pitch] worklet init failed:', e);
@@ -560,7 +560,7 @@ function applyBankPitch(semitones) {
     const val = document.getElementById('pitchVal');
     if (val) val.textContent = (semitones >= 0 ? '+' : '') + semitones;
     if (!pitchShifterNode) return;
-    pitchShifterNode.port.postMessage({ pitchFactor: Math.pow(2, semitones / 12) });
+    pitchShifterNode.port.postMessage(JSON.stringify(["pitch", Math.pow(2, semitones / 12)]));
 }
 
 // ============================================
