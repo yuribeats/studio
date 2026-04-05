@@ -18,7 +18,9 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["universal"]
+          "arch": [
+            "universal"
+          ]
         }
       ],
       "icon": "build/icon.icns",
@@ -42,6 +44,7 @@
     "extraResources": []
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "node-addon-api": "^8.3.0"
   },
   "devDependencies": {
